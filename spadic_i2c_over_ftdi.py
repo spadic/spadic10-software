@@ -11,6 +11,11 @@ class FtdiOpenError(Exception):
     pass
 
 
+def int2bytes(x, n=4):
+    return [(x % (0x100 ** (i+1))) / (0x100 ** i) for i in range(n)]
+    # int2bytes(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
+
+
 class SpadicI2cRf:
     def __init__(self):
         self.ftdic = self._connect()
@@ -41,7 +46,12 @@ class SpadicI2cRf:
         return map(ord, buf)
 
     def write_register(self, address, data):
-        self._write_data(address+data)
+        iom_payload = int2bytes(address, 3) + int2bytes(data, 8)
+        iom_addr = 0x20
+        iom_wr   = 0x01
+        iom_len  = len(iom_payload) # == 11
+        iom_header = [iom_addr, iom_wr, iom_len]
+        self._write_data(iom_header + iom_payload)
 
     def read_register(self, address):
         self._write_data(address)
