@@ -36,6 +36,13 @@ class SpadicI2cRf:
             buf = buf[num_bytes_read:]
         return map(ord, buf)
 
+    def write_register(self, address, data):
+        self._write_data(address+data)
+
+    def read_register(self, address):
+        self._write_data(address)
+        return self._read_data(8)
+
 
 if __name__=='__main__':
     s = SpadicI2cRf()
