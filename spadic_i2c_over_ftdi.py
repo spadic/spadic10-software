@@ -4,8 +4,12 @@ import sys
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
+from spadic_rf import spadic_rf
+
+
 class FtdiOpenError(Exception):
     pass
+
 
 class SpadicI2cRf:
     def __init__(self):
