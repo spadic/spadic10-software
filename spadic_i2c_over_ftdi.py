@@ -53,5 +53,8 @@ if __name__=='__main__':
 
     if s.ftdic is None:
         sys.exit('could not connect to device!')
+
+    # try to switch some LEDs on
+    s.write_register(spadic_rf['overrides'].address, [0xff])
     
 
