@@ -16,6 +16,9 @@ class SpadicI2cRf:
     def __init__(self):
         self._connect()
 
+    def __del__(self):
+        ftdi.ftdi_usb_close(self.ftdic)
+
     def _connect(self, VID=0x0403, PID=0x6010):
         context = ftdi.ftdi_context()
         ftdi.ftdi_init(context)
@@ -62,5 +65,7 @@ if __name__=='__main__':
 
     # try to switch some LEDs on
     s.write_register(spadic_rf['overrides'].address, 0xff)
-    
+
+    del s # _should_ be called automatically
+    print 'disconnected!'
 
