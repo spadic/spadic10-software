@@ -7,10 +7,6 @@ import ftdi
 from spadic_rf import spadic_rf
 
 
-class FtdiOpenError(Exception):
-    pass
-
-
 def int2bytes(x, n=4):
     return [(x % (0x100 ** (i+1))) / (0x100 ** i) for i in range(n)]
     # int2bytes(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
@@ -18,7 +14,7 @@ def int2bytes(x, n=4):
 
 class SpadicI2cRf:
     def __init__(self):
-        self.ftdic = self._connect()
+        self._connect()
 
     def _connect(self, VID=0x0403, PID=0x6010):
         context = ftdi.ftdi_context()
@@ -45,12 +41,10 @@ class SpadicI2cRf:
             buf = buf[num_bytes_read:]
         return map(ord, buf)
 
-    def write_register(self, address, data):
+    def write_register(self, address, data, iom_wr=0x01, iom_addr=0x20):
         iom_payload = int2bytes(address, 3) + int2bytes(data, 8)
-        iom_addr = 0x20
-        iom_wr   = 0x01
         iom_len  = len(iom_payload) # == 11
-        iom_header = [iom_addr, iom_wr, iom_len]
+        iom_header = [iom_wr, iom_addr, iom_len]
         self._write_data(iom_header + iom_payload)
 
     def read_register(self, address):
@@ -64,7 +58,9 @@ if __name__=='__main__':
     if s.ftdic is None:
         sys.exit('could not connect to device!')
 
+    print 'connected!'
+
     # try to switch some LEDs on
-    s.write_register(spadic_rf['overrides'].address, [0xff])
+    s.write_register(spadic_rf['overrides'].address, 0xff)
     
 
