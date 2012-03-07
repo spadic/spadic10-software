@@ -66,6 +66,7 @@ link_ready, rxpcs_initovr, txpcs_initovr - physical link init.""",
    "REG_enableAnalogTrigger" : Register(address=0x2e0, width=1 , sw="rw", hw="ro"),
    "REG_enableTriggerOutput" : Register(address=0x2e8, width=1 , sw="rw", hw="ro"),
    "control"                 : Register(address=0x2f0, width=14, sw="wo", hw="ro"),
+   "data"                    : Register(address=0x300                            ),
    "status"                  : Register(address=0x2f8, width=16, sw="ro", hw="wo")
 }
   

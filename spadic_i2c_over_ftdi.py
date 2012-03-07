@@ -6,10 +6,12 @@ import ftdi
 
 from spadic_rf import spadic_rf
 
+def int2bitstring(x):
+    return bin(x)[2:]
 
-def int2bytes(x, n=4):
+def int2bytelist(x, n=4):
     return [(x % (0x100 ** (i+1))) / (0x100 ** i) for i in range(n)]
-    # int2bytes(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
+    # int2bytelist(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
 
 
 class SpadicI2cRf:
@@ -45,7 +47,7 @@ class SpadicI2cRf:
         return map(ord, buf)
 
     def write_register(self, address, data, iom_wr=0x01, iom_addr=0x20):
-        iom_payload = int2bytes(address, 3) + int2bytes(data, 8)
+        iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
         iom_len  = len(iom_payload) # == 11
         iom_header = [iom_wr, iom_addr, iom_len]
         self._write_data(iom_header + iom_payload)
@@ -53,6 +55,18 @@ class SpadicI2cRf:
     def read_register(self, address):
         self._write_data(address)
         return self._read_data(8)
+
+    def write_shiftregister(self, data, sr_length=123):
+        mode = '10'
+        chain = '0'
+        ctrl_bits = int2bitstring(sr_length)+chain+mode
+        ctrl_data = int(ctrl_bits, 2)
+        self.write_register(spadic_rf['control'].address, ctrl_data)
+
+        for i in range(sr_length/16):
+            chunk = data[-16:]
+            data = data[:-16]
+            self.write_register(spadic_rf['data'].address, chunk)
 
 
 if __name__=='__main__':
