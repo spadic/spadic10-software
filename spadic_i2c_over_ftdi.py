@@ -56,6 +56,12 @@ class SpadicI2cRf:
 
 
 if __name__=='__main__':
+    if len(sys.argv < 3):
+        sys.exit('usage: %s <reg_addr> <value>' % sys.argv[0])
+
+    address = int(sys.argv[1], 16)
+    value = int(sys.argv[2], 16)
+
     s = SpadicI2cRf()
 
     if s.ftdic is None:
@@ -64,7 +70,9 @@ if __name__=='__main__':
     print 'connected!'
 
     # try to switch some LEDs on
-    s.write_register(spadic_rf['overrides'].address, 0xff)
+    #s.write_register(spadic_rf['overrides'].address, 0xff)
+
+    s.write_register(address, value)
 
     del s # _should_ be called automatically
     print 'disconnected!'
