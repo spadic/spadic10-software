@@ -31,10 +31,12 @@ class SpadicI2cRf:
             self.ftdic = context
 
     def _write_data(self, byte_list):
+        print map(hex, byte_list)
         bytes_left = byte_list
         while bytes_left:
             num_bytes_written = ftdi.ftdi_write_data(self.ftdic,
                                 ''.join(map(chr, bytes_left)), len(bytes_left))
+            print num_bytes_written
             bytes_left = bytes_left[num_bytes_written:]
 
     def _read_data(self, num_bytes):
@@ -56,25 +58,26 @@ class SpadicI2cRf:
         self._write_data(address)
         return self._read_data(8)
 
-    def write_shiftregister(self, data, sr_length=123):
-        mode = '10'
+    def write_shiftregister(self, bits): # len(bits) should be 584
+        mode = '10' # write
         chain = '0'
-        ctrl_bits = int2bitstring(sr_length)+chain+mode
+        length = len(bits)
+        ctrl_bits = int2bitstring(length)+chain+mode
         ctrl_data = int(ctrl_bits, 2)
         self.write_register(spadic_rf['control'].address, ctrl_data)
 
-        for i in range(sr_length/16):
-            chunk = data[-16:]
-            data = data[:-16]
+        for i in range(length/16):
+            chunk = int(bits[-16:], 2)
+            bits = bits[:-16]
             self.write_register(spadic_rf['data'].address, chunk)
 
 
 if __name__=='__main__':
-    if len(sys.argv < 3):
-        sys.exit('usage: %s <reg_addr> <value>' % sys.argv[0])
+    #if len(sys.argv < 3):
+    #    sys.exit('usage: %s <reg_addr> <value>' % sys.argv[0])
 
-    address = int(sys.argv[1], 16)
-    value = int(sys.argv[2], 16)
+    #address = int(sys.argv[1], 16)
+    #value = int(sys.argv[2], 16)
 
     s = SpadicI2cRf()
 
@@ -85,8 +88,9 @@ if __name__=='__main__':
 
     # try to switch some LEDs on
     #s.write_register(spadic_rf['overrides'].address, 0xff)
+    #s.write_register(address, value)
 
-    s.write_register(address, value)
+    s.write_shiftregister('1'*584)
 
     del s # _should_ be called automatically
     print 'disconnected!'
