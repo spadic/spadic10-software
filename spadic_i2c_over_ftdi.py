@@ -4,14 +4,13 @@ import sys
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
-from spadic_rf import spadic_rf
-from spadic_sr import SR_LENGTH, SpadicShiftRegister
+from spadic_registers import RF_MAP, SR_MAP, SR_LENGTH
 
 
 #--------------------------------------------------------------------
 # dictionary of known ftdi error codes
 #--------------------------------------------------------------------
-ftdi_error_code = {
+FTDI_ERROR_CODE = {
   -110: 'timeout',
   -666: 'device unavailable'
 }
@@ -33,7 +32,7 @@ def int2bytelist(x, n=4):
 
 
 #--------------------------------------------------------------------
-# FTDI -> IO Manager -> I2C -> SPADIC Register File communication
+# FTDI -> IO Manager -> I2C -> SPADIC Register File access
 #--------------------------------------------------------------------
 
 class SpadicI2cRf:
@@ -63,8 +62,8 @@ class SpadicI2cRf:
                     ''.join(map(chr, bytes_left)), len(bytes_left))
             if n < 0:
                 raise IOError('USB write error (error code %i: %s)'
-                              % (n, ftdi_error_code[n]
-                                    if n in ftdi_error_code else 'unknown'))
+                              % (n, FTDI_ERROR_CODE[n]
+                                    if n in FTDI_ERROR_CODE else 'unknown'))
             bytes_left = bytes_left[n:]
 
     def _read(self, num_bytes):
@@ -101,14 +100,27 @@ class SpadicI2cRf:
         mode = '10' # write mode
         ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
         ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
-        self.write_register(spadic_rf['control'].address, ctrl_data)
+        self.write_register(RF_MAP['control'], ctrl_data)
 
         # divide bit string into 16 bit chunks
         while bits: # should iterate int(SR_LENGTH/16) times
             chunk = int(bits[-16:], 2) # take the last 16 bits
             bits = bits[:-16]          # remove the last 16 bits
-            self.write_register(spadic_rf['data'].address, chunk)
+            self.write_register(RF_MAP['data'], chunk)
 
+
+#--------------------------------------------------------------------
+# FTDI -> IO Manager -> I2C -> SPADIC Register File -> Shift Register
+#--------------------------------------------------------------------
+
+class SpadicShiftRegister:
+    def __init__(self):
+        self.bits = '0'*SR_LENGTH
+
+
+#--------------------------------------------------------------------
+# MAIN
+#--------------------------------------------------------------------
 
 if __name__=='__main__':
     #if len(sys.argv < 3):
