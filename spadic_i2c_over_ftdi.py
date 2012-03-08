@@ -10,7 +10,7 @@ def int2bitstring(x):
     return bin(x)[2:]
 
 def int2bytelist(x, n=4):
-    return [(x % (0x100 ** (i+1))) / (0x100 ** i) for i in range(n)]
+    return [(x >> (8*i)) % 0x100 for i in range(n)]
     # int2bytelist(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
 
 
