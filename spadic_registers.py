@@ -71,6 +71,7 @@ RF_MAP = {
 SR_LENGTH = 584
 
 SR_MAP = {
+#  name : [MSB, ..., LSB]
   'dac1': [4, 2, 5, 6]
 }
 
