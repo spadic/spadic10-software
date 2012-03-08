@@ -6,6 +6,20 @@ import ftdi
 
 from spadic_rf import spadic_rf
 
+
+#--------------------------------------------------------------------
+# dictionary of known ftdi error codes
+#--------------------------------------------------------------------
+ftdi_error_code = {
+  -110: 'timeout',
+  -666: 'device unavailable'
+}
+
+
+#--------------------------------------------------------------------
+# convert data between various representations
+#--------------------------------------------------------------------
+
 def int2bitstring(x):
     return bin(x)[2:]
 
@@ -14,32 +28,42 @@ def int2bytelist(x, n=4):
     # int2bytelist(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
 
 
+#--------------------------------------------------------------------
+# FTDI -> IO Manager -> I2C -> SPADIC Register File communication
+#--------------------------------------------------------------------
+
 class SpadicI2cRf:
-    def __init__(self):
-        self._connect()
-
-    def __del__(self):
-        ftdi.ftdi_usb_close(self.ftdic)
-
-    def _connect(self, VID=0x0403, PID=0x6010):
+    #----------------------------------------------------------------
+    # open/close USB connection with constructor/destructor methods
+    #----------------------------------------------------------------
+    def __init__(self, VID=0x0403, PID=0x6010):
         context = ftdi.ftdi_context()
         ftdi.ftdi_init(context)
         if not (ftdi.ftdi_usb_open(context, VID, PID) == 0):
             self.ftdic = None
-        else:
-            ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
-            self.ftdic = context
+            raise IOError('could not open USB connection!')
+        ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
+        self.ftdic = context
 
-    def _write_data(self, byte_list):
-        print map(hex, byte_list)
+    def __del__(self):
+        if self.ftdic is not None:
+            ftdi.ftdi_usb_close(self.ftdic)
+
+    #----------------------------------------------------------------
+    # low-level communication
+    #----------------------------------------------------------------
+    def _write(self, byte_list):
         bytes_left = byte_list
         while bytes_left:
-            num_bytes_written = ftdi.ftdi_write_data(self.ftdic,
-                                ''.join(map(chr, bytes_left)), len(bytes_left))
-            print num_bytes_written
-            bytes_left = bytes_left[num_bytes_written:]
+            n = ftdi.ftdi_write_data(self.ftdic,
+                    ''.join(map(chr, bytes_left)), len(bytes_left))
+            if n < 0:
+                raise IOError('USB write error (error code %i: %s)'
+                              % (n, ftdi_error_code[n]
+                                    if n in ftdi_error_code else 'unknown'))
+            bytes_left = bytes_left[n:]
 
-    def _read_data(self, num_bytes):
+    def _read(self, num_bytes):
         buf = chr(0)*num_bytes
         bytes_read = []
         while buf:
@@ -48,27 +72,37 @@ class SpadicI2cRf:
             buf = buf[num_bytes_read:]
         return map(ord, buf)
 
+    #----------------------------------------------------------------
+    # register file communication
+    #----------------------------------------------------------------
     def write_register(self, address, data, iom_wr=0x01, iom_addr=0x20):
         iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
         iom_len  = len(iom_payload) # == 11
         iom_header = [iom_wr, iom_addr, iom_len]
-        self._write_data(iom_header + iom_payload)
+        self._write(iom_header + iom_payload)
 
     def read_register(self, address):
-        self._write_data(address)
-        return self._read_data(8)
+        self._write(address)
+        return self._read(8)
 
-    def write_shiftregister(self, bits): # len(bits) should be 584
-        mode = '10' # write
+    #----------------------------------------------------------------
+    # write bits (given as string) to shift register
+    #----------------------------------------------------------------
+    def write_shiftregister(self, bits, SR_LENGTH=584):
+        if len(bits) != SR_LENGTH:
+            raise ValueError('number of bits must be %i!' % SR_LENGTH)
+        if not all(b in '01' for b in bits):
+            raise ValueError('bit string must contain only 0 and 1!')
         chain = '0'
-        length = len(bits)
-        ctrl_bits = int2bitstring(length)+chain+mode
-        ctrl_data = int(ctrl_bits, 2)
+        mode = '10' # write mode
+        ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
+        ctrl_data = int(ctrl_bits, 2) # should be 0x1242
         self.write_register(spadic_rf['control'].address, ctrl_data)
 
-        for i in range(length/16):
-            chunk = int(bits[-16:], 2)
-            bits = bits[:-16]
+        # divide bit string into 16 bit chunks
+        while bits: # should iterate int(SR_LENGTH/16) times
+            chunk = int(bits[-16:], 2) # take the last 16 bits
+            bits = bits[:-16]          # remove the last 16 bits
             self.write_register(spadic_rf['data'].address, chunk)
 
 
@@ -81,18 +115,10 @@ if __name__=='__main__':
 
     s = SpadicI2cRf()
 
-    if s.ftdic is None:
-        sys.exit('could not open USB connection!')
-
-    print 'opened USB connection.'
-
     # try to switch some LEDs on
     #s.write_register(spadic_rf['overrides'].address, 0xff)
     #s.write_register(address, value)
 
     s.write_shiftregister('1'*584)
 
-    if s.ftdic is not None:
-        del s
-        print 'closed USB connection.'
 
