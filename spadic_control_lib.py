@@ -1,6 +1,3 @@
-#!/usr/bin/python
-
-import sys
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
@@ -132,25 +129,4 @@ class SpadicShiftRegister:
 
     def get_value(self, name):
         return int(''.join([self.bits[p] for p in SR_MAP[name]]), 2)
-
-
-#--------------------------------------------------------------------
-# MAIN
-#--------------------------------------------------------------------
-
-if __name__=='__main__':
-    #if len(sys.argv < 3):
-    #    sys.exit('usage: %s <reg_addr> <value>' % sys.argv[0])
-
-    #address = int(sys.argv[1], 16)
-    #value = int(sys.argv[2], 16)
-
-    s = SpadicI2cRf()
-
-    # try to switch some LEDs on
-    #s.write_register(spadic_rf['overrides'].address, 0xff)
-    #s.write_register(address, value)
-
-    s.write_shiftregister('1'*584)
-
 
