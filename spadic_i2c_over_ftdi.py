@@ -5,6 +5,7 @@ import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
 from spadic_rf import spadic_rf
+from spadic_sr import SR_LENGTH, SpadicShiftRegister
 
 
 #--------------------------------------------------------------------
@@ -22,10 +23,13 @@ ftdi_error_code = {
 
 def int2bitstring(x):
     return bin(x)[2:]
+    # reverse: b = int2bitstring(x)
+    #      --> x = int(b, 2)
 
 def int2bytelist(x, n=4):
     return [(x >> (8*i)) % 0x100 for i in range(n)]
-    # int2bytelist(x, 3) == [a0, a1, a2] --> x == a0 + a1*256 + a2*256**2
+    # reverse: b = int2bytelist(x, n)
+    #      --> x = sum(bi << (8*i) for (i, bi) in enumerate(b)
 
 
 #--------------------------------------------------------------------
@@ -88,7 +92,7 @@ class SpadicI2cRf:
     #----------------------------------------------------------------
     # write bits (given as string) to shift register
     #----------------------------------------------------------------
-    def write_shiftregister(self, bits, SR_LENGTH=584):
+    def write_shiftregister(self, bits):
         if len(bits) != SR_LENGTH:
             raise ValueError('number of bits must be %i!' % SR_LENGTH)
         if not all(b in '01' for b in bits):
@@ -96,7 +100,7 @@ class SpadicI2cRf:
         chain = '0'
         mode = '10' # write mode
         ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
-        ctrl_data = int(ctrl_bits, 2) # should be 0x1242
+        ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
         self.write_register(spadic_rf['control'].address, ctrl_data)
 
         # divide bit string into 16 bit chunks
