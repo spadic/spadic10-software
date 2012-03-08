@@ -82,9 +82,9 @@ if __name__=='__main__':
     s = SpadicI2cRf()
 
     if s.ftdic is None:
-        sys.exit('could not connect to device!')
+        sys.exit('could not open USB connection!')
 
-    print 'connected!'
+    print 'opened USB connection.'
 
     # try to switch some LEDs on
     #s.write_register(spadic_rf['overrides'].address, 0xff)
@@ -92,6 +92,7 @@ if __name__=='__main__':
 
     s.write_shiftregister('1'*584)
 
-    del s # _should_ be called automatically
-    print 'disconnected!'
+    if s.ftdic is not None:
+        del s
+        print 'closed USB connection.'
 
