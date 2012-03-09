@@ -70,7 +70,7 @@ class SpadicI2cRf:
             num_bytes_read = ftdi.ftdi_read_data(self.ftdic, buf, len(buf))
             bytes_read += map(ord, buf[:num_bytes_read])
             buf = buf[num_bytes_read:]
-        return map(ord, buf)
+        return bytes_read
 
     #----------------------------------------------------------------
     # register file communication
