@@ -18,7 +18,7 @@ FTDI_ERROR_CODE = {
 #--------------------------------------------------------------------
 
 def int2bitstring(x):
-    return bin(x)[2:]
+    return bin(x)[2:] # remove '0b' at the beginning of the resulting string
     # reverse: b = int2bitstring(x)
     #      --> x = int(b, 2)
 
@@ -75,10 +75,10 @@ class SpadicI2cRf:
     #----------------------------------------------------------------
     # register file communication
     #----------------------------------------------------------------
-    def write_register(self, address, data, iom_wr=0x01, iom_addr=0x20):
+    def write_register(self, address, data, IOM_WR=0x01, IOM_ADDR=0x20):
         iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
         iom_len  = len(iom_payload) # == 11
-        iom_header = [iom_wr, iom_addr, iom_len]
+        iom_header = [IOM_WR, IOM_ADDR, iom_len]
         self._write(iom_header + iom_payload)
 
     def read_register(self, address):
@@ -93,7 +93,7 @@ class SpadicI2cRf:
             raise ValueError('number of bits must be %i!' % SR_LENGTH)
         if not all(b in '01' for b in bits):
             raise ValueError('bit string must contain only 0 and 1!')
-        chain = '0'
+        chain = '0' # ?
         mode = '10' # write mode
         ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
         ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
@@ -118,11 +118,12 @@ class SpadicShiftRegister:
 
     def __str__(self):
         return ''.join(self.bits)
+        # use this as argument for SpadicI2cRf.write_shiftregister
 
     def set_value(self, name, value):
         pos = SR_MAP[name]
         n = len(pos)
-        # make string of length n, pad if shorter, cut if longer
+        # make string of length n: pad if shorter, cut if longer
         bitstring = int2bitstring(value).rjust(n, '0')[-n:]
         for (i, b) in enumerate(bitstring):
             self.bits[pos[i]] = b
