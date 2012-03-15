@@ -9,9 +9,10 @@ from spadic_registers import RF_MAP, SR_MAP, SR_LENGTH
 #====================================================================
 
 #--------------------------------------------------------------------
-# dictionary of known ftdi error codes
+# dictionary of known USB error codes
 #--------------------------------------------------------------------
-FTDI_ERROR_CODE = {
+USB_ERROR_CODE = {
+   -16: 'device busy',
   -110: 'timeout',
   -666: 'device unavailable'
 }
@@ -74,8 +75,8 @@ class FtdiIom:
                     ''.join(map(chr, bytes_left)), len(bytes_left))
             if n < 0:
                 raise IOError('USB write error (error code %i: %s)'
-                              % (n, FTDI_ERROR_CODE[n]
-                                    if n in FTDI_ERROR_CODE else 'unknown'))
+                              % (n, USB_ERROR_CODE[n]
+                                    if n in USB_ERROR_CODE else 'unknown'))
             bytes_left = bytes_left[n:]
 
     def _ftdi_read(self, num_bytes):
@@ -100,7 +101,18 @@ class FtdiIom:
         if not package_mode:
             self._ftdi_write([IOM_RD, self.iom_addr, num_bytes])
         # read [iom_addr, num_data, data]
-        return self._ftdi_read(2+num_bytes)
+        iom_data = self._ftdi_read(2+num_bytes)
+        iom_addr = iom_data[0]
+        iom_num_bytes = iom_data[1]
+        iom_payload = iom_data[2:]
+        if not (iom_addr == self.iom_addr):
+            raise ValueError('wrong IO Manager address!')
+        if not (iom_num_bytes == len(iom_payload)):
+            raise ValueError('wrong number of bytes indicated!')
+        if not (iom_num_bytes == num_bytes):
+            raise ValueError('wrong number of bytes read!')
+        # if all tests are passed, len(iom_payload) == num_bytes
+        return iom_payload
 
 
 #====================================================================
@@ -195,3 +207,14 @@ class SpadicTestDataOut(FtdiIom):
     def __init__(self, iom_addr=0xff):
         FtdiIom.__init__(self, iom_addr)
 
+    #----------------------------------------------------------------
+    # read data
+    #----------------------------------------------------------------
+    def read_data(self, num_bytes, block_size=64):
+        num_bytes_left = num_bytes
+        while (num_bytes_left > 0): # negative numbers are treated as True
+            bytes_read = self._iom_read(block_size)
+            for byte in bytes_read:
+                yield byte
+            num_bytes_left -= block_size
+            
