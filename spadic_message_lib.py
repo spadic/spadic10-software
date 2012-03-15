@@ -89,55 +89,60 @@ hittype_str = {
   hittype['eIAE']: 'int+ext hit'
 }
 
-#--------------------------------------------------------------------
-# selection mask
-#--------------------------------------------------------------------
-mask = '11111111111111111111111111111111'
-#mask = '11110001111111111111111111111111'
 
 
 #====================================================================
-# message parser
+# message parsing
 #====================================================================
 
 #--------------------------------------------------------------------
 # make 2-byte message words out of byte sequence
 #--------------------------------------------------------------------
-def message_words(byte_sequence): # must support next() method
+def message_words(byte_sequence): # must support next() method (iterator)
+    # initialize 5-byte buffer
     buf = [int2bitstring(0, 8) for i in range(5)]
+
+    # search for wSOM, wTSW and wRDA in successive 2-byte words:
+    # [wSOM, ...] [wTSW, ...] [wRDA, ...
+    #  0     1     2     3     4
     sync = False
     while not sync:
+        # shift next byte into the buffer
         buf = buf[1:]
         buf.append(int2bitstring(byte_sequence.next(), 8))
+        # test for pattern
         sync = (buf[0].startswith(preamble['wSOM']) and
                 buf[2].startswith(preamble['wTSW']) and
                 buf[4].startswith(preamble['wRDA']))
+
+    # once in sync, yield the first two bytes in the buffer
     for byte in byte_sequence:
+        buf.append(int2bitstring(byte, 8))
         if (len(buf) > 1):
             yield buf[0]+buf[1]
             buf = buf[2:]
-        buf.append(int2bitstring(byte, 8))
-        
 
 
 #--------------------------------------------------------------------
-# split switch output data into info words and messages
+# split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
-def split_switch_output_data(switch_output_data):
+def messages(message_words):
     message = []
-
-    for (i, word) in switchOutputData:
+    for word in message_words:
+        # start new message at start of message marker
         if word.startswith(preamble['wSOM']):
-            message = [(i, word)]
-
-        elif any(word.startswith(preamble[p])
-                 for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
-            message.append((i, word))
-            yield message
             message = []
 
-        else:
-            message.append((i, word))
+        # build up message
+        message.append(word)
+
+        # yield message at all possible end of message markers
+        if any(word.startswith(preamble[p])
+               for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
+            yield message
+            # start a new message in case the next one is an info message and
+            # does not start with wSOM for this reason
+            message = []
 
 
 #-------------------------------------------------------------------------------
