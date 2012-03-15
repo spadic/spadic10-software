@@ -2,6 +2,7 @@ import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
 from spadic_registers import RF_MAP, SR_MAP, SR_LENGTH
+from bit_byte_helper import *
 
 
 #====================================================================
@@ -22,25 +23,6 @@ USB_ERROR_CODE = {
 #--------------------------------------------------------------------
 IOM_WR = 0x01 # write
 IOM_RD = 0x02 # read
-
-
-#====================================================================
-# helper functions
-#====================================================================
-
-#--------------------------------------------------------------------
-# convert data between various representations
-#--------------------------------------------------------------------
-
-def int2bitstring(x):
-    return bin(x)[2:] # remove '0b' at the beginning of the resulting string
-    # reverse: b = int2bitstring(x)
-    #      --> x = int(b, 2)
-
-def int2bytelist(x, n=4):
-    return [(x >> (8*i)) % 0x100 for i in range(n)]
-    # reverse: b = int2bytelist(x, n)
-    #      --> x = sum(bi << (8*i) for (i, bi) in enumerate(b)
 
 
 #====================================================================
@@ -191,9 +173,7 @@ class SpadicShiftRegister:
     def set_value(self, name, value):
         pos = SR_MAP[name]
         n = len(pos)
-        # make string of length n: pad if shorter, cut if longer
-        bitstring = int2bitstring(value).rjust(n, '0')[-n:]
-        for (i, b) in enumerate(bitstring):
+        for (i, b) in enumerate(int2bitstring(value, n)):
             self.bits[pos[i]] = b
 
     def get_value(self, name):
