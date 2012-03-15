@@ -1,3 +1,6 @@
+from bit_byte_helper import *
+
+
 #====================================================================
 # SPADIC message definitions
 #====================================================================
@@ -97,18 +100,29 @@ mask = '11111111111111111111111111111111'
 # message parser
 #====================================================================
 
-#-------------------------------------------------------------------------------
-# read data words from simulation output file
-#-------------------------------------------------------------------------------
-def readSimOutputFile(filename):
-    with open(filename) as f:
-        for (i, line) in enumerate(f):
-            yield (i, line.rstrip())
+#--------------------------------------------------------------------
+# make 2-byte message words out of byte sequence
+#--------------------------------------------------------------------
+def message_words(byte_sequence): # must support next() method
+    buf = [int2bitstring(0, 8) for i in range(5)]
+    sync = False
+    while not sync:
+        buf = buf[1:]
+        buf.append(int2bitstring(byte_sequence.next(), 8))
+        sync = (buf[0].startswith(preamble['wSOM']) and
+                buf[2].startswith(preamble['wTSW']) and
+                buf[4].startswith(preamble['wRDA']))
+    for byte in byte_sequence:
+        if (len(buf) > 1):
+            yield buf[0]+buf[1]
+            buf = buf[2:]
+        buf.append(int2bitstring(byte, 8))
+        
 
 
-#-------------------------------------------------------------------------------
+#--------------------------------------------------------------------
 # split switch output data into info words and messages
-#-------------------------------------------------------------------------------
+#--------------------------------------------------------------------
 def split_switch_output_data(switch_output_data):
     message = []
 
@@ -213,56 +227,57 @@ def getInfo(message):
 #-------------------------------------------------------------------------------
 # MAIN
 #-------------------------------------------------------------------------------
-recordedData = []
-
-verbose = False
-if len(sys.argv) > 1:
-    verbose = (sys.argv[1] == '-v')
-
-#-------------------------------------------------------------------------------
-# get all messages and infos
-#-------------------------------------------------------------------------------
-switchOutputData = readSimOutputFile('switchOutputData_raw.txt')
-messages = list(splitSwitchOutputData(switchOutputData))
-
-num_messages = len(messages)
-size_messages = sum(len(message) for message in messages) * 2 # bytes
-
-print 'found %i messages' % num_messages
-print '    total size: %i bytes' % size_messages
-print '    average: %.2f bytes' % (float(size_messages)/num_messages)
-
-#-------------------------------------------------------------------------------
-# analyze each message
-#-------------------------------------------------------------------------------
-for (i, message) in enumerate(messages):
-    print '\n----------------------------------------------------------------------'
-    print '%4i of %i' % (i+1, num_messages)
-    print '----------------------------------------------------------------------'
-
-    if verbose:
-        print '\n'.join('%5i: %s' % (i, word) for (i, word) in message) + '\n'
-
-    for (group, channel) in getGroupIdChannelId(message):
-        print 'group: %i\nchannel: %i' % (group, channel)
-
-    timestamps = getTimestamps(message)
-    if len(timestamps) > 0:
-        print 'timestamp(s):', ' '.join(str(timestamp)
-                                        for timestamp in timestamps)
-
-    data_parts = getRawData(message)
-    if len(data_parts):
-        print 'data:', '\n      '.join(str(data) for data in data_parts)
-
-    for (end_reason, hit_type, num_data) in getEndOfMessage(message):
-        print 'end of message:'
-        print '    reason: %s' % end_reason
-        print '    hit type: %s' % hit_type
-        print '    number of data values: %i' % num_data
-
-    for (info, channel) in getInfo(message):
-        print 'info:', info
-        print 'channel:', channel
+if __name__=='__main__':
+    recordedData = []
+    
+    verbose = False
+    if len(sys.argv) > 1:
+        verbose = (sys.argv[1] == '-v')
+    
+    #-------------------------------------------------------------------------------
+    # get all messages and infos
+    #-------------------------------------------------------------------------------
+    switchOutputData = readSimOutputFile('switchOutputData_raw.txt')
+    messages = list(splitSwitchOutputData(switchOutputData))
+    
+    num_messages = len(messages)
+    size_messages = sum(len(message) for message in messages) * 2 # bytes
+    
+    print 'found %i messages' % num_messages
+    print '    total size: %i bytes' % size_messages
+    print '    average: %.2f bytes' % (float(size_messages)/num_messages)
+    
+    #-------------------------------------------------------------------------------
+    # analyze each message
+    #-------------------------------------------------------------------------------
+    for (i, message) in enumerate(messages):
+        print '\n----------------------------------------------------------------------'
+        print '%4i of %i' % (i+1, num_messages)
+        print '----------------------------------------------------------------------'
+    
+        if verbose:
+            print '\n'.join('%5i: %s' % (i, word) for (i, word) in message) + '\n'
+    
+        for (group, channel) in getGroupIdChannelId(message):
+            print 'group: %i\nchannel: %i' % (group, channel)
+    
+        timestamps = getTimestamps(message)
+        if len(timestamps) > 0:
+            print 'timestamp(s):', ' '.join(str(timestamp)
+                                            for timestamp in timestamps)
+    
+        data_parts = getRawData(message)
+        if len(data_parts):
+            print 'data:', '\n      '.join(str(data) for data in data_parts)
+    
+        for (end_reason, hit_type, num_data) in getEndOfMessage(message):
+            print 'end of message:'
+            print '    reason: %s' % end_reason
+            print '    hit type: %s' % hit_type
+            print '    number of data values: %i' % num_data
+    
+        for (info, channel) in getInfo(message):
+            print 'info:', info
+            print 'channel:', channel
 
 
