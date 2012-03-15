@@ -83,9 +83,13 @@ class FtdiIom:
         buf = chr(0)*num_bytes
         bytes_read = []
         while buf:
-            num_bytes_read = ftdi.ftdi_read_data(self.ftdic, buf, len(buf))
-            bytes_read += map(ord, buf[:num_bytes_read])
-            buf = buf[num_bytes_read:]
+            n = ftdi.ftdi_read_data(self.ftdic, buf, len(buf))
+            if n < 0:
+                raise IOError('USB read error (error code %i: %s)'
+                              % (n, USB_ERROR_CODE[n]
+                                    if n in USB_ERROR_CODE else 'unknown'))
+            bytes_read += map(ord, buf[:n])
+            buf = buf[n:]
         return bytes_read
 
     #----------------------------------------------------------------
@@ -213,7 +217,7 @@ class SpadicTestDataOut(FtdiIom):
     def read_data(self, num_bytes, block_size=64):
         num_bytes_left = num_bytes
         while (num_bytes_left > 0): # negative numbers are treated as True
-            bytes_read = self._iom_read(block_size)
+            bytes_read = self._iom_read(min(num_bytes_left, block_size))
             for byte in bytes_read:
                 yield byte
             num_bytes_left -= block_size
