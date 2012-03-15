@@ -4,6 +4,10 @@ import ftdi
 from spadic_registers import RF_MAP, SR_MAP, SR_LENGTH
 
 
+#====================================================================
+# constants
+#====================================================================
+
 #--------------------------------------------------------------------
 # dictionary of known ftdi error codes
 #--------------------------------------------------------------------
@@ -12,6 +16,16 @@ FTDI_ERROR_CODE = {
   -666: 'device unavailable'
 }
 
+#--------------------------------------------------------------------
+# IO Manager commands
+#--------------------------------------------------------------------
+IOM_WR = 0x01 # write
+IOM_RD = 0x02 # read
+
+
+#====================================================================
+# helper functions
+#====================================================================
 
 #--------------------------------------------------------------------
 # convert data between various representations
@@ -28,15 +42,15 @@ def int2bytelist(x, n=4):
     #      --> x = sum(bi << (8*i) for (i, bi) in enumerate(b)
 
 
-#--------------------------------------------------------------------
-# FTDI -> IO Manager -> I2C -> SPADIC Register File access
-#--------------------------------------------------------------------
+#====================================================================
+# FTDI -> IO Manager communication base class
+#====================================================================
 
-class SpadicI2cRf:
+class FtdiIom:
     #----------------------------------------------------------------
     # open/close USB connection with constructor/destructor methods
     #----------------------------------------------------------------
-    def __init__(self, VID=0x0403, PID=0x6010):
+    def __init__(self, iom_addr, VID=0x0403, PID=0x6010):
         context = ftdi.ftdi_context()
         ftdi.ftdi_init(context)
         if not (ftdi.ftdi_usb_open(context, VID, PID) == 0):
@@ -44,15 +58,16 @@ class SpadicI2cRf:
             raise IOError('could not open USB connection!')
         ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
+        self.iom_addr = iom_addr
 
     def __del__(self):
         if self.ftdic is not None:
             ftdi.ftdi_usb_close(self.ftdic)
 
     #----------------------------------------------------------------
-    # low-level communication
+    # FTDI communication
     #----------------------------------------------------------------
-    def _write(self, byte_list):
+    def _ftdi_write(self, byte_list):
         bytes_left = byte_list
         while bytes_left:
             n = ftdi.ftdi_write_data(self.ftdic,
@@ -63,7 +78,7 @@ class SpadicI2cRf:
                                     if n in FTDI_ERROR_CODE else 'unknown'))
             bytes_left = bytes_left[n:]
 
-    def _read(self, num_bytes):
+    def _ftdi_read(self, num_bytes):
         buf = chr(0)*num_bytes
         bytes_read = []
         while buf:
@@ -73,17 +88,54 @@ class SpadicI2cRf:
         return bytes_read
 
     #----------------------------------------------------------------
-    # register file communication
+    # IO Manager communication
     #----------------------------------------------------------------
-    def write_register(self, address, data, IOM_WR=0x01, IOM_ADDR=0x20):
+    def _iom_write(self, iom_payload):
+        iom_len = len(iom_payload)
+        iom_header = [IOM_WR, self.iom_addr, iom_len]
+        self._ftdi_write(iom_header + iom_payload)
+
+    def _iom_read(self, num_bytes, package_mode=False):
+        # send read command if not in package mode
+        if not package_mode:
+            self._ftdi_write([IOM_RD, self.iom_addr, num_bytes])
+        # read [iom_addr, num_data, data]
+        return self._ftdi_read(2+num_bytes)
+
+
+#====================================================================
+# FTDI -> IO Manager -> I2C -> SPADIC Register File access
+#====================================================================
+
+
+#--------------------------------------------------------------------
+# SPADIC Shift Register communication class (derived from FtdiIom)
+#--------------------------------------------------------------------
+
+class SpadicI2cRf(FtdiIom):
+    #----------------------------------------------------------------
+    # set IO Manager address in constructor
+    #----------------------------------------------------------------
+    def __init__(self, iom_addr=0x20):
+        FtdiIom.__init__(self, iom_addr)
+
+    #----------------------------------------------------------------
+    # register file access
+    #----------------------------------------------------------------
+    def write_register(self, address, data):
         iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
-        iom_len  = len(iom_payload) # == 11
-        iom_header = [IOM_WR, IOM_ADDR, iom_len]
-        self._write(iom_header + iom_payload)
+        self._iom_write(iom_payload)
 
     def read_register(self, address):
-        self._write(address)
-        return self._read(8)
+        i2c_read_implemented = False # TODO fix i2c read
+        if not i2c_read_implemented:
+            print 'implement i2c read operation first!'
+            return
+        # write register address
+        iom_payload = int2bytelist(address, 3)
+        self._iom_write(iom_payload)
+        # read register value (always 64 bits)
+        return self._iom_read(8)
 
     #----------------------------------------------------------------
     # write bits (given as string) to shift register
@@ -130,4 +182,16 @@ class SpadicShiftRegister:
 
     def get_value(self, name):
         return int(''.join([self.bits[p] for p in SR_MAP[name]]), 2)
+
+
+#====================================================================
+# FTDI -> IO Manager -> SPADIC Test Data Output access
+#====================================================================
+
+class SpadicTestDataOut(FtdiIom):
+    #----------------------------------------------------------------
+    # set IO Manager address in constructor
+    #----------------------------------------------------------------
+    def __init__(self, iom_addr=0xff):
+        FtdiIom.__init__(self, iom_addr)
 
