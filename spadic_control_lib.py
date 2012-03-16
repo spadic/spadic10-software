@@ -196,7 +196,7 @@ class SpadicTestDataOut(FtdiIom):
     #----------------------------------------------------------------
     def read_data(self, num_bytes, block_size=64):
         num_bytes_left = num_bytes
-        while (num_bytes_left > 0): # negative numbers are treated as True
+        while num_bytes_left > 0: # negative numbers are treated as True
             bytes_read = self._iom_read(min(num_bytes_left, block_size))
             for byte in bytes_read:
                 yield byte
