@@ -92,13 +92,10 @@ hittype_str = {
 
 
 #====================================================================
-# message parsing
+# test data output reconstruction
 #====================================================================
 
-#--------------------------------------------------------------------
-# make 2-byte message words out of byte sequence
-#--------------------------------------------------------------------
-def message_words(byte_sequence): # must support next() method (iterator)
+def message_words(byte_sequence): # byte_sequence must be an iterator
     # initialize 5-byte buffer
     buf = [int2bitstring(0, 8) for i in range(5)]
 
@@ -118,10 +115,14 @@ def message_words(byte_sequence): # must support next() method (iterator)
     # once in sync, yield the first two bytes in the buffer
     for byte in byte_sequence:
         buf.append(int2bitstring(byte, 8))
-        if (len(buf) > 1):
+        if len(buf) > 1:
             yield buf[0]+buf[1]
             buf = buf[2:]
 
+
+#====================================================================
+# message reconstruction & interpretation
+#====================================================================
 
 #--------------------------------------------------------------------
 # split sequence of message words into messages (or info words)
@@ -129,8 +130,9 @@ def message_words(byte_sequence): # must support next() method (iterator)
 def messages(message_words):
     message = []
     for word in message_words:
-        # start new message at start of message marker
-        if word.startswith(preamble['wSOM']):
+        # start new message at start of message marker or info marker
+        if any(word.startswith(preamble[p])
+               for p in ['wSOM', 'wINF']):
             message = []
 
         # build up message
@@ -140,93 +142,104 @@ def messages(message_words):
         if any(word.startswith(preamble[p])
                for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
             yield message
-            # start a new message in case the next one is an info message and
-            # does not start with wSOM for this reason
-            message = []
 
 
-#-------------------------------------------------------------------------------
-# get start of message (group/channel IDs)
-#-------------------------------------------------------------------------------
-def getGroupIdChannelId(message):
-    start_words = [word for (i, word) in message
-                   if word.startswith(preamble['wSOM'])]
-    return [(int(word[4:12],2), int(word[12:16],2)) for word in start_words]
-    #        groupID            channelID
+#--------------------------------------------------------------------
+# Message class
+#--------------------------------------------------------------------
+class Message():
+    def __init__(self, message): # message = output of messages()
+        self.message_raw = message
 
-    
-#-------------------------------------------------------------------------------
-# get timestamps
-#-------------------------------------------------------------------------------
-def getTimestamps(message):
-    timestamp_words = [word for (i, word) in message
-                       if word.startswith(preamble['wTSW'])]
-    timestamps = [int(word[len(preamble['wTSW']):], 2)
-                  for word in timestamp_words]
-    return timestamps
+        self.group_id              = None
+        self.channel_id            = None
+        self.timestamp             = None
+        self.data                  = None
+        self.num_data              = None
+        self.hit_type              = None
+        self.stop_type             = None
+        self.buffer_overflow_count = None
+        self.epoch_count           = None
+        self.info_type             = None
 
+        #------------------------------------------------------------
+        # get start of message (group/channel IDs)
+        #------------------------------------------------------------
+        start_words = [word for word in message
+                       if word.startswith(preamble['wSOM'])]
+        if len(start_words) > 0:
+            w = start_words[0]
+            self.group_id   = int(w[4:12], 2)
+            self.channel_id = int(w[12:16], 2)
 
-#-------------------------------------------------------------------------------
-# get raw data
-#-------------------------------------------------------------------------------
-def getRawData(message):
-    RDA_positions = [j for (j, (i, word)) in enumerate(message)
-                     if word.startswith(preamble['wRDA'])]
-    rawdata_parts = []
-    for RDA_position in RDA_positions:
-        data_string = message[RDA_position][1][len(preamble['wRDA']):]
-        for (i, word) in message[RDA_position+1:]:
-            if word.startswith(preamble['wCON']):
-                data_string += word[len(preamble['wCON']):]
-            else:
-                break
-        data_values = [x-512 if x > 255 else x
-                       for x in [int(data_string[i*9:(i+1)*9], 2)
-                                 for i in range(len(data_string)/9)]]
-        rawdata_parts.append(data_values)
-    return rawdata_parts
+        #------------------------------------------------------------
+        # get timestamp
+        #------------------------------------------------------------
+        timestamp_words = [word for word in message
+                           if word.startswith(preamble['wTSW'])]
+        if len(timestamp_words) > 0:
+            w = timestamp_words[0]
+            self.timestamp = int(w[len(preamble['wTSW']):], 2)
 
+        #------------------------------------------------------------
+        # get raw data
+        #------------------------------------------------------------
+        rda_pos = [i for (i, word) in enumerate(message)
+                   if word.startswith(preamble['wRDA'])]
 
-#-------------------------------------------------------------------------------
-# get end of message (end type, hit type, data length)
-#-------------------------------------------------------------------------------
-def getEndOfMessage(message):
-    end_words = [word for (i, word) in message
-                 if any(word.startswith(preamble[p])
-                        for p in ['wEOM', 'wBOM', 'wEPM'])]
-    eoms = []
-    for end_word in end_words:
-        if end_word.startswith(preamble['wEOM']):
-            num_data = int(end_word[4:10], 2)
-            hit_type = hittype_str[end_word[10:12]]
-            end_reason = endofmessage_str[end_word[13:16]]
-            
-        elif end_word.startswith(preamble['wBOM']):
-            buffer_overflow_counter = int(end_word[8:16], 2)
-            num_data = buffer_overflow_counter
-            hit_type = 'none'
-            end_reason = 'buffer overflow counter'
-            
-        elif end_word.startswith(preamble['wEPM']):
-            epoch_counter = int(end_word[4:16], 2)
-            num_data = epoch_counter
-            hit_type = 'none'
-            end_reason = 'epoch counter'
+        if len(rda_pos) > 0:
+            p = rda_pos[0]
 
-        eoms.append((end_reason, hit_type, num_data))
-    return eoms
+            # data begins with the rest of the 'start of raw data' word
+            data_string = message[p][len(preamble['wRDA']):]
 
+            # data continues for all consecutive words with continuation marker
+            for word in message[p+1:]:
+                if word.startswith(preamble['wCON']):
+                    data_string += word[len(preamble['wCON']):]
+                else:
+                    break
 
-#-------------------------------------------------------------------------------
-# get info from info words
-#-------------------------------------------------------------------------------
-def getInfo(message):
-    info_words = [word for (i, word) in message
-                  if word.startswith(preamble['wINF'])]
-    return [(infotype_str[word[4:8]], int(word[8:12],2)) for word in info_words]
-    #        info                     channelID
+            # split data in 9 bit values and interpret as 2-s complement
+            self.data = [x-512 if x > 255 else x
+                         for x in [int(data_string[i*9:(i+1)*9], 2)
+                                   for i in range(len(data_string)/9)]]
 
+        #------------------------------------------------------------
+        # get end of message
+        #------------------------------------------------------------
+        end_words = [word for word in message
+                     if any(word.startswith(preamble[p])
+                            for p in ['wEOM', 'wBOM', 'wEPM'])]
 
+        if len(end_words) > 0:
+            w = end_words[0]
+
+            # extract information for different cases
+            if w.startswith(preamble['wEOM']):
+                self.num_data = int(w[4:10], 2)
+                self.data = self.data[:self.num_data] # discard last 0 value
+                self.hit_type = hittype_str[w[10:12]]
+                self.stop_type = endofmessage_str[w[13:16]]
+
+            elif w.startswith(preamble['wBOM']):
+                self.buffer_overflow_count = int(w[8:16], 2)
+
+            elif w.startswith(preamble['wEPM']):
+                self.epoch_count = int(w[4:16], 2)
+
+        #------------------------------------------------------------
+        # get info from info words
+        #------------------------------------------------------------
+        info_words = [word for word in message
+                      if word.startswith(preamble['wINF'])]
+        
+        if len(info_words) > 0:
+            w = info_words[0]
+            self.info_type = infotype_str[w[4:8]]
+            # channel_id only for some info types
+            if w[4:8] in [infotype[t] for t in ['iDIS', 'iNGT']]:
+                self.channel_id = int(word[8:12], 2)
 
         
 #-------------------------------------------------------------------------------
