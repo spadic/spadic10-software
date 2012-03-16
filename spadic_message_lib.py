@@ -84,7 +84,7 @@ hittype = {
 }
 hittype_str = {
   hittype['eNON']: 'no hit, error',
-  hittype['eINT']: 'internal hit ',
+  hittype['eINT']: 'internal hit',
   hittype['eEXT']: 'external hit',
   hittype['eIAE']: 'int+ext hit'
 }
