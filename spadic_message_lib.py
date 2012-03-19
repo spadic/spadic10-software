@@ -284,7 +284,8 @@ class Message():
     # return data points in a format suitable for gnuplot (x: time in ns)
     #----------------------------------------------------------------
     def data_gnuplot(self, mask='1'*32, T=40):
-        t = [i*T for (i, m) in enumerate(mask) if m=='1']
-        return'\n'.join('%5i %5i' % (x, y)
-                        for (x, y) in zip(t, self.data))
+        if self.data is not None:
+            t = [i*T for (i, m) in enumerate(mask) if m=='1']
+            return'\n'.join('%5i %5i' % (x, y)
+                            for (x, y) in zip(t, self.data))
 
