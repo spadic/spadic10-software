@@ -188,7 +188,7 @@ class SpadicTestDataOut(FtdiIom):
     #----------------------------------------------------------------
     # set IO Manager address in constructor
     #----------------------------------------------------------------
-    def __init__(self, iom_addr=0xff):
+    def __init__(self, iom_addr=0x30):
         FtdiIom.__init__(self, iom_addr)
 
     #----------------------------------------------------------------
