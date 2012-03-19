@@ -246,29 +246,45 @@ class Message():
     #----------------------------------------------------------------
     # make human-readable report of a message
     #----------------------------------------------------------------
-    def __str__(self):
-        s = '\n'.join('%3i: %s' % (i, word)
-                      for (i, word) in enumerate(self.words)) + '\n'
+    def report(self, verbose=False):
+        s = []
+        if verbose:
+            s.append('\n'.join('%3i: %s' % (i, word)
+                               for (i, word) in enumerate(self.words)))
 
         if self.group_id is not None:
-            s += 'group: %i\n' % self.group_id
+            s.append('group: %i' % self.group_id)
         if self.channel_id is not None:
-            s += 'channel: %i\n' % self.channel_id
+            s.append('channel: %i' % self.channel_id)
         if self.timestamp is not None:
-            s += 'timestamp: %i\n' % self.timestamp
+            s.append('timestamp: %i' % self.timestamp)
         if self.data is not None:
-            s += 'data (%i values): ' % self.num_data +
-                 ', '.join(str(x) for x in self.data) + '\n'
+            s.append('data (%i values): ' % self.num_data +
+                     ', '.join(str(x) for x in self.data))
         if self.hit_type is not None:
-            s += 'hit type: %s\n' % self.hit_type
+            s.append('hit type: %s' % self.hit_type)
         if self.stop_type is not None:
-            s += 'stop type: %s\n' % self.stop_type
+            s.append('stop type: %s' % self.stop_type)
         if self.buffer_overflow_count is not None:
-            s += 'buffer overflow count: %i\n' % self.buffer_overflow_count
+            s.append('buffer overflow count: %i' % self.buffer_overflow_count)
         if self.epoch_count is not None:
-            s += 'epoch count: %i\n' % self.epoch_count
+            s.append('epoch count: %i' % self.epoch_count)
         if self.info_type is not None:
-            s += 'info type: %s\n' % self.info_type
+            s.append('info type: %s' % self.info_type)
 
-        return s
+        return '\n'.join(s)
+
+    #----------------------------------------------------------------
+    # 'print'ing a message returns verbose report
+    #----------------------------------------------------------------
+    def __str__(self):
+        return self.report(verbose=True)
+
+    #----------------------------------------------------------------
+    # return data points in a format suitable for gnuplot (x: time in ns)
+    #----------------------------------------------------------------
+    def data_gnuplot(self, mask='1'*32, T=40):
+        t = [i*T for (i, m) in enumerate(mask) if m=='1']
+        return'\n'.join('%5i %5i' % (x, y)
+                        for (x, y) in zip(t, self.data))
 
