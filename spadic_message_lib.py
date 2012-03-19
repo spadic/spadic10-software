@@ -149,7 +149,7 @@ def messages(message_words):
 #--------------------------------------------------------------------
 class Message():
     def __init__(self, message): # message = output of messages()
-        self.message_raw = message
+        self.words = message     # i.e. some raw 16-bit words
 
         self.group_id              = None
         self.channel_id            = None
@@ -241,61 +241,34 @@ class Message():
             if w[4:8] in [infotype[t] for t in ['iDIS', 'iNGT']]:
                 self.channel_id = int(word[8:12], 2)
 
-        
-#-------------------------------------------------------------------------------
-# MAIN
-#-------------------------------------------------------------------------------
-if __name__=='__main__':
-    recordedData = []
-    
-    verbose = False
-    if len(sys.argv) > 1:
-        verbose = (sys.argv[1] == '-v')
-    
-    #-------------------------------------------------------------------------------
-    # get all messages and infos
-    #-------------------------------------------------------------------------------
-    switchOutputData = readSimOutputFile('switchOutputData_raw.txt')
-    messages = list(splitSwitchOutputData(switchOutputData))
-    
-    num_messages = len(messages)
-    size_messages = sum(len(message) for message in messages) * 2 # bytes
-    
-    print 'found %i messages' % num_messages
-    print '    total size: %i bytes' % size_messages
-    print '    average: %.2f bytes' % (float(size_messages)/num_messages)
-    
-    #-------------------------------------------------------------------------------
-    # analyze each message
-    #-------------------------------------------------------------------------------
-    for (i, message) in enumerate(messages):
-        print '\n----------------------------------------------------------------------'
-        print '%4i of %i' % (i+1, num_messages)
-        print '----------------------------------------------------------------------'
-    
-        if verbose:
-            print '\n'.join('%5i: %s' % (i, word) for (i, word) in message) + '\n'
-    
-        for (group, channel) in getGroupIdChannelId(message):
-            print 'group: %i\nchannel: %i' % (group, channel)
-    
-        timestamps = getTimestamps(message)
-        if len(timestamps) > 0:
-            print 'timestamp(s):', ' '.join(str(timestamp)
-                                            for timestamp in timestamps)
-    
-        data_parts = getRawData(message)
-        if len(data_parts):
-            print 'data:', '\n      '.join(str(data) for data in data_parts)
-    
-        for (end_reason, hit_type, num_data) in getEndOfMessage(message):
-            print 'end of message:'
-            print '    reason: %s' % end_reason
-            print '    hit type: %s' % hit_type
-            print '    number of data values: %i' % num_data
-    
-        for (info, channel) in getInfo(message):
-            print 'info:', info
-            print 'channel:', channel
+        # end of __init__()
 
+    #----------------------------------------------------------------
+    # make human-readable report of a message
+    #----------------------------------------------------------------
+    def __str__(self):
+        s = '\n'.join('%3i: %s' % (i, word)
+                      for (i, word) in enumerate(self.words)) + '\n'
+
+        if self.group_id is not None:
+            s += 'group: %i\n' % self.group_id
+        if self.channel_id is not None:
+            s += 'channel: %i\n' % self.channel_id
+        if self.timestamp is not None:
+            s += 'timestamp: %i\n' % self.timestamp
+        if self.data is not None:
+            s += 'data (%i values): ' % self.num_data +
+                 ', '.join(str(x) for x in self.data) + '\n'
+        if self.hit_type is not None:
+            s += 'hit type: %s\n' % self.hit_type
+        if self.stop_type is not None:
+            s += 'stop type: %s\n' % self.stop_type
+        if self.buffer_overflow_count is not None:
+            s += 'buffer overflow count: %i\n' % self.buffer_overflow_count
+        if self.epoch_count is not None:
+            s += 'epoch count: %i\n' % self.epoch_count
+        if self.info_type is not None:
+            s += 'info type: %s\n' % self.info_type
+
+        return s
 
