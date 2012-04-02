@@ -34,9 +34,9 @@ class FtdiIom:
     # open/close USB connection with constructor/destructor methods
     #----------------------------------------------------------------
     def __init__(self, iom_addr, VID=0x0403, PID=0x6010):
-        context = ftdi.ftdi_context()
-        ftdi.ftdi_init(context)
+        context = ftdi.ftdi_new()
         if not (ftdi.ftdi_usb_open(context, VID, PID) == 0):
+            ftdi.ftdi_free(context)
             self.ftdic = None
             raise IOError('could not open USB connection!')
         ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
@@ -46,10 +46,15 @@ class FtdiIom:
     def __del__(self):
         if self.ftdic is not None:
             ftdi.ftdi_usb_close(self.ftdic)
+            ftdi.ftdi_free(self.ftdic)
 
     #----------------------------------------------------------------
-    # reconnect USB
+    # reset FTDI, or reconnect entirely
     #----------------------------------------------------------------
+    def reset(self):
+        if self.ftdic is not None:
+            ftdi.ftdi_usb_reset(self.ftdic)
+
     def reconnect(self):
         self.__del__()
         self.__init__(self.iom_addr)
