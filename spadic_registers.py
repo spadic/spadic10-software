@@ -351,3 +351,27 @@ SR_MAP = {
   'enAmpN_31'       : range(583, 583+1), # 583:583   1
 }
 
+
+#--------------------------------------------------------------------
+# SPADIC Shift Register representation
+#--------------------------------------------------------------------
+
+class SpadicShiftRegister:
+    def __init__(self):
+        self.bits = ['0']*SR_LENGTH
+        # bits[0] = MSB (on the left side, shifted last)
+        # bits[-1] = LSB (on the right side, shifted first)
+
+    def __str__(self):
+        return ''.join(self.bits)
+        # use this as argument for SpadicI2cRf.write_shiftregister
+
+    def set_value(self, name, value):
+        pos = SR_MAP[name]
+        n = len(pos)
+        for (i, b) in enumerate(int2bitstring(value, n)):
+            self.bits[pos[i]] = b
+
+    def get_value(self, name):
+        return int(''.join([self.bits[p] for p in SR_MAP[name]]), 2)
+
