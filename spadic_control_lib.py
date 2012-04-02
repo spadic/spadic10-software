@@ -1,4 +1,4 @@
-from spadic_registers import RF_MAP, SR_MAP, SR_LENGTH
+from spadic_registers import *
 from bit_byte_helper import *
 
 
@@ -55,6 +55,18 @@ class Spadic(FtdiIom):
             chunk = int(bits[-16:], 2) # take the last 16 bits
             bits = bits[:-16]          # remove the last 16 bits
             self.write_register(RF_MAP['data'], chunk)
+
+    #----------------------------------------------------------------
+    # write configuration from dictionary
+    #----------------------------------------------------------------
+    def config(self, rf_dict, sr_dict):
+        for reg in rf_dict:
+            self.write_register(reg, rf_dict[reg])
+
+        sr = SpadicRegisterFile()
+        for reg in sr_dict:
+            sr.set_value(reg, sr_dict[reg])
+        self.write_shiftregister(str(sr))
 
     #----------------------------------------------------------------
     # read data from test output
