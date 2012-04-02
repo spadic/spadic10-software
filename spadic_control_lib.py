@@ -1,3 +1,4 @@
+from iom_lib import *
 from spadic_registers import *
 from bit_byte_helper import *
 
@@ -61,9 +62,9 @@ class Spadic(FtdiIom):
     #----------------------------------------------------------------
     def config(self, rf_dict, sr_dict):
         for reg in rf_dict:
-            self.write_register(reg, rf_dict[reg])
+            self.write_register(RF_MAP[reg], rf_dict[reg])
 
-        sr = SpadicRegisterFile()
+        sr = SpadicShiftRegister()
         for reg in sr_dict:
             sr.set_value(reg, sr_dict[reg])
         self.write_shiftregister(str(sr))

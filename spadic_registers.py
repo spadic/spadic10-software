@@ -1,3 +1,6 @@
+from bit_byte_helper import *
+
+
 #--------------------------------------------------------------------
 # dictionary of SPADIC 1.0 register file (contains addresses)
 #--------------------------------------------------------------------
