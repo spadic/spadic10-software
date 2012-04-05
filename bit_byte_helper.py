@@ -1,4 +1,6 @@
 def int2bitstring(x, n=None):
+    if n is not None:
+        x += 2**n # support two's complement (must specify n)
     s = bin(x)[2:] # remove '0b' at the beginning of the resulting string
     # if desired make string of length n: pad if shorter, cut if longer
     if n is not None:
