@@ -120,9 +120,13 @@ in their 9 bit representation they are:
   78: 001001110
  140: 010001100
 
-the concatenation of all bitstrings must be somewhere in the data. there are
-four possibilities for the bitstring to be aligned in 4-bit (i.e.
+the concatenation of all bitstrings must be somewhere in the data (*). there
+are four possibilities for the bitstring to be aligned in 4-bit (i.e.
 hexadecimal character) steps:
+
+    (*) I made a mistake here, forgot to first combine to 15 bit blocks and
+        prepend a 0 before each --> see "trying to find repeating pattern,
+        version 2"
 
  ---- 1 ----  ---- 2 ----  ---- 3 ----  ---- 4 ----
  0101 0010 0  0 1010 0100  01 0100 100  010 1001 00
@@ -185,5 +189,73 @@ closest similarity: version 2b
  (.. ..) .. .. .. .. .. A4 63 16 0C 85 81 C0 C8 10
  (4E 46) .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
 
-idea: invert test data out bits (16 possibilities...)
+idea: maybe some test data out bits are inverted (lvds P/N mistake...)
+--> no, the polarity is correct for all bits
+
+---------------------------------------------------------------------
+trying to find repeating pattern, version 2:
+
+why not start with the first byte...?
+
+ A0 00 (BE E3) A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ A0 00 (BE EB) AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ A0 00 (B8 0B) A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ A0 00 (B8 13) AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ A0 00 (B9 5C) A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ A0 00 (B9 66) AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ A0 00 (B2 BB) A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ A0 00 (B2 A3) AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ A0 00 (B5 D1) A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ A0 00 (B5 D9) AE 36 25 22 23 3D 26 20 20 00 20 00 .. .. .. .. .. ..
+
+ now, the only bytes that changed are at positions 3+4, which is where we
+ would expect the timestamp word!
+ 
+ we would expect the first two 16-bit words of a normal message to begin
+ with 8 (SOM) and 9 (TSW), respectively. we found A and B.
+ 
+ 8: 1000  9: 1001
+ A: 1010  B: 1011
+
+ the third 16-bit word in our data always begins with A. this is the raw
+ data marker, as we expect it!
+
+ the last 16-bit word in our data always begins with B. this is EOM!
+
+ in the middle part of our data we find many 20s where we would expect 00s.
+ but we do find 00s as well.
+ which leads to the following theory:
+
+ for each 16-bit word [15:0], the bit [13] is always 1. that would lead to
+ the following conversion of 16-bit words on their way out of the test data
+ output:
+
+ 0. ..: 0000 .... .... .... --> 0010 .... .... ....: 2. ..
+ 1. ..: 0001 .... .... .... --> 0011 .... .... ....: 3. ..
+ 2. ..: 0010 .... .... .... --> 0010 .... .... ....: 2. .. (ok)
+ 3. ..: 0011 .... .... .... --> 0011 .... .... ....: 3. .. (ok)
+ 4. ..: 0100 .... .... .... --> 0110 .... .... ....: 6. ..
+ 5. ..: 0101 .... .... .... --> 0111 .... .... ....: 7. ..
+ 6. ..: 0110 .... .... .... --> 0110 .... .... ....: 6. .. (ok)
+ 7. ..: 0111 .... .... .... --> 0111 .... .... ....: 7. .. (ok)
+ 8. ..: 1000 .... .... .... --> 1010 .... .... ....: A. ..
+ 9. ..: 1001 .... .... .... --> 1011 .... .... ....: B. ..
+ A. ..: 1010 .... .... .... --> 1010 .... .... ....: A. .. (ok)
+ B. ..: 1011 .... .... .... --> 1011 .... .... ....: B. .. (ok)
+ C. ..: 1100 .... .... .... --> 1110 .... .... ....: E. ..
+ D. ..: 1101 .... .... .... --> 1111 .... .... ....: F. ..
+ E. ..: 1110 .... .... .... --> 1110 .... .... ....: E. .. (ok)
+ F. ..: 1111 .... .... .... --> 1111 .... .... ....: F. .. (ok)
+
+let's try to manually fix the bit errors by correcting the SOM and TSW:
+
+ 80 00 9E E3 A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ 80 00 9E EB AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ 80 00 98 0B A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ 80 00 98 13 AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ 80 00 99 5C A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ 80 00 99 66 AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ 80 00 92 BB A2 20 20 00 22 A9 63 26 2C 44 B2 33
+ 80 00 92 A3 AE 36 25 22 23 3D 26 20 20 00 20 00 20 00 20 00 B3 30
+ 80 00 95 D1 A2 20 20 00 22 A9 63 26 2C 44 B2 33
 
