@@ -81,3 +81,38 @@ class Spadic(FtdiIom):
                 yield byte
             num_bytes_left -= block_size
             
+
+# prepare some stuff that is frequently used
+s = Spadic()
+
+def ledtest():
+    s.write_register(RF_MAP['overrides'], 0x10)
+    s.write_register(RF_MAP['overrides'], 0x00)
+
+def testout(x):
+    if x not in [0, 1]:
+        raise ValueError('only 0 or 1 allowed!')
+    s.write_register(RF_MAP['REG_enableTestOutput'], x)
+
+def testin(x):
+    if x not in [0, 1]:
+        raise ValueError('only 0 or 1 allowed!')
+    s.write_register(RF_MAP['REG_enableTestInput'], x)
+
+def enablechannel0(x):
+    if x not in [0, 1]:
+        raise ValueError('only 0 or 1 allowed!')
+    s.write_register(RF_MAP['REG_disableChannelA'], 2**16-1-x)
+    s.write_register(RF_MAP['REG_disableChannelB'], 2**16-1)
+
+import time
+def ftdireadtest(f=None):
+    start = time.time()
+    print >> f, ''
+    while True:
+        d = s._ftdi_read(9, 1)
+        if len(d):
+            print >> f, '%6.1f: ' % (time.time()-start) + \
+                        ' '.join('%02X' % x for x in d)
+    
+
