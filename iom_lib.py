@@ -100,11 +100,14 @@ class FtdiIom:
         iom_num_bytes = iom_data[1]
         iom_payload = iom_data[2:]
         if not (iom_addr_ret == iom_addr):
-            raise ValueError('wrong IO Manager address!')
+            raise ValueError('wrong IO Manager address! '
+              '(expected: 0x%02X found: 0x%02X)' % (iom_addr, iom_addr_ret))
         if not (iom_num_bytes == len(iom_payload)):
-            raise ValueError('wrong number of bytes indicated!')
+            raise ValueError('wrong number of bytes indicated! '
+            '(indicated: %i found: %i)' % (iom_num_bytes, len(iom_payload)))
         if not (iom_num_bytes == num_bytes):
-            raise ValueError('wrong number of bytes read!')
+            raise ValueError('wrong number of bytes read! '
+              '(expected: %i found: %i)' % (num_bytes, iom_num_bytes))
         # if all tests are passed, len(iom_payload) == num_bytes
         return iom_payload
 
