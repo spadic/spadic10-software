@@ -58,9 +58,12 @@ class FtdiIom:
     #----------------------------------------------------------------
     # FTDI communication
     #----------------------------------------------------------------
-    def _ftdi_write(self, byte_list):
+    def _ftdi_write(self, byte_list, max_iter=None):
         bytes_left = byte_list
+        iter_left = max_iter
         while bytes_left:
+            if iter_left == 0:
+                break
             n = ftdi.ftdi_write_data(self.ftdic,
                     ''.join(map(chr, bytes_left)), len(bytes_left))
             if n < 0:
@@ -68,11 +71,18 @@ class FtdiIom:
                               % (n, USB_ERROR_CODE[n]
                                     if n in USB_ERROR_CODE else 'unknown'))
             bytes_left = bytes_left[n:]
+            if iter_left is not None:
+                iter_left -= 1
+        # number of bytes that were _not_ written
+        return len(bytes_left)
 
-    def _ftdi_read(self, num_bytes):
+    def _ftdi_read(self, num_bytes, max_iter=None):
         buf = chr(0)*num_bytes
         bytes_read = []
+        iter_left = max_iter
         while buf:
+            if iter_left == 0:
+                break
             n = ftdi.ftdi_read_data(self.ftdic, buf, len(buf))
             if n < 0:
                 raise IOError('USB read error (error code %i: %s)'
@@ -80,22 +90,29 @@ class FtdiIom:
                                     if n in USB_ERROR_CODE else 'unknown'))
             bytes_read += map(ord, buf[:n])
             buf = buf[n:]
+            if iter_left is not None:
+                iter_left -= 1
         return bytes_read
 
     #----------------------------------------------------------------
     # IO Manager communication
     #----------------------------------------------------------------
-    def _iom_write(self, iom_addr, iom_payload):
+    def _iom_write(self, iom_addr, iom_payload, max_iter=None):
         iom_len = len(iom_payload)
         iom_header = [IOM_WR, iom_addr, iom_len]
-        self._ftdi_write(iom_header + iom_payload)
+        num_written = self._ftdi_write(iom_header + iom_payload, max_iter)
+        return num_written
 
-    def _iom_read(self, iom_addr, num_bytes, package_mode=False):
+    def _iom_read(self, iom_addr, num_bytes, package_mode=False,
+                  max_iter=None):
         # send read command if not in package mode
         if not package_mode:
-            self._ftdi_write([IOM_RD, iom_addr, num_bytes])
+            num_bytes_left = self._ftdi_write([IOM_RD, iom_addr, num_bytes],
+                                              max_iter)
+            if not num_bytes_left == 0:
+                raise IOError('%i bytes were not written!' % num_bytes_left)
         # read [iom_addr, num_data, data]
-        iom_data = self._ftdi_read(2+num_bytes)
+        iom_data = self._ftdi_read(2+num_bytes, max_iter)
         iom_addr_ret = iom_data[0]
         iom_num_bytes = iom_data[1]
         iom_payload = iom_data[2:]
