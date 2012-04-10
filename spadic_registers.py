@@ -20,9 +20,8 @@ RF_MAP = {
                      # [2] link_ready;
                      # [1] rxpcs_initovr;
                      # [0] txpcs_initovr.
-                     # Delivers user pins and override pins for link_active,
-                     # align_initovr, link_ready, rxpcs_initovr, txpcs_initovr
-                     # - physical link init.
+   # Delivers user pins and override pins for link_active, align_initovr,
+   # link_ready, rxpcs_initovr, txpcs_initovr - physical link init.
 
    "REG_CbmNetAddr"       : 0x10, # width=16, sw="rw", hw="ro"
    "REG_EpochCounter"     : 0x18, # width=16, sw="rw", hw="ro"

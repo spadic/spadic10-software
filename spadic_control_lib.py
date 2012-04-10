@@ -83,6 +83,7 @@ class Spadic(FtdiIom):
             
 
 # prepare some stuff that is frequently used
+import time, random
 s = Spadic()
 
 def ledtest():
@@ -105,7 +106,13 @@ def enablechannel0(x):
     s.write_register(RF_MAP['REG_disableChannelA'], 2**16-1-x)
     s.write_register(RF_MAP['REG_disableChannelB'], 2**16-1)
 
-import time
+def zerosr():
+    sr = SpadicShiftRegister()
+    s.write_shiftregister(str(sr))
+
+def randdata(n):
+    return [random.randint(0, 120) for i in range(n)]
+    
 def ftdireadtest(f=None):
     start = time.time()
     print >> f, ''
