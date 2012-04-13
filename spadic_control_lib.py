@@ -103,12 +103,28 @@ def testin(x):
 def enablechannel0(x):
     if x not in [0, 1]:
         raise ValueError('only 0 or 1 allowed!')
-    s.write_register(RF_MAP['REG_disableChannelA'], 2**16-1-x)
-    s.write_register(RF_MAP['REG_disableChannelB'], 2**16-1)
+    s.write_register(RF_MAP['REG_disableChannelA'], 0xFFFF-x)
+    s.write_register(RF_MAP['REG_disableChannelB'], 0xFFFF)
+
+def selectmask(mask):
+    # mask: 32 bit
+    mask_h = mask >> 16;
+    mask_l = mask & 0x0000FFFF;
+    s.write_register(RF_MAP['REG_selectMask_h'], mask_h)
+    s.write_register(RF_MAP['REG_selectMask_l'], mask_l)
 
 def zerosr():
     sr = SpadicShiftRegister()
     s.write_shiftregister(str(sr))
+
+def config_ftdireadtest():
+    s.write_register(8, 0x10)
+    zerosr()
+    testin(1)
+    testout(1)
+    enablechannel0(1)
+    selectmask(0xFFFF0000) # first 16 samples
+    s.write_register(8, 0x00)
 
 def randdata(n):
     return [random.randint(0, 120) for i in range(n)]
@@ -122,4 +138,3 @@ def ftdireadtest(f=None):
             print >> f, '%6.1f: ' % (time.time()-start) + \
                         ' '.join('%02X' % x for x in d)
     
-
