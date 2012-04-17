@@ -73,8 +73,8 @@ class FtdiIom:
             bytes_left = bytes_left[n:]
             if iter_left is not None:
                 iter_left -= 1
-        # number of bytes that were _not_ written
-        return len(bytes_left)
+        # number of bytes that were written
+        return len(byte_list)-len(bytes_left)
 
     def _ftdi_read(self, num_bytes, max_iter=None):
         buf = chr(0)*num_bytes
@@ -103,14 +103,13 @@ class FtdiIom:
         num_written = self._ftdi_write(iom_header + iom_payload, max_iter)
         return num_written
 
-    def _iom_read(self, iom_addr, num_bytes, package_mode=False,
-                  max_iter=None):
-        # send read command if not in package mode
-        if not package_mode:
-            num_bytes_left = self._ftdi_write([IOM_RD, iom_addr, num_bytes],
+    def _iom_read(self, iom_addr, num_bytes, max_iter=None):
+        # only suitable if package mode is not used
+        num_bytes_written = self._ftdi_write([IOM_RD, iom_addr, num_bytes],
                                               max_iter)
-            if not num_bytes_left == 0:
-                raise IOError('%i bytes were not written!' % num_bytes_left)
+        if not num_bytes_written == num_bytes:
+            raise IOError('%i bytes were not written!' %
+                          (num_bytes-num_bytes_written))
         # read [iom_addr, num_data, data]
         iom_data = self._ftdi_read(2+num_bytes, max_iter)
         iom_addr_ret = iom_data[0]
@@ -118,13 +117,16 @@ class FtdiIom:
         iom_payload = iom_data[2:]
         if not (iom_addr_ret == iom_addr):
             raise ValueError('wrong IO Manager address! '
-              '(expected: 0x%02X found: 0x%02X)' % (iom_addr, iom_addr_ret))
+                             '(expected: 0x%02X found: 0x%02X)' %
+                              (iom_addr, iom_addr_ret))
         if not (iom_num_bytes == len(iom_payload)):
             raise ValueError('wrong number of bytes indicated! '
-            '(indicated: %i found: %i)' % (iom_num_bytes, len(iom_payload)))
+                             '(indicated: %i found: %i)' %
+                              (iom_num_bytes, len(iom_payload)))
         if not (iom_num_bytes == num_bytes):
             raise ValueError('wrong number of bytes read! '
-              '(expected: %i found: %i)' % (num_bytes, iom_num_bytes))
+                             '(expected: %i found: %i)' %
+                              (num_bytes, iom_num_bytes))
         # if all tests are passed, len(iom_payload) == num_bytes
         return iom_payload
 
