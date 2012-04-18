@@ -1,8 +1,9 @@
 import signal
 
+from bit_byte_helper import *
 from iom_lib import *
 from spadic_registers import *
-from bit_byte_helper import *
+from spadic_message_lib import *
 
 
 #====================================================================
@@ -25,7 +26,7 @@ signal.signal(signal.SIGALRM, timeout_handler)
 # IO Manager addresses
 #--------------------------------------------------------------------
 IOM_ADDR_I2C = 0x20
-IOM_ADDR_TDO = 0x30
+IOM_ADDR_TDA = 0x30
 
 # size of package parts in IOM package mode
 # first byte is always 0xFF --> discard after read
@@ -91,7 +92,7 @@ class Spadic(FtdiIom):
     # read data from test output -> IOM -> FTDI
     # (assuming package mode is used)
     #----------------------------------------------------------------
-    def read_data_test_output(self, num_bytes, timeout=1):
+    def read_data(self, num_bytes, timeout=1):
         # read data until num_bytes are read
         # abort if timeout is over after no data was received
         num_bytes_left = num_bytes
@@ -109,8 +110,16 @@ class Spadic(FtdiIom):
                 yield byte
             num_bytes_left -= len(bytes_read)
             
+    #----------------------------------------------------------------
+    # write data to test FTDI -> IOM -> test input
+    #----------------------------------------------------------------
+    def write_data(self, data):
+        s._iom_write(IOM_ADDR_TDA, [(x%512)>>1 for x in data])
 
+
+#--------------------------------------------------------------------
 # prepare some stuff that is frequently used
+#--------------------------------------------------------------------
 import time, random
 s = Spadic()
 
@@ -157,9 +166,6 @@ def config_ftdireadtest():
 
 def randdata(n):
     return [random.randint(0, 120) for i in range(n)]
-
-def writedata():
-    s._iom_write(0x30, [0x7F, 0x55, 0x66])
     
 def ftdireadtest(f=None, max_timeout=1, timeout_init=1e-6):
     start = time.time()
