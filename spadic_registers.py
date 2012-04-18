@@ -377,3 +377,16 @@ class SpadicShiftRegister:
     def get_value(self, name):
         return int(''.join([self.bits[p] for p in SR_MAP[name]]), 2)
 
+
+#--------------------------------------------------------------------
+# find registers by name
+#--------------------------------------------------------------------
+def search_rf(name_part):
+    for name in RF_MAP:
+        if name_part.lower() in name.lower(): # ignore case
+            print name, '0x%02X' % RF_MAP[name]
+
+def search_sr(name_part):
+    print ', '.join([name for name in SR_MAP
+                     if name_part.lower() in name.lower()]) # ignore case
+

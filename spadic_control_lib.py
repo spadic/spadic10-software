@@ -114,6 +114,8 @@ class Spadic(FtdiIom):
     # write data to test FTDI -> IOM -> test input
     #----------------------------------------------------------------
     def write_data(self, data):
+        if len(data) == 1:
+            data.append(0) # test input interface needs at least 2 values
         s._iom_write(IOM_ADDR_TDA, [(x%512)>>1 for x in data])
 
 
