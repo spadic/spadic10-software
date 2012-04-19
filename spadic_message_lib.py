@@ -95,29 +95,49 @@ hittype_str = {
 # test data output reconstruction
 #====================================================================
 
-def message_words(byte_sequence): # byte_sequence must be an iterator
-    # initialize 5-byte buffer
-    buf = [int2bitstring(0, 8) for i in range(5)]
+class _message_words:
+    def __init__(self):
+        self._sync = False
+        self._remainder = [int2bitstring(0, 8)]*5 # at the time the first
+                                        # pattern matching attempt is made,
+                                        # the buffer must contain five bytes
 
-    # search for wSOM, wTSW and wRDA in successive 2-byte words:
-    # [wSOM, ...] [wTSW, ...] [wRDA, ...
-    #  0     1     2     3     4
-    sync = False
-    while not sync:
-        # shift next byte into the buffer
-        buf = buf[1:]
-        buf.append(int2bitstring(byte_sequence.next(), 8))
-        # test for pattern
-        sync = (buf[0].startswith(preamble['wSOM']) and
-                buf[2].startswith(preamble['wTSW']) and
-                buf[4].startswith(preamble['wRDA']))
+    def __call__(self, byte_sequence): # byte_sequence must be an iterator
+        # initialize buffer with the remainder from the last time
+        buf = self._remainder
 
-    # once in sync, yield the first two bytes in the buffer
-    for byte in byte_sequence:
-        buf.append(int2bitstring(byte, 8))
-        if len(buf) > 1:
-            yield buf[0]+buf[1]
-            buf = buf[2:]
+        # search for wSOM, wTSW and wRDA in successive 2-byte words:
+        # [wSOM, ...] [wTSW, ...] [wRDA, ...
+        #  0     1     2     3     4
+        while not self._sync:
+            # shift next byte into the buffer (must discard old bytes until
+            # in sync, in order to guarantee that the very first word that
+            # is yielded marks the beginning of a message)
+            try:
+                buf.append(int2bitstring(byte_sequence.next(), 8))
+                buf = buf[1:] # do this after appending, so when
+                              # StopIteration is raised, buf remains
+                              # untouched
+            except StopIteration:
+                self._remainder = buf
+                return
+            # search the pattern in the newest five bytes
+            self._sync = (buf[0].startswith(preamble['wSOM']) and
+                          buf[2].startswith(preamble['wTSW']) and
+                          buf[4].startswith(preamble['wRDA']))
+
+        # once in sync, yield the oldest two bytes of the buffer
+        for byte in byte_sequence:
+            buf.append(int2bitstring(byte, 8))
+            if len(buf) > 1:
+                yield buf[0]+buf[1]
+                buf = buf[2:]
+
+        # store the remaining byte (if left over) for the next time
+        self._remainder = buf
+
+# create an instance, it behaves like a function
+message_words = _message_words()
 
 
 #====================================================================
@@ -145,13 +165,16 @@ class _messages:
             message.append(word)
 
             # yield message at all possible end of message markers
+            # also clear it so it is not stored as remainder
             if any(word.startswith(preamble[p])
                    for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
                 yield message
+                message = []
 
         # store remainder for the next time
         self._remainder = message
 
+# create an instance, it behaves like a function
 messages = _messages()
 
 
