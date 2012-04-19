@@ -127,21 +127,32 @@ def message_words(byte_sequence): # byte_sequence must be an iterator
 #--------------------------------------------------------------------
 # split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
-def messages(message_words):
-    message = []
-    for word in message_words:
-        # start new message at start of message marker or info marker
-        if any(word.startswith(preamble[p])
-               for p in ['wSOM', 'wINF']):
-            message = []
+class _messages:
+    def __init__(self):
+        self._remainder = []
 
-        # build up message
-        message.append(word)
+    def __call__(self, message_words):
+        # recall remainder from the last time
+        message = self._remainder
 
-        # yield message at all possible end of message markers
-        if any(word.startswith(preamble[p])
-               for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
-            yield message
+        for word in message_words:
+            # start new message at start of message marker or info marker
+            if any(word.startswith(preamble[p])
+                   for p in ['wSOM', 'wINF']):
+                message = []
+
+            # build up message
+            message.append(word)
+
+            # yield message at all possible end of message markers
+            if any(word.startswith(preamble[p])
+                   for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
+                yield message
+
+        # store remainder for the next time
+        self._remainder = message
+
+messages = _messages()
 
 
 #--------------------------------------------------------------------
