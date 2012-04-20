@@ -92,11 +92,11 @@ class Spadic(FtdiIom):
     # read data from test output -> IOM -> FTDI
     # (assuming package mode is used)
     #----------------------------------------------------------------
-    def read_data(self, num_bytes, timeout=1):
-        # read data until num_bytes are read
+    def read_data(self, num_bytes=None, timeout=1):
+        # read data until num_bytes are read (None -> 'infinity')
         # abort if timeout is over after no data was received
         num_bytes_left = num_bytes
-        while num_bytes_left >= PACKAGE_SIZE:
+        while num_bytes is None or num_bytes_left >= PACKAGE_SIZE:
             signal.alarm(timeout) # set alarm
             try:
                 bytes_read = self._ftdi_read(PACKAGE_SIZE)[1:]
@@ -108,7 +108,8 @@ class Spadic(FtdiIom):
 
             for byte in bytes_read:
                 yield byte
-            num_bytes_left -= len(bytes_read)
+            if num_bytes_left:
+                num_bytes_left -= len(bytes_read)
             
     #----------------------------------------------------------------
     # write data to test FTDI -> IOM -> test input
@@ -175,7 +176,7 @@ def ftdireadtest(f=None, max_timeout=1, timeout_init=1e-6):
     print >> f, ''
     while True:
         d = s._ftdi_read(9, 1)
-        if len(d):
+        if d:
             timeout = timeout_init
             print >> f, '%6.1f: ' % (time.time()-start) + \
                         ' '.join('%02X' % x for x in d)

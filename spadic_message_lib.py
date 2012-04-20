@@ -201,7 +201,7 @@ class Message():
         #------------------------------------------------------------
         start_words = [word for word in message
                        if word.startswith(preamble['wSOM'])]
-        if len(start_words) > 0:
+        if start_words:
             w = start_words[0]
             self.group_id   = int(w[4:12], 2)
             self.channel_id = int(w[12:16], 2)
@@ -211,7 +211,7 @@ class Message():
         #------------------------------------------------------------
         timestamp_words = [word for word in message
                            if word.startswith(preamble['wTSW'])]
-        if len(timestamp_words) > 0:
+        if timestamp_words:
             w = timestamp_words[0]
             self.timestamp = int(w[len(preamble['wTSW']):], 2)
 
@@ -221,7 +221,7 @@ class Message():
         rda_pos = [i for (i, word) in enumerate(message)
                    if word.startswith(preamble['wRDA'])]
 
-        if len(rda_pos) > 0:
+        if rda_pos:
             p = rda_pos[0]
 
             # data begins with the rest of the 'start of raw data' word
@@ -246,7 +246,7 @@ class Message():
                      if any(word.startswith(preamble[p])
                             for p in ['wEOM', 'wBOM', 'wEPM'])]
 
-        if len(end_words) > 0:
+        if end_words:
             w = end_words[0]
 
             # extract information for different cases
@@ -268,7 +268,7 @@ class Message():
         info_words = [word for word in message
                       if word.startswith(preamble['wINF'])]
         
-        if len(info_words) > 0:
+        if info_words:
             w = info_words[0]
             self.info_type = infotype_str[w[4:8]]
             # channel_id only for some info types
