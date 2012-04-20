@@ -39,7 +39,7 @@ PACKAGE_SIZE = 9
 
 class Spadic(FtdiIom):
     #----------------------------------------------------------------
-    # register file access
+    # register file access (see below for special register methods)
     #----------------------------------------------------------------
     def write_register(self, address, data):
         iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
@@ -118,7 +118,26 @@ class Spadic(FtdiIom):
         if len(data) == 1:
             data.append(0) # test input interface needs at least 2 values
         s._iom_write(IOM_ADDR_TDA, [(x%512)>>1 for x in data])
+            
+    #----------------------------------------------------------------
+    # special register methods
+    #----------------------------------------------------------------
+    def selectmask(self, mask):
+        # mask: 32 bit
+        mask_h = mask >> 16;
+        mask_l = mask & 0x0000FFFF;
+        self.write_register(RF_MAP['REG_selectMask_h'], mask_h)
+        self.write_register(RF_MAP['REG_selectMask_l'], mask_l)
 
+    def scale(self, scale, norm=False):
+        if norm:
+            scale = int(round(32*scale))
+        scale = min(max(scale, -256), 255)
+        self.write_register(RF_MAP['REG_scalingFilter'], scale)
+
+    def offset(self, offset):
+        offset = min(max(offset, -256), 255)
+        self.write_register(RF_MAP['REG_offsetFilter'], offset)
 
 #--------------------------------------------------------------------
 # prepare some stuff that is frequently used
@@ -146,13 +165,6 @@ def enablechannel0(x):
     s.write_register(RF_MAP['REG_disableChannelA'], 0xFFFF-x)
     s.write_register(RF_MAP['REG_disableChannelB'], 0xFFFF)
 
-def selectmask(mask):
-    # mask: 32 bit
-    mask_h = mask >> 16;
-    mask_l = mask & 0x0000FFFF;
-    s.write_register(RF_MAP['REG_selectMask_h'], mask_h)
-    s.write_register(RF_MAP['REG_selectMask_l'], mask_l)
-
 def zerosr():
     sr = SpadicShiftRegister()
     s.write_shiftregister(str(sr))
@@ -163,7 +175,7 @@ def config_ftdireadtest():
     testin(1)
     testout(1)
     enablechannel0(1)
-    selectmask(0xFFFF0000) # first 16 samples
+    s.selectmask(0xFFFF0000) # first 16 samples
     s.write_register(48, 0) # diffmode off
     s.write_register(8, 0x00)
 
