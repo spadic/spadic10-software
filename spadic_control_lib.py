@@ -119,25 +119,86 @@ class Spadic(FtdiIom):
             data.append(0) # test input interface needs at least 2 values
         s._iom_write(IOM_ADDR_TDA, [(x%512)>>1 for x in data])
             
-    #----------------------------------------------------------------
+
+    #================================================================
     # special register methods
+    #================================================================
+            
     #----------------------------------------------------------------
-    def selectmask(self, mask):
-        # mask: 32 bit
+    # hit logic
+    #----------------------------------------------------------------
+    def threshold(self, threshold1, threshold2, diffmode=0):
+        for (reg, th) in [('REG_threshold1', threshold1),
+                          ('REG_threshold2', threshold2)]:
+            if th < -256 or th > 255:
+                raise ValueError('valid threshold range: -256..255')
+            self.write_register(RF_MAP[reg], th % 512)
+        self.write_register(RF_MAP['REG_compDiffMode'], diffmode)
+        
+    def selectmask(self, mask=0xFFFF0000, windowlength=16):
+        if mask < 0 or mask > 0xFFFFFFFF:
+            raise ValueError('expected 32 bit integer')
         mask_h = mask >> 16;
-        mask_l = mask & 0x0000FFFF;
+        mask_l = mask & 0xFFFF;
         self.write_register(RF_MAP['REG_selectMask_h'], mask_h)
         self.write_register(RF_MAP['REG_selectMask_l'], mask_l)
+        if windowlength < 0 or windowlength > 63:
+            raise ValueError('valid hit window length range: 0..63')
+        self.write_register(RF_MAP['REG_hitWindowLength'], windowlength)
+            
+    #----------------------------------------------------------------
+    # filter settings
+    #----------------------------------------------------------------
 
-    def scale(self, scale, norm=False):
+    def _filter_enable(self, enable):
+        if enable < 0 or enable > 0x1F:
+            raise ValueError('expected 5 bit integer')
+        self.write_register(RF_MAP['REG_bypassFilterStage'], ~enable)
+        # enable scaling/offset:     0x10
+        # enable first filter stage: 0x01
+
+    def _filter_scale(self, scale, norm=False):
         if norm:
             scale = int(round(32*scale))
-        scale = min(max(scale, -256), 255)
+        if scale < -256 or scale > 255:
+            raise ValueError('valid scaling range: -256..255')
         self.write_register(RF_MAP['REG_scalingFilter'], scale)
 
-    def offset(self, offset):
-        offset = min(max(offset, -256), 255)
+    def _filter_offset(self, offset):
+        if offset < -256 or offset > 255:
+            raise ValueError('valid offset range: -256..255')
         self.write_register(RF_MAP['REG_offsetFilter'], offset)
+
+    def _filter_coeff_(self, coeff, norm, num, reg):
+        if not len(coeff) == num:
+            raise ValueError('expected list of %i coefficients' % num)
+        if norm:
+            coeff = [int(round(32*c)) for c in coeff]
+        if any(c < -32 or c > 31 for c in coeff):
+            raise ValueError('valid coefficient range: -32..31')
+        value = sum(c << 6*i for (i, c) in enumerate(coeff))
+        value_h = value >> 16;
+        value_l = value & 0xFFFF;
+        self.write_register(RF_MAP[reg+'_h'], value_h)
+        self.write_register(RF_MAP[reg+'_l'], value_l)
+
+    def _filter_coeffa(self, coeff, norm=False):
+        self._filter_coeff_(coeff, norm, 3, 'REG_aCoeffFilter')
+    def _filter_coeffb(self, coeff, norm=False):
+        self._filter_coeff_(coeff, norm, 4, 'REG_bCoeffFilter')
+
+    def filter_settings(self, enable=None, scale=None, offset=None,
+                        coeffa=None, coeffb=None, norm=False):
+        if enable is None: enable = 0x00
+        if scale is None: scale = 1.0 if norm else 32
+        if offset is None: offset = 0
+        if coeffa is None: coeffa = [0]*3
+        if coeffb is None: coeffb = [0]*4
+        self._filter_enable(enable)
+        self._filter_scale(scale, norm)
+        self._filter_offset(offset)
+        self._filter_coeffa(coeffa, norm)
+        self._filter_coeffb(coeffb, norm)
 
 #--------------------------------------------------------------------
 # prepare some stuff that is frequently used
