@@ -176,7 +176,7 @@ class Spadic(FtdiIom):
             coeff = [int(round(32*c)) for c in coeff]
         if any(c < -32 or c > 31 for c in coeff):
             raise ValueError('valid coefficient range: -32..31')
-        value = sum(c << 6*i for (i, c) in enumerate(coeff))
+        value = sum(c%64 << 6*i for (i, c) in enumerate(coeff))
         value_h = value >> 16;
         value_l = value & 0xFFFF;
         self.write_register(RF_MAP[reg+'_h'], value_h)
@@ -258,4 +258,11 @@ def ftdireadtest(f=None, max_timeout=1, timeout_init=1e-6):
                 break
             time.sleep(timeout)
             timeout = 2*timeout
+
+def quickwrite(data):
+    for i in range(4):
+        s.write_data(data)
+        time.sleep(0.1)
+    M = [Message(m) for m in messages(message_words(s.read_data()))]
+    return M[-1].data
     
