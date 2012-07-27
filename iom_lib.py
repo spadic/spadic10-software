@@ -28,7 +28,7 @@ IOM_RD = 0x02 # read
 
 class FtdiIom:
     #----------------------------------------------------------------
-    # open/close USB connection with constructor/destructor methods
+    # open/close USB connection with constructor/destructor
     #----------------------------------------------------------------
     def __init__(self, VID=0x0403, PID=0x6010):
         context = ftdi.ftdi_new()
