@@ -182,19 +182,19 @@ messages = _messages()
 # Message class
 #--------------------------------------------------------------------
 class Message():
+    group_id              = None
+    channel_id            = None
+    timestamp             = None
+    data                  = None
+    num_data              = None
+    hit_type              = None
+    stop_type             = None
+    buffer_overflow_count = None
+    epoch_count           = None
+    info_type             = None
+
     def __init__(self, message): # message = output of messages()
         self.words = message     # i.e. some raw 16-bit words
-
-        self.group_id              = None
-        self.channel_id            = None
-        self.timestamp             = None
-        self.data                  = None
-        self.num_data              = None
-        self.hit_type              = None
-        self.stop_type             = None
-        self.buffer_overflow_count = None
-        self.epoch_count           = None
-        self.info_type             = None
 
         #------------------------------------------------------------
         # get start of message (group/channel IDs)
