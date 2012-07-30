@@ -35,7 +35,7 @@ endofmessage = {
 }
 endofmessage_str = {
   endofmessage['eEND']: 'normal end of message',
-  endofmessage['eEBF']: 'buffer full ',
+  endofmessage['eEBF']: 'buffer full',
   endofmessage['eEFF']: 'ordering fifo full',
   endofmessage['eEDH']: 'multi hit',
   endofmessage['eEDB']: 'multi hit but buffer full',
