@@ -28,7 +28,7 @@ SR_DEFAULT = {
     #channel config
     'baselineTrimN'    : 10,
     'SelMonitor'       : 1, #1: CSA 0: ADC
-    'DecSelectNP'      : 1,
+    'DecSelectNP'      : 1, # N=0, P=1
 
     #N channel bias 
     'nCascN'           : 30,
@@ -343,11 +343,12 @@ SR_DEFAULT = {
 #--------------------------------------------------------------------   
 
 RF_DEFAULT = {
-   'REG_threshold1':           2,
-   'REG_threshold2':          18,
+   'REG_threshold1':        -255,
+   'REG_threshold2':        -210,
+   'REG_compDiffMode':         0,
    'REG_selectMask_h':    0xFFFF,
    'REG_selectMask_l':    0x0000,
-   'REG_hitWindowLength':     32,
+   'REG_hitWindowLength':     16,
    'REG_disableChannelA': 0xFFFF, # disable group A
    'REG_disableChannelB': 0x7FFF, # disable group B, exept for channel 31
    'REG_enableTestOutput':     1,

@@ -1,9 +1,11 @@
 import signal
+import time
 
 from bit_byte_helper import *
 from iom_lib import *
 from spadic_registers import *
 from spadic_message_lib import *
+from spadic_config import *
 
 
 #====================================================================
@@ -79,14 +81,19 @@ class Spadic(FtdiIom):
     #----------------------------------------------------------------
     # write configuration from dictionary
     #----------------------------------------------------------------
-    def config(self, rf_dict, sr_dict):
+    def configrf(self, rf_dict):
         for reg in rf_dict:
             self.write_register(RF_MAP[reg], rf_dict[reg])
 
+    def configsr(self, sr_dict):
         sr = SpadicShiftRegister()
         for reg in sr_dict:
             sr.set_value(reg, sr_dict[reg])
         self.write_shiftregister(str(sr))
+
+    def config(self, rf_dict, sr_dict):
+        self.configrf(rf_dict)
+        self.configsr(sr_dict)
 
     #----------------------------------------------------------------
     # read data from test output -> IOM -> FTDI
@@ -97,7 +104,8 @@ class Spadic(FtdiIom):
         # abort if timeout is over after no data was received
         num_bytes_left = num_bytes
         while num_bytes is None or num_bytes_left >= PACKAGE_SIZE:
-            signal.alarm(timeout) # set alarm
+            if timeout is not None:
+                signal.alarm(timeout) # set alarm
             try:
                 bytes_read = self._ftdi_read(PACKAGE_SIZE)[1:]
                              # discard the first byte
@@ -240,6 +248,11 @@ def config_ftdireadtest():
     s.write_register(48, 0) # diffmode off
     s.write_register(8, 0x00)
 
+def config_analogtest():
+    s.write_register(8, 0x10)
+    s.config(RF_DEFAULT, SR_DEFAULT)
+    s.write_register(8, 0x00)
+
 def randdata(n):
     return [random.randint(0, 120) for i in range(n)]
     
@@ -259,10 +272,28 @@ def ftdireadtest(f=None, max_timeout=1, timeout_init=1e-6):
             time.sleep(timeout)
             timeout = 2*timeout
 
+def getmessages():
+    for m in messages(message_words(s.read_data())):
+        yield Message(m)
+
 def quickwrite(data):
     for i in range(4):
         s.write_data(data)
         time.sleep(0.1)
-    M = [Message(m) for m in messages(message_words(s.read_data()))]
-    return M[-1].data
+    M = list(getmessages())
+    if M:
+        return M[-1].data
+    else:
+        print 'no messages found!'
+
+def enableamp(channel, only=True):
+  if only:
+    for i in range(32):
+        reg = 'enAmpP_' + str(i)
+        SR_DEFAULT[reg] = 1 if (i == channel) else 0
+    s.configsr(SR_DEFAULT)
+  else:
+    reg = 'enAmpP_' + str(channel)
+    SR_DEFAULT[reg] = 1
+    s.configsr(SR_DEFAULT)
     
