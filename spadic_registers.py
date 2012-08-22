@@ -366,7 +366,7 @@ class SpadicShiftRegister:
 
     def __str__(self):
         return ''.join(self.bits)
-        # use this as argument for SpadicI2cRf.write_shiftregister
+        # use this as argument for Spadic.write_shiftregister
 
     def set_value(self, name, value):
         pos = SR_MAP[name]
