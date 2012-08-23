@@ -1,4 +1,4 @@
-from bit_byte_helper import *
+from bit_byte_helper import int2bitstring
 
 
 #====================================================================
@@ -136,8 +136,8 @@ class _message_words:
         # store the remaining byte (if left over) for the next time
         self._remainder = buf
 
-# create an instance, it behaves like a function
-message_words = _message_words()
+    def resync(self):
+        self._sync = False
 
 
 #====================================================================
@@ -173,9 +173,6 @@ class _messages:
 
         # store remainder for the next time
         self._remainder = message
-
-# create an instance, it behaves like a function
-messages = _messages()
 
 
 #--------------------------------------------------------------------
@@ -322,4 +319,21 @@ class Message():
             t = [i*T for (i, m) in enumerate(mask) if m=='1']
             return'\n'.join('%5i %5i' % (x, y)
                             for (x, y) in zip(t, self.data))
+
+
+#--------------------------------------------------------------------
+# Message reader
+#--------------------------------------------------------------------
+class SpadicMessageReader:
+    _read_words = _message_words()
+    _read_messages = _messages()
+
+    def __init__(self, spadic):
+        self._spadic = spadic
+
+    def read(self, num_bytes=None):
+        d = self._spadic.read_data(num_bytes)
+        w = self._read_words(d)
+        m = self._read_messages(w)
+        return [Message(mi) for mi in m]
 

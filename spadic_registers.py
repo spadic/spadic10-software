@@ -1,10 +1,13 @@
-from bit_byte_helper import *
+from bit_byte_helper import int2bitstring
 
+
+#====================================================================
+# SPADIC Register File representation
+#====================================================================
 
 #--------------------------------------------------------------------
 # dictionary of SPADIC 1.0 register file (contains addresses)
 #--------------------------------------------------------------------
-
 RF_MAP = {
    "loopback": 0x0, # width=3, sw="rw", hw="ro"
                     # [2] DES2BS Loopback
@@ -63,7 +66,61 @@ RF_MAP = {
    "data"                    : 0x300,
    "status"                  : 0x2f8, # width=16, sw="ro", hw="wo"
 }
+
+#--------------------------------------------------------------------
+# register file control class
+#--------------------------------------------------------------------
+class SpadicRegisterFile:
+    _registers = {}
+
+    def __init__(self):
+        for name in RF_MAP:
+            self[name] = None
+
+    def __contains__(self, name):
+        return name in RF_MAP
+
+    def __iter__(self):
+        return iter(RF_MAP)
+
+    def __getitem__(self, name):
+        if name not in self:
+            raise KeyError('%s not in register file' % name)
+        return self._registers[name]
+
+    def __setitem__(self, name, value):
+        if name not in self:
+            raise KeyError('%s not in register file' % name)
+        self._registers[name] = value
+
+    def load(self, config):
+        for name in config:
+            self[name] = config[name]
+
+    def save(self, nonzero_only=True):
+        config = {}
+        for name in self:
+            if not nonzero_only or self[name] is not None:
+                config[name] = self[name]
+        return config
+
+    def search(self, name_or_addr):
+        if isinstance(name_or_addr, str):
+            name_part = name_or_addr
+            result = [name for name in self
+                      if name_part.lower() in name.lower()]
+        elif isinstance(name_or_addr, int):
+            addr = name_or_addr
+            result = [name for name in self
+                      if addr == RF_MAP[name]]
+        print '\n'.join(name.ljust(25) + '%3i' % RF_MAP[name]
+                        for name in sorted(result))
+        
  
+
+#====================================================================
+# SPADIC Shift Register representation
+#====================================================================
 
 #--------------------------------------------------------------------
 # dictionary of SPADIC 1.0 shift register (contains bit numbers)
@@ -353,40 +410,58 @@ SR_MAP = {
   'enAmpN_31'       : range(583, 583+1), # 583:583   1
 }
 
-
 #--------------------------------------------------------------------
-# SPADIC Shift Register representation
+# shift register control class
 #--------------------------------------------------------------------
-
 class SpadicShiftRegister:
     def __init__(self):
-        self.bits = ['0']*SR_LENGTH
+        self._bits = ['0']*SR_LENGTH
         # bits[0] = MSB (on the left side, shifted last)
         # bits[-1] = LSB (on the right side, shifted first)
 
     def __str__(self):
-        return ''.join(self.bits)
+        return ''.join(self._bits)
         # use this as argument for Spadic.write_shiftregister
 
-    def set_value(self, name, value):
+    def __contains__(self, name):
+        return name in SR_MAP
+
+    def __iter__(self):
+        return iter(SR_MAP)
+
+    def __getitem__(self, name):
+        if name not in self:
+            raise KeyError('%s not in shift register' % name)
+        return int(''.join([self._bits[p] for p in SR_MAP[name]]), 2)
+
+    def __setitem__(self, name, value):
+        if name not in self:
+            raise KeyError('%s not in shift register' % name)
+        if value not in range(2**self.size(name)):
+            raise ValueError('value for %s must be in the range 0..%i' %
+                             (name, 2**self.size(name)-1))
         pos = SR_MAP[name]
         n = len(pos)
         for (i, b) in enumerate(int2bitstring(value, n)):
-            self.bits[pos[i]] = b
+            self._bits[pos[i]] = b
 
-    def get_value(self, name):
-        return int(''.join([self.bits[p] for p in SR_MAP[name]]), 2)
+    def size(self, name):
+        return len(SR_MAP[name])
 
+    def load(self, config):
+        for name in config:
+            self[name] = config[name]
 
-#--------------------------------------------------------------------
-# find registers by name
-#--------------------------------------------------------------------
-def search_rf(name_part):
-    for name in RF_MAP:
-        if name_part.lower() in name.lower(): # ignore case
-            print name, '0x%02X' % RF_MAP[name]
+    def save(self, nonzero_only=True):
+        config = {}
+        for name in self:
+            if not nonzero_only or self[name] != 0:
+                config[name] = self[name]
+        return config
 
-def search_sr(name_part):
-    print ', '.join([name for name in SR_MAP
-                     if name_part.lower() in name.lower()]) # ignore case
+    def search(self, name_part):
+        result = [name for name in self
+                  if name_part.lower() in name.lower()]
+        print '\n'.join(sorted(result))
+
 
