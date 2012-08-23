@@ -1,22 +1,50 @@
 import time
 
-from spadic_registers import SpadicRegisterFile, SpadicShiftRegister
 from spadic_config import *
 
+#================================================================
+# Hit logic
+#================================================================
+class SpadicHitLogic:
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+
+    def comparator(self, threshold1, threshold2, diffmode=0):
+        for (name, th) in [('REG_threshold1', threshold1),
+                           ('REG_threshold2', threshold2)]:
+            if th < -256 or th > 255:
+                raise ValueError('valid threshold range: -256..255')
+            self._registerfile[name] = th % 512
+        self._registerfile['REG_compDiffMode'] = diffmode
+        
+    def selectmask(self, mask=0xFFFF0000, windowlength=16):
+        if mask < 0 or mask > 0xFFFFFFFF:
+            raise ValueError('expected 32 bit integer')
+        mask_h = mask >> 16;
+        mask_l = mask & 0xFFFF;
+        self._registerfile['REG_selectMask_h'] = mask_h
+        self._registerfile['REG_selectMask_l'] = mask_l
+        if windowlength < 0 or windowlength > 63:
+            raise ValueError('valid hit window length range: 0..63')
+        self._registerfile['REG_hitWindowLength'] = windowlength
+            
 
 class SpadicController:
-    _registerfile = SpadicRegisterFile()
-    _shiftregister = SpadicShiftRegister()
-
-    def __init__(self, spadic):
+    """Controller for the SPADIC register file and shift register
+    configuration."""
+    def __init__(self, spadic, registerfile, shiftregister):
         self._spadic = spadic
+        self._registerfile = registerfile
+        self._shiftregister = shiftregister
+        self._hitlogic = SpadicHitLogic(registerfile)
 
-    #----------------------------------------------------------------
-    # write configuration from dictionary
-    #----------------------------------------------------------------
-    def configrf(self, rf_dict):
-        for reg in rf_dict:
-            self.write_register(RF_MAP[reg], rf_dict[reg])
+    def write_shiftregister(self):
+        bits = str(self._shiftregister)
+        self._spadic.write_shiftregister(bits)
+
+    def write_registerfile(self):
+        for name in self._registerfile:
+        
 
     def config(self, rf_dict, sr_dict):
         self.configrf(rf_dict)
@@ -28,28 +56,6 @@ class SpadicController:
     #================================================================
     # special register methods
     #================================================================
-            
-    #----------------------------------------------------------------
-    # hit logic
-    #----------------------------------------------------------------
-    def threshold(self, threshold1, threshold2, diffmode=0):
-        for (reg, th) in [('REG_threshold1', threshold1),
-                          ('REG_threshold2', threshold2)]:
-            if th < -256 or th > 255:
-                raise ValueError('valid threshold range: -256..255')
-            self.write_register(RF_MAP[reg], th % 512)
-        self.write_register(RF_MAP['REG_compDiffMode'], diffmode)
-        
-    def selectmask(self, mask=0xFFFF0000, windowlength=16):
-        if mask < 0 or mask > 0xFFFFFFFF:
-            raise ValueError('expected 32 bit integer')
-        mask_h = mask >> 16;
-        mask_l = mask & 0xFFFF;
-        self.write_register(RF_MAP['REG_selectMask_h'], mask_h)
-        self.write_register(RF_MAP['REG_selectMask_l'], mask_l)
-        if windowlength < 0 or windowlength > 63:
-            raise ValueError('valid hit window length range: 0..63')
-        self.write_register(RF_MAP['REG_hitWindowLength'], windowlength)
             
     #----------------------------------------------------------------
     # filter settings

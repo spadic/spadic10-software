@@ -71,11 +71,18 @@ RF_MAP = {
 # register file control class
 #--------------------------------------------------------------------
 class SpadicRegisterFile:
+    """Representation of the SPADIC register file.
+    
+    Emulates the behaviour of a dictionary. Registers are accessed by their
+    names. Assigning a value to a name directly performs the write operation and
+    remembers the value so that it can be accessed later."""
+
     _registers = {}
 
-    def __init__(self):
+    def __init__(self, spadic):
+        self._spadic = spadic
         for name in RF_MAP:
-            self[name] = None
+            self[name] = 0
 
     def __contains__(self, name):
         return name in RF_MAP
@@ -91,20 +98,27 @@ class SpadicRegisterFile:
     def __setitem__(self, name, value):
         if name not in self:
             raise KeyError('%s not in register file' % name)
+        self._spadic.write_register(RF_MAP[name], value)
         self._registers[name] = value
 
     def load(self, config):
+        """Load the register file configuration from a dictionary."""
         for name in config:
             self[name] = config[name]
 
     def save(self, nonzero_only=True):
+        """Return a dictionary with the current register file configuration.
+        
+        If 'nonzero_only' is True, include only the registers containing a
+        nonzero value, else include all registers."""
         config = {}
         for name in self:
-            if not nonzero_only or self[name] is not None:
+            if not nonzero_only or self[name] != 0:
                 config[name] = self[name]
         return config
 
     def search(self, name_or_addr):
+        """Search for registers by name or by address."""
         if isinstance(name_or_addr, str):
             name_part = name_or_addr
             result = [name for name in self
@@ -414,7 +428,15 @@ SR_MAP = {
 # shift register control class
 #--------------------------------------------------------------------
 class SpadicShiftRegister:
-    def __init__(self):
+    """Representation of the SPADIC shift register.
+    
+    Emulates the behaviour of a dictionary. Registers are accessed by their
+    names. Assigning a value to a name only writes to an internal
+    dictionary, to perform the actual write operation, the write() method
+    must be called."""
+
+    def __init__(self, spadic):
+        self._spadic = spacic
         self._bits = ['0']*SR_LENGTH
         # bits[0] = MSB (on the left side, shifted last)
         # bits[-1] = LSB (on the right side, shifted first)
@@ -446,13 +468,28 @@ class SpadicShiftRegister:
             self._bits[pos[i]] = b
 
     def size(self, name):
+        """Return the size, in bits, of the register given by the name."""
         return len(SR_MAP[name])
 
-    def load(self, config):
+    def write(self):
+        """Perform the shift register write operation, using the previously
+        stored values."""
+        self._spadic.write_shiftregister(str(self))
+
+    def load(self, config, write=False):
+        """Load the shift register configuration from a dictionary.
+        
+        Optionally perform the write operation."""
         for name in config:
             self[name] = config[name]
+        if write:
+            self.write()
 
     def save(self, nonzero_only=True):
+        """Return a dictionary with the current shift register configuration.
+        
+        If 'nonzero_only' is True, include only the registers containing a
+        nonzero value, else include all registers."""
         config = {}
         for name in self:
             if not nonzero_only or self[name] != 0:
@@ -460,8 +497,8 @@ class SpadicShiftRegister:
         return config
 
     def search(self, name_part):
+        """Search for registers by name."""
         result = [name for name in self
                   if name_part.lower() in name.lower()]
         print '\n'.join(sorted(result))
-
 
