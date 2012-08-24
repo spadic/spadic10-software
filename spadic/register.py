@@ -106,6 +106,11 @@ class RegisterFile:
         for name in config:
             self[name] = config[name]
 
+    def clear(self):
+        """Reset every register to zero."""
+        for name in self:
+            self[name] = 0
+
     def save(self, nonzero_only=True):
         """Return a dictionary with the current register file configuration.
         
@@ -496,6 +501,12 @@ class ShiftRegister:
             self[name] = config[name]
         if write:
             self.write()
+
+    def clear(self):
+        """Reset every register to zero."""
+        for name in self:
+            self[name] = 0
+        self.write()
 
     def save(self, nonzero_only=True):
         """Return a dictionary with the current shift register configuration.

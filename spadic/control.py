@@ -1,5 +1,3 @@
-import time
-
 from register import RegisterFile, ShiftRegister
 
 #================================================================
@@ -71,11 +69,23 @@ class Controller:
         self.shiftregister.write()
         self.leds(0, 0)
 
+    def clear_shiftregister(self):
+        """Fill the shift register with zeros."""
+        config = dict((name, 0) for name in self.shiftregister)
+        self.write_shiftregister(config)
+
     def write_registerfile(self, config):
         """Write a configuration into the register file."""
         self.leds(1, 0)
         self.registerfile.load(config)
         self.leds(0, 0)
+
+    def testdata(self, inp, out):
+        if any(x not in [0, 1] for x in [inp, out]):
+            raise ValueError('only 0 or 1 allowed!')
+        config = {'REG_enableTestInput': inp,
+                  'REG_enableTestOutput': out}
+        self.write_registerfile(config)
 
     def comparator(self, threshold1, threshold2, diffmode=0):
         """Configure the digital comparators."""
@@ -88,7 +98,7 @@ class Controller:
         config['REG_compDiffMode'] = diffmode
         self.write_registerfile(config)
         
-    def hitlogic(self, mask=0xFFFF0000, windowlength=16):
+    def hitlogic(self, mask=0xFFFF0000, window=16):
         """Configure the hit logic."""
         if mask < 0 or mask > 0xFFFFFFFF:
             raise ValueError('expected 32 bit integer')
@@ -97,9 +107,9 @@ class Controller:
         mask_l = mask & 0xFFFF;
         config['REG_selectMask_h'] = mask_h
         config['REG_selectMask_l'] = mask_l
-        if windowlength < 0 or windowlength > 63:
+        if window < 0 or window > 63:
             raise ValueError('valid hit window length range: 0..63')
-        config['REG_hitWindowLength'] = windowlength
+        config['REG_hitWindowLength'] = window
         self.write_registerfile(config)
 
     def filter(self, enable=None, scale=None, offset=None,
@@ -131,77 +141,14 @@ class Controller:
 #import time, random
 #s = Spadic()
 #
-#def ledtest():
-#    s.write_register(RF_MAP['overrides'], 0x10)
-#    s.write_register(RF_MAP['overrides'], 0x00)
-#
-#def testout(x):
-#    if x not in [0, 1]:
-#        raise ValueError('only 0 or 1 allowed!')
-#    s.write_register(RF_MAP['REG_enableTestOutput'], x)
-#
-#def testin(x):
-#    if x not in [0, 1]:
-#        raise ValueError('only 0 or 1 allowed!')
-#    s.write_register(RF_MAP['REG_enableTestInput'], x)
-#
-#def enablechannel0(x):
-#    if x not in [0, 1]:
-#        raise ValueError('only 0 or 1 allowed!')
-#    s.write_register(RF_MAP['REG_disableChannelA'], 0xFFFF-x)
-#    s.write_register(RF_MAP['REG_disableChannelB'], 0xFFFF)
-#
-#def zerosr():
-#    sr = SpadicShiftRegister()
-#    s.write_shiftregister(str(sr))
-#
-#def config_ftdireadtest():
-#    s.write_register(8, 0x10)
-#    zerosr()
-#    testin(1)
-#    testout(1)
-#    enablechannel0(1)
-#    s.selectmask(0xFFFF0000) # first 16 samples
-#    s.write_register(48, 0) # diffmode off
-#    s.write_register(8, 0x00)
-#
 #def config_analogtest():
 #    s.write_register(8, 0x10)
 #    s.config(RF_DEFAULT, SR_DEFAULT)
 #    s.write_register(8, 0x00)
 #
-#def randdata(n):
-#    return [random.randint(0, 120) for i in range(n)]
-#    
-#def ftdireadtest(f=None, max_timeout=1, timeout_init=1e-6):
-#    start = time.time()
-#    timeout = timeout_init
-#    print >> f, ''
-#    while True:
-#        d = s._ftdi_read(9, 1)
-#        if d:
-#            timeout = timeout_init
-#            print >> f, '%6.1f: ' % (time.time()-start) + \
-#                        ' '.join('%02X' % x for x in d)
-#        else:
-#            if timeout > max_timeout:
-#                break
-#            time.sleep(timeout)
-#            timeout = 2*timeout
-#
 #def getmessages():
 #    for m in messages(message_words(s.read_data())):
 #        yield Message(m)
-#
-#def quickwrite(data):
-#    for i in range(4):
-#        s.write_data(data)
-#        time.sleep(0.1)
-#    M = list(getmessages())
-#    if M:
-#        return M[-1].data
-#    else:
-#        print 'no messages found!'
 #
 #def enableamp(channel, only=True):
 #  if only:
