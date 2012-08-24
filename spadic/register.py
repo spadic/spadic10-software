@@ -70,7 +70,7 @@ RF_MAP = {
 #--------------------------------------------------------------------
 # register file control class
 #--------------------------------------------------------------------
-class SpadicRegisterFile:
+class RegisterFile:
     """Representation of the SPADIC register file.
     
     Emulates the behaviour of a dictionary. Registers are accessed by their
@@ -82,13 +82,13 @@ class SpadicRegisterFile:
     def __init__(self, spadic):
         self._spadic = spadic
         for name in RF_MAP:
-            self[name] = 0
+            self._registers[name] = 0
 
     def __contains__(self, name):
-        return name in RF_MAP
+        return name in self._registers
 
     def __iter__(self):
-        return iter(RF_MAP)
+        return iter(self._registers)
 
     def __getitem__(self, name):
         if name not in self:
@@ -427,7 +427,7 @@ SR_MAP = {
 #--------------------------------------------------------------------
 # shift register control class
 #--------------------------------------------------------------------
-class SpadicShiftRegister:
+class ShiftRegister:
     """Representation of the SPADIC shift register.
     
     Emulates the behaviour of a dictionary. Registers are accessed by their
@@ -436,7 +436,7 @@ class SpadicShiftRegister:
     must be called."""
 
     def __init__(self, spadic):
-        self._spadic = spacic
+        self._spadic = spadic
         self._bits = ['0']*SR_LENGTH
         # bits[0] = MSB (on the left side, shifted last)
         # bits[-1] = LSB (on the right side, shifted first)
@@ -474,7 +474,19 @@ class SpadicShiftRegister:
     def write(self):
         """Perform the shift register write operation, using the previously
         stored values."""
-        self._spadic.write_shiftregister(str(self))
+
+        chain = '0' # ?
+        mode = '10' # write mode
+        ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
+        ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
+        self._spadic.write_register(RF_MAP['control'], ctrl_data)
+
+        # divide bit string into 16 bit chunks
+        bits = str(self)
+        while bits: # should iterate int(SR_LENGTH/16) times
+            chunk = int(bits[-16:], 2) # take the last 16 bits
+            bits = bits[:-16]          # remove the last 16 bits
+            self._spadic.write_register(RF_MAP['data'], chunk)
 
     def load(self, config, write=False):
         """Load the shift register configuration from a dictionary.

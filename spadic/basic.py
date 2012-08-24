@@ -54,26 +54,6 @@ class Spadic(iom.FtdiIom):
         return self._iom_read(IOM_ADDR_I2C, 8)
 
     #----------------------------------------------------------------
-    # write bits (given as string) to shift register
-    #----------------------------------------------------------------
-    def write_shiftregister(self, bits):
-        if len(bits) != SR_LENGTH:
-            raise ValueError('number of bits must be %i!' % SR_LENGTH)
-        if not all(b in '01' for b in bits):
-            raise ValueError('bit string must contain only 0 and 1!')
-        chain = '0' # ?
-        mode = '10' # write mode
-        ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
-        ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
-        self.write_register(RF_MAP['control'], ctrl_data)
-
-        # divide bit string into 16 bit chunks
-        while bits: # should iterate int(SR_LENGTH/16) times
-            chunk = int(bits[-16:], 2) # take the last 16 bits
-            bits = bits[:-16]          # remove the last 16 bits
-            self.write_register(RF_MAP['data'], chunk)
-
-    #----------------------------------------------------------------
     # read data from test output -> IOM -> FTDI
     # (assuming package mode is used)
     #----------------------------------------------------------------

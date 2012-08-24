@@ -324,7 +324,7 @@ class Message():
 #--------------------------------------------------------------------
 # Message reader
 #--------------------------------------------------------------------
-class SpadicMessageReader:
+class MessageReader:
     _read_words = _message_words()
     _read_messages = _messages()
 
