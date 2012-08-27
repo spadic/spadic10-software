@@ -1,21 +1,25 @@
 from bit_byte_helper import int2bitstring
 
-
 #====================================================================
 # SPADIC Register File representation
 #====================================================================
+
+class Register:
+    def __init__(self, addr, size=None):
+        self.addr = addr
+        self.size = size
 
 #--------------------------------------------------------------------
 # dictionary of SPADIC 1.0 register file (contains addresses)
 #--------------------------------------------------------------------
 RF_MAP = {
-   "loopback": 0x0, # width=3, sw="rw", hw="ro"
+   "loopback": Register(addr=0x0, size=3), # sw="rw", hw="ro"
                     # [2] DES2BS Loopback
                     # [1] BS2DEC Loopback
                     # [0] DEC2USR Loopback
                     # Sets loopback modes.
 
-   "overrides": 0x8, # width=7, sw="rw", hw="ro"
+   "overrides": Register(addr=0x8, size=7), # sw="rw", hw="ro"
                      # [6] link_active;
                      # [5] user_pin2;
                      # [4] user_pin1;
@@ -26,45 +30,48 @@ RF_MAP = {
    # Delivers user pins and override pins for link_active, align_initovr,
    # link_ready, rxpcs_initovr, txpcs_initovr - physical link init.
 
-   "REG_CbmNetAddr"       : 0x10, # width=16, sw="rw", hw="ro"
-   "REG_EpochCounter"     : 0x18, # width=16, sw="rw", hw="ro"
-   "REG_threshold1"       : 0x20, # width=9 , sw="rw", hw="ro"
-   "REG_threshold2"       : 0x28, # width=9 , sw="rw", hw="ro"
-   "REG_compDiffMode"     : 0x30, # width=1 , sw="rw", hw="ro"
-   "REG_hitWindowLength"  : 0x38, # width=6 , sw="rw", hw="ro"
-   "REG_selectMask_l"     : 0x40, # width=16, sw="rw", hw="ro"
-   "REG_selectMask_h"     : 0x48, # width=16, sw="rw", hw="ro"
-   "REG_bypassFilterStage": 0x50, # width=5 , sw="rw", hw="ro"
-   "REG_aCoeffFilter_l"   : 0x58, # width=16, sw="rw", hw="ro"
-   "REG_aCoeffFilter_h"   : 0x60, # width=2 , sw="rw", hw="ro"
-   "REG_bCoeffFilter_l"   : 0x68, # width=16, sw="rw", hw="ro"
-   "REG_bCoeffFilter_h"   : 0x70, # width=8 , sw="rw", hw="ro"
-   "REG_scalingFilter"    : 0x78, # width=9 , sw="rw", hw="ro"
-   "REG_offsetFilter"     : 0x80, # width=9 , sw="rw", hw="ro"
-   "REG_groupIdA"         : 0x88, # width=8 , sw="rw", hw="ro"
-   "REG_groupIdB"         : 0x90, # width=8 , sw="rw", hw="ro"
+   "REG_CbmNetAddr"       : Register(addr=0x10, size=16), # sw="rw", hw="ro"
+   "REG_EpochCounter"     : Register(addr=0x18, size=16), # sw="rw", hw="ro"
+   "REG_threshold1"       : Register(addr=0x20, size=9 ), # sw="rw", hw="ro"
+   "REG_threshold2"       : Register(addr=0x28, size=9 ), # sw="rw", hw="ro"
+   "REG_compDiffMode"     : Register(addr=0x30, size=1 ), # sw="rw", hw="ro"
+   "REG_hitWindowLength"  : Register(addr=0x38, size=6 ), # sw="rw", hw="ro"
+   "REG_selectMask_l"     : Register(addr=0x40, size=16), # sw="rw", hw="ro"
+   "REG_selectMask_h"     : Register(addr=0x48, size=16), # sw="rw", hw="ro"
+   "REG_bypassFilterStage": Register(addr=0x50, size=5 ), # sw="rw", hw="ro"
+   "REG_aCoeffFilter_l"   : Register(addr=0x58, size=16), # sw="rw", hw="ro"
+   "REG_aCoeffFilter_h"   : Register(addr=0x60, size=2 ), # sw="rw", hw="ro"
+   "REG_bCoeffFilter_l"   : Register(addr=0x68, size=16), # sw="rw", hw="ro"
+   "REG_bCoeffFilter_h"   : Register(addr=0x70, size=8 ), # sw="rw", hw="ro"
+   "REG_scalingFilter"    : Register(addr=0x78, size=9 ), # sw="rw", hw="ro"
+   "REG_offsetFilter"     : Register(addr=0x80, size=9 ), # sw="rw", hw="ro"
+   "REG_groupIdA"         : Register(addr=0x88, size=8 ), # sw="rw", hw="ro"
+   "REG_groupIdB"         : Register(addr=0x90, size=8 ), # sw="rw", hw="ro"
   
    # "REG_neighborSelectMatrixA"
    # "REG_neighborSelectMatrixA_H"
    # "REG_neighborSelectMatrixB"
    # "REG_neighborSelectMatrixB_H"
   
-   "REG_disableChannelA"     : 0x288, # width=16, sw="rw", hw="ro"
-   "REG_disableChannelB"     : 0x290, # width=16, sw="rw", hw="ro"
-   "REG_disableEpochChannelA": 0x298, # width=1 , sw="rw", hw="ro"
-   "REG_disableEpochChannelB": 0x2a0, # width=1 , sw="rw", hw="ro"
-   "REG_enableTestOutput"    : 0x2a8, # width=1 , sw="rw", hw="ro"
-   "REG_testOutputSelGroup"  : 0x2b0, # width=1 , sw="rw", hw="ro"
-   "REG_enableTestInput"     : 0x2b8, # width=1 , sw="rw", hw="ro"
-   "REG_enableAdcDec_l"      : 0x2c0, # width=16, sw="rw", hw="ro"
-   "REG_enableAdcDec_h"      : 0x2c8, # width=5 , sw="rw", hw="ro"
-   "REG_triggerMaskA"        : 0x2d0, # width=16, sw="rw", hw="ro"
-   "REG_triggerMaskB"        : 0x2d8, # width=16, sw="rw", hw="ro"
-   "REG_enableAnalogTrigger" : 0x2e0, # width=1 , sw="rw", hw="ro"
-   "REG_enableTriggerOutput" : 0x2e8, # width=1 , sw="rw", hw="ro"
-   "control"                 : 0x2f0, # width=14, sw="wo", hw="ro"
-   "data"                    : 0x300,
-   "status"                  : 0x2f8, # width=16, sw="ro", hw="wo"
+   "REG_disableChannelA"     : Register(addr=0x288, size=16), # sw="rw", hw="ro"
+   "REG_disableChannelB"     : Register(addr=0x290, size=16), # sw="rw", hw="ro"
+   "REG_disableEpochChannelA": Register(addr=0x298, size=1 ), # sw="rw", hw="ro"
+   "REG_disableEpochChannelB": Register(addr=0x2a0, size=1 ), # sw="rw", hw="ro"
+   "REG_enableTestOutput"    : Register(addr=0x2a8, size=1 ), # sw="rw", hw="ro"
+   "REG_testOutputSelGroup"  : Register(addr=0x2b0, size=1 ), # sw="rw", hw="ro"
+   "REG_enableTestInput"     : Register(addr=0x2b8, size=1 ), # sw="rw", hw="ro"
+   "REG_enableAdcDec_l"      : Register(addr=0x2c0, size=16), # sw="rw", hw="ro"
+   "REG_enableAdcDec_h"      : Register(addr=0x2c8, size=5 ), # sw="rw", hw="ro"
+   "REG_triggerMaskA"        : Register(addr=0x2d0, size=16), # sw="rw", hw="ro"
+   "REG_triggerMaskB"        : Register(addr=0x2d8, size=16), # sw="rw", hw="ro"
+   "REG_enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # sw="rw", hw="ro"
+   "REG_enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # sw="rw", hw="ro"
+   # TODO hide the following two somehow, they should not be used in
+   # RegisterFile, but are needed for ShiftRegister.write
+   "control"                 : Register(addr=0x2f0, size=14), # sw="wo", hw="ro"
+   "data"                    : Register(addr=0x300)
+   # hide this as well, it can not be written anyway
+#  "status"                  : Register(addr=0x2f8, size=16) # sw="ro", hw="wo"
 }
 
 #--------------------------------------------------------------------
@@ -98,8 +105,13 @@ class RegisterFile:
     def __setitem__(self, name, value):
         if name not in self:
             raise KeyError('%s not in register file' % name)
-        self._spadic.write_register(RF_MAP[name], value)
+        self._spadic.write_register(RF_MAP[name].addr, value)
         self._registers[name] = value
+
+    def size(self, name):
+        """Return the size of a register in bits."""
+        sz = RF_MAP[name].size
+        return sz if sz is not None else 0
 
     def load(self, config):
         """Load the register file configuration from a dictionary."""
@@ -111,7 +123,7 @@ class RegisterFile:
         for name in self:
             self[name] = 0
 
-    def save(self, nonzero_only=True):
+    def dict(self, nonzero_only=True):
         """Return a dictionary with the current register file configuration.
         
         If 'nonzero_only' is True, include only the registers containing a
@@ -131,8 +143,8 @@ class RegisterFile:
         elif isinstance(name_or_addr, int):
             addr = name_or_addr
             result = [name for name in self
-                      if addr == RF_MAP[name]]
-        print '\n'.join(name.ljust(25) + '%3i' % RF_MAP[name]
+                      if addr == RF_MAP[name].addr]
+        print '\n'.join(name.ljust(25) + '%3i' % RF_MAP[name].addr
                         for name in sorted(result))
         
  
@@ -473,7 +485,7 @@ class ShiftRegister:
             self._bits[pos[i]] = b
 
     def size(self, name):
-        """Return the size, in bits, of the register given by the name."""
+        """Return the size of a register in bits."""
         return len(SR_MAP[name])
 
     def write(self):
@@ -484,14 +496,14 @@ class ShiftRegister:
         mode = '10' # write mode
         ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
         ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
-        self._spadic.write_register(RF_MAP['control'], ctrl_data)
+        self._spadic.write_register(RF_MAP['control'].addr, ctrl_data)
 
         # divide bit string into 16 bit chunks
         bits = str(self)
         while bits: # should iterate int(SR_LENGTH/16) times
             chunk = int(bits[-16:], 2) # take the last 16 bits
             bits = bits[:-16]          # remove the last 16 bits
-            self._spadic.write_register(RF_MAP['data'], chunk)
+            self._spadic.write_register(RF_MAP['data'].addr, chunk)
 
     def load(self, config, write=False):
         """Load the shift register configuration from a dictionary.
@@ -508,7 +520,7 @@ class ShiftRegister:
             self[name] = 0
         self.write()
 
-    def save(self, nonzero_only=True):
+    def dict(self, nonzero_only=True):
         """Return a dictionary with the current shift register configuration.
         
         If 'nonzero_only' is True, include only the registers containing a

@@ -3,6 +3,7 @@ from register import RegisterFile, ShiftRegister
 #================================================================
 # helper functions
 #================================================================
+ONOFF = {1: 'ON', 0: 'OFF'}
         
 #----------------------------------------------------------------
 # filter settings
@@ -45,7 +46,100 @@ def _filter_coeffb(coeff, norm=False):
 
 
 #================================================================
-# Main controller unit
+# LED control
+#================================================================
+class Led:
+    """Control unit for the userpin1/2 LEDs."""
+    _userpin1 = 0
+    _userpin2 = 0
+
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+
+    def __call__(self, userpin1=None, userpin2=None):
+        """Turn the userpin1/2 LEDs on or off."""
+        if userpin1 is not None:
+            self._userpin1 = 1 if userpin1 else 0
+        if userpin2 is not None:
+            self._userpin2 = 1 if userpin2 else 0
+        value = ((0x10 * self._userpin1) +
+                 (0x20 * self._userpin2))
+        self._registerfile['overrides'] = value
+
+    def reset(self):
+        self(0, 0)
+
+    def __str__(self):
+        return ('userpin1: %s  userpin2: %s' %
+                (ONOFF[self._userpin1], ONOFF[self._userpin2]))
+        
+
+#================================================================
+# Test data control
+#================================================================
+class TestData:
+    """Control unit for the test data input and output."""
+    _testdatain = 0
+    _testdataout = 0
+
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+
+    def __call__(self, testdatain=None, testdataout=None):
+        """Turn the test data input and output on or off."""
+        if testdatain is not None:
+            self._testdatain = 1 if testdatain else 0
+        if testdataout is not None:
+            self._testdataout = 1 if testdataout else 0
+        self._registerfile['REG_enableTestInput'] = self._testdatain
+        self._registerfile['REG_enableTestOutput'] = self._testdataout
+
+    def reset(self):
+        self(0, 0)
+
+    def __str__(self):
+        return ('test data input: %s  test data output: %s' %
+                (ONOFF[self._testdatain], ONOFF[self._testdataout]))
+
+
+#================================================================
+# Comparator control
+#================================================================
+class Comparator:
+    """Control unit for the digital comparators."""
+    _threshold1 = 0
+    _threshold2 = 0
+    _diffmode = 0
+
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+
+    def __call__(self, threshold1=None, threshold2=None, diffmode=None):
+        """Set the two thresholds and turn the diff mode on or off."""
+        thresholds_to_check = [th for th in [threshold1, threshold2]
+                               if th is not None]
+        if any(th < -256 or th > 255 for th in thresholds_to_check):
+            raise ValueError('valid threshold range: -256..255')
+        if threshold1 is not None:
+            self._threshold1 = threshold1
+        if threshold2 is not None:
+            self._threshold2 = threshold2
+        if diffmode is not None:
+            self._diffmode = 1 if diffmode else 0
+        self._registerfile['REG_threshold1'] = self._threshold1 % 512
+        self._registerfile['REG_threshold2'] = self._threshold2 % 512
+        self._registerfile['REG_compDiffMode'] = self._diffmode
+
+    def reset(self):
+        self(0, 0, 0)
+
+    def __str__(self):
+        return ('threshold 1: %i  threshold 2: %i\ndiff mode: %s' %
+                (self._threshold1, self._threshold2, ONOFF[self._diffmode]))
+
+
+#================================================================
+# Main control
 #================================================================
 class Controller:
     """SPADIC configuration controller."""
@@ -54,20 +148,17 @@ class Controller:
         self._spadic = spadic
         self.registerfile = RegisterFile(spadic)
         self.shiftregister = ShiftRegister(spadic)
-
-    def leds(self, led1=False, led2=False):
-        """Turn the userpin1/2 LEDs on or off."""
-        value = ((0x10 if led1 else 0) +
-                 (0x20 if led2 else 0))
-        self.registerfile['overrides'] = value
+        self.led = Led(self.registerfile)
+        self.testdata = TestData(self.registerfile)
+        self.comparator = Comparator(self.registerfile)
 
     def write_shiftregister(self, config=None):
         """Perform the shift register write operation."""
         if config is not None:
             self.shiftregister.load(config)
-        self.leds(1, 0)
+        self.led(1)
         self.shiftregister.write()
-        self.leds(0, 0)
+        self.led(0)
 
     def clear_shiftregister(self):
         """Fill the shift register with zeros."""
@@ -76,27 +167,41 @@ class Controller:
 
     def write_registerfile(self, config):
         """Write a configuration into the register file."""
-        self.leds(1, 0)
+        self.led(1)
         self.registerfile.load(config)
-        self.leds(0, 0)
+        self.led(0)
 
-    def testdata(self, inp, out):
-        if any(x not in [0, 1] for x in [inp, out]):
-            raise ValueError('only 0 or 1 allowed!')
-        config = {'REG_enableTestInput': inp,
-                  'REG_enableTestOutput': out}
-        self.write_registerfile(config)
-
-    def comparator(self, threshold1, threshold2, diffmode=0):
-        """Configure the digital comparators."""
-        config = {}
-        for (name, th) in [('REG_threshold1', threshold1),
-                           ('REG_threshold2', threshold2)]:
-            if th < -256 or th > 255:
-                raise ValueError('valid threshold range: -256..255')
-            config[name] = th % 512
-        config['REG_compDiffMode'] = diffmode
-        self.write_registerfile(config)
+    def save(self, f=None, nonzero=True):
+        """Save the current configuration to a text file."""
+        def frame(title, symbol='=', width=60):
+            return ['#' + symbol*(width-1),
+                    '# '+title,
+                    '#' + symbol*(width-1), '']
+        def fmtnumber(n, sz):
+            if sz == 1:
+                fmt = '{0}'
+            else:
+                nhex = sz//4 + (1 if sz%4 else 0)
+                fmt = '0x{:0'+str(nhex)+'X}'
+            return fmt.format(n).rjust(6)
+        lines = frame('Register file')
+        rflines = []
+        for name in self.registerfile.dict(nonzero):
+            ln = name.ljust(25) + ' '
+            sz = self.registerfile.size(name)
+            ln += fmtnumber(self.registerfile[name], sz)
+            rflines.append(ln)
+        lines += sorted(rflines, key=str.lower)
+        lines.append('')
+        lines += frame('Shift register')
+        srlines = []
+        for name in self.shiftregister.dict(nonzero):
+            ln = name.ljust(25) + ' '
+            sz = self.shiftregister.size(name)
+            ln += fmtnumber(self.shiftregister[name], sz)
+            srlines.append(ln)
+        lines += sorted(srlines, key=str.lower)
+        print >> f, '\n'.join(lines)
         
     def hitlogic(self, mask=0xFFFF0000, window=16):
         """Configure the hit logic."""
