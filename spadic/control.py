@@ -209,7 +209,7 @@ class StageZero(Stage):
 
     def __str__(self):
         p = self._position
-        return ('coeff. a:  ---  coeff. b: %4i  enabled: %s' %
+        return ('                coeff. b: %4i  enabled: %s' %
                 (self._coeffb[p], onoff(self._enable[p])))
 
 #----------------------------------------------------------------

@@ -7,8 +7,8 @@ c = spadic.Controller(s)
 r = spadic.MessageReader(s)
 
 def ledtest():
-    c.leds(1, 0)
-    c.leds(0, 0)
+    c.led(1, 0)
+    c.led(0, 0)
 
 # TODO: include in Controller
 def enablechannel0(x):
@@ -19,10 +19,8 @@ def enablechannel0(x):
 
 def config_ftdireadtest():
     c.clear_shiftregister()
-    c.testdata(inp=True, out=True)
+    c.testdata(testdatain=True, testdataout=True)
     enablechannel0(1)
-    c.hitlogic(mask=0xFFFF0000, window=16)
-    c.comparator(0, 0, 0) # diffmode off
 
 def randdata(n):
     return [random.randint(0, 120) for i in range(n)]
