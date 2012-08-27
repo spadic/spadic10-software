@@ -3,50 +3,17 @@ from register import RegisterFile, ShiftRegister
 #================================================================
 # helper functions
 #================================================================
-ONOFF = {1: 'ON', 0: 'OFF'}
-        
-#----------------------------------------------------------------
-# filter settings
-#----------------------------------------------------------------
-def _filter_enable(enable):
-    if enable < 0 or enable > 0x1F:
-        raise ValueError('expected 5 bit integer')
-    return {'REG_bypassFilterStage': ~enable}
-    # enable scaling/offset:     0x10
-    # enable first filter stage: 0x01
+def onoff(value):
+    return 'ON' if value else 'OFF'
 
-def _filter_scale(scale, norm=False):
-    if norm:
-        scale = int(round(32*scale))
-    if scale < -256 or scale > 255:
-        raise ValueError('valid scaling range: -256..255')
-    return {'REG_scalingFilter': scale}
-
-def _filter_offset(offset):
-    if offset < -256 or offset > 255:
-        raise ValueError('valid offset range: -256..255')
-    return {'REG_offsetFilter': offset}
-
-def _filter_coeff_(coeff, norm, num, reg):
-    if not len(coeff) == num:
-        raise ValueError('expected list of %i coefficients' % num)
-    if norm:
-        coeff = [int(round(32*c)) for c in coeff]
-    if any(c < -32 or c > 31 for c in coeff):
-        raise ValueError('valid coefficient range: -32..31')
-    value = sum(c%64 << 6*i for (i, c) in enumerate(coeff))
-    value_h = value >> 16;
-    value_l = value & 0xFFFF;
-    return {reg+'_h': value_h, reg+'_l': value_l} 
-
-def _filter_coeffa(coeff, norm=False):
-    return _filter_coeff_(coeff, norm, 3, 'REG_aCoeffFilter')
-def _filter_coeffb(coeff, norm=False):
-    return _filter_coeff_(coeff, norm, 4, 'REG_bCoeffFilter')
+def frame(title, symbol='=', width=60):
+    return '\n'.join(['#' + symbol*(width-1),
+                      '# '+title,
+                      '#' + symbol*(width-1)])
 
 
 #================================================================
-# LED control
+# LEDs
 #================================================================
 _LED_USERPIN1 = 0
 _LED_USERPIN2 = 0
@@ -71,11 +38,11 @@ class Led:
 
     def __str__(self):
         return ('userpin1: %s  userpin2: %s' %
-                (ONOFF[self._userpin1], ONOFF[self._userpin2]))
+                (onoff(self._userpin1), onoff(self._userpin2)))
         
 
 #================================================================
-# Test data control
+# Test data
 #================================================================
 _TESTDATAIN = 0
 _TESTDATAOUT = 0
@@ -99,11 +66,11 @@ class TestData:
 
     def __str__(self):
         return ('test data input: %s  test data output: %s' %
-                (ONOFF[self._testdatain], ONOFF[self._testdataout]))
+                (onoff(self._testdatain), onoff(self._testdataout)))
 
 
 #================================================================
-# Comparator control
+# Comparator
 #================================================================
 _CMP_TH1 = 0
 _CMP_TH2 = 0
@@ -134,15 +101,15 @@ class Comparator:
         self._registerfile['REG_compDiffMode'] = self._diffmode
 
     def __str__(self):
-        return ('threshold 1: %i  threshold 2: %i\ndiff mode: %s' %
-                (self._threshold1, self._threshold2, ONOFF[self._diffmode]))
+        return ('threshold 1: %i  threshold 2: %i  diff mode: %s' %
+                (self._threshold1, self._threshold2, onoff(self._diffmode)))
         
 
 #================================================================
-# Hit logic control
+# Hit logic
 #================================================================
-_HITLOGIC_MASK = 0x00000000
-_HITLOGIC_WINDOW = 0
+_HITLOGIC_MASK = 0xFFFF0000
+_HITLOGIC_WINDOW = 16
 class HitLogic:
     """Controls the hit logic."""
     def __init__(self, registerfile):
@@ -172,6 +139,148 @@ class HitLogic:
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
                 (self._mask, self._window))
+        
+#================================================================
+# Filter
+#================================================================
+_FILTER_COEFFA = 0
+_FILTER_COEFFB = 0
+_FILTER_ENABLE = 0
+_FILTER_SCALING = 0
+_FILTER_OFFSET = 0
+
+#----------------------------------------------------------------
+# Single stage
+#----------------------------------------------------------------
+class Stage:
+    """Controls a filter stage."""
+    def __init__(self, registerfile, coeffa_list, coeffb_list,
+                                                  enable_list, position):
+        self._registerfile = registerfile
+        self._coeffa = coeffa_list
+        self._coeffb = coeffb_list
+        self._enable = enable_list
+        self._position = position
+        self.reset()
+
+    def reset(self):
+        self(_FILTER_COEFFA, _FILTER_COEFFB, _FILTER_ENABLE)
+
+    def __call__(self, coeffa=None, coeffb=None, enable=None, norm=False):
+        """Set the 'a'/'b' coefficients and turn the stage on or off."""
+        coeff_to_check = [c for c in [coeffa, coeffb] if c is not None]
+        coeff_max = 0.96875 if norm else 31
+        coeff_min = -1 if norm else -32
+        if any(c < coeff_min or c > coeff_max for c in coeff_to_check):
+            raise ValueError('valid coefficient range: %s..%s' %
+                             (str(coeff_min), str(coeff_max)))
+        if coeffa is not None:
+            self._coeffa[self._position] = (coeffa if not norm
+                                            else int(round(32*coeffa)))
+        if coeffb is not None:
+            self._coeffb[self._position] = (coeffb if not norm
+                                            else int(round(32*coeffb)))
+        if enable is not None:
+            self._enable[self._position] = 1 if enable else 0
+
+        value_a = sum(c%64 << 6*i for (i, c) in enumerate(self._coeffa)) >> 6
+        value_b = sum(c%64 << 6*i for (i, c) in enumerate(self._coeffb))
+        self._registerfile['REG_aCoeffFilter_h'] = value_a >> 16
+        self._registerfile['REG_aCoeffFilter_l'] = value_a & 0xFFFF
+        self._registerfile['REG_bCoeffFilter_h'] = value_b >> 16
+        self._registerfile['REG_bCoeffFilter_l'] = value_b & 0xFFFF
+        value_enable = sum(en << i for (i, en) in enumerate(self._enable))
+        self._registerfile['REG_bypassFilterStage'] = (~value_enable) % 32
+
+    def __str__(self):
+        p = self._position
+        return ('coeff. a: %4i  coeff. b: %4i  enabled: %s' %
+                (self._coeffa[p], self._coeffb[p], onoff(self._enable[p])))
+
+#----------------------------------------------------------------
+# Single stage (half)
+#----------------------------------------------------------------
+class StageZero(Stage):
+    """Controls a half stage which has no 'a' coefficient."""
+
+    def __call__(self, coeffb=None, enable=None, norm=False):
+        """Set the 'b' coefficient and turn the stage on or off."""
+        Stage.__call__(self, None, coeffb, enable, norm)
+
+    def __str__(self):
+        p = self._position
+        return ('coeff. a:  ---  coeff. b: %4i  enabled: %s' %
+                (self._coeffb[p], onoff(self._enable[p])))
+
+#----------------------------------------------------------------
+# Scaling/offset
+#----------------------------------------------------------------
+class ScalingOffset:
+    """Controls a scaling/offset stage."""
+    def __init__(self, registerfile, enable_list, position):
+        self._registerfile = registerfile
+        self._enable = enable_list
+        self._position = position
+        self.reset()
+
+    def reset(self):
+        self(_FILTER_SCALING, _FILTER_OFFSET, _FILTER_ENABLE)
+
+    def __call__(self, scaling=None, offset=None, enable=None, norm=False):
+        """Set the scaling and offset and turn the stage on or off."""
+        if scaling is not None:
+            scaling_min = -8 if norm else -256
+            scaling_max = 7.96875 if norm else 255
+            if scaling < scaling_min or scaling > scaling_max:
+                raise ValueError('valid scaling range: -%s..%s' %
+                                 (str(scaling_min), str(scaling_max)))
+            self._scaling = (scaling if not norm
+                             else int(round(32*scaling)))
+        if offset is not None:
+            if offset < -256 or offset > 255:
+                raise ValueError('valid offset range: -256..255')
+            self._offset = offset
+        if enable is not None:
+            self._enable[self._position] = 1 if enable else 0
+
+        self._registerfile['REG_offsetFilter'] = self._offset
+        self._registerfile['REG_scalingFilter'] = self._scaling
+        value_enable = sum(en << i for (i, en) in enumerate(self._enable))
+        self._registerfile['REG_bypassFilterStage'] = (~value_enable) % 32
+
+    def __str__(self):
+        p = self._position
+        return ('scaling: %5i  offset: %6i  enabled: %s' %
+                (self._scaling, self._offset, onoff(self._enable[p])))
+
+#----------------------------------------------------------------
+# Whole filter
+#----------------------------------------------------------------
+class Filter:
+    """Collection of several filter stages."""
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+        self._coeffa = [_FILTER_COEFFA for _ in range(4)]
+        self._coeffb = [_FILTER_COEFFB for _ in range(4)]
+        self._enable = [_FILTER_ENABLE for _ in range(5)]
+        self.stage = [StageZero(self._registerfile, self._coeffa,
+                                self._coeffb, self._enable, 0),
+                      Stage(self._registerfile, self._coeffa,
+                                self._coeffb, self._enable, 1),
+                      Stage(self._registerfile, self._coeffa,
+                                self._coeffb, self._enable, 2),
+                      Stage(self._registerfile, self._coeffa,
+                                self._coeffb, self._enable, 3),
+                      ScalingOffset(self._registerfile, self._enable, 4)]
+        self.reset()
+
+    def reset(self):
+        for s in self.stage:
+            s.reset()
+
+    def __str__(self):
+        return '\n'.join(('Stage %i: ' % i) + str(s)
+                         for (i, s) in enumerate(self.stage))
 
 
 #================================================================
@@ -184,10 +293,29 @@ class Controller:
         self._spadic = spadic
         self.registerfile = RegisterFile(spadic)
         self.shiftregister = ShiftRegister(spadic)
+
+        # add control units
+        self._units = {}
         self.led = Led(self.registerfile)
+        self._units['LEDs'] = self.led
         self.testdata = TestData(self.registerfile)
+        self._units['Test data'] = self.testdata
         self.comparator = Comparator(self.registerfile)
+        self._units['Comparator'] = self.comparator
         self.hitlogic = HitLogic(self.registerfile)
+        self._units['Hit logic'] = self.hitlogic
+        self.filter = Filter(self.registerfile)
+        self._units['Filter'] = self.filter
+
+        self.reset()
+
+    def reset(self):
+        for unit in self._units.itervalues():
+            unit.reset()
+
+    def __str__(self):
+        return '\n\n'.join(frame(name)+'\n'+str(unit)
+                           for (name, unit) in self._units.iteritems())
 
     def write_shiftregister(self, config=None):
         """Perform the shift register write operation."""
@@ -210,10 +338,6 @@ class Controller:
 
     def save(self, f=None, nonzero=True):
         """Save the current configuration to a text file."""
-        def frame(title, symbol='=', width=60):
-            return ['#' + symbol*(width-1),
-                    '# '+title,
-                    '#' + symbol*(width-1), '']
         def fmtnumber(n, sz):
             if sz == 1:
                 fmt = '{0}'
@@ -221,7 +345,7 @@ class Controller:
                 nhex = sz//4 + (1 if sz%4 else 0)
                 fmt = '0x{:0'+str(nhex)+'X}'
             return fmt.format(n).rjust(6)
-        lines = frame('Register file')
+        lines = [frame('Register file')]
         rflines = []
         for name in self.registerfile.dict(nonzero):
             ln = name.ljust(25) + ' '
@@ -230,7 +354,7 @@ class Controller:
             rflines.append(ln)
         lines += sorted(rflines, key=str.lower)
         lines.append('')
-        lines += frame('Shift register')
+        lines.append(frame('Shift register'))
         srlines = []
         for name in self.shiftregister.dict(nonzero):
             ln = name.ljust(25) + ' '
@@ -240,21 +364,6 @@ class Controller:
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
 
-    def filter(self, enable=None, scale=None, offset=None,
-                     coeffa=None, coeffb=None, norm=False):
-        """Configure the digital filters."""
-        if enable is None: enable = 0x00
-        if scale is None: scale = 1.0 if norm else 32
-        if offset is None: offset = 0
-        if coeffa is None: coeffa = [0]*3
-        if coeffb is None: coeffb = [0]*4
-        config = {}
-        config.update(_filter_enable(enable))
-        config.update(_filter_scale(scale, norm))
-        config.update(_filter_offset(offset))
-        config.update(_filter_coeffa(coeffa, norm))
-        config.update(_filter_coeffb(coeffb, norm))
-        self.write_registerfile(config)
 
 #    def config(self, rf_dict, sr_dict):
 #        self.configrf(rf_dict)
