@@ -49,7 +49,7 @@ def _filter_coeffb(coeff, norm=False):
 # LED control
 #================================================================
 class Led:
-    """Control unit for the userpin1/2 LEDs."""
+    """Controls the userpin1/2 LEDs."""
     _userpin1 = 0
     _userpin2 = 0
 
@@ -78,7 +78,7 @@ class Led:
 # Test data control
 #================================================================
 class TestData:
-    """Control unit for the test data input and output."""
+    """Controls the test data input and output."""
     _testdatain = 0
     _testdataout = 0
 
@@ -106,7 +106,7 @@ class TestData:
 # Comparator control
 #================================================================
 class Comparator:
-    """Control unit for the digital comparators."""
+    """Controls the digital comparators."""
     _threshold1 = 0
     _threshold2 = 0
     _diffmode = 0
@@ -136,6 +136,42 @@ class Comparator:
     def __str__(self):
         return ('threshold 1: %i  threshold 2: %i\ndiff mode: %s' %
                 (self._threshold1, self._threshold2, ONOFF[self._diffmode]))
+        
+
+#================================================================
+# Hit logic control
+#================================================================
+class HitLogic:
+    """Controls the hit logic."""
+    _mask = 0xFFFF0000
+    _window = 16
+
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+
+    def __call__(self, mask=None, window=None):
+        """Set the selection mask and the hit window length."""
+        if mask is not None:
+            if mask < 0 or mask > 0xFFFFFFFF:
+                raise ValueError('valid mask range: 0..0xFFFFFFFF')
+            self._mask = mask
+        if window is not None:
+            if window < 0 or window > 63:
+                raise ValueError('valid hit window length range: 0..63')
+            self._window = window
+
+        mask_h = self._mask >> 16;
+        mask_l = self._mask & 0xFFFF;
+        self._registerfile['REG_selectMask_h'] = mask_h
+        self._registerfile['REG_selectMask_l'] = mask_l
+        self._registerfile['REG_hitWindowLength'] = self._window
+
+    def reset(self):
+        self(0xFFFF0000, 16)
+
+    def __str__(self):
+        return ('selection mask: 0x%08X  hit window length: %i' %
+                (self._mask, self._window))
 
 
 #================================================================
@@ -151,6 +187,7 @@ class Controller:
         self.led = Led(self.registerfile)
         self.testdata = TestData(self.registerfile)
         self.comparator = Comparator(self.registerfile)
+        self.hitlogic = HitLogic(self.registerfile)
 
     def write_shiftregister(self, config=None):
         """Perform the shift register write operation."""
@@ -202,20 +239,6 @@ class Controller:
             srlines.append(ln)
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
-        
-    def hitlogic(self, mask=0xFFFF0000, window=16):
-        """Configure the hit logic."""
-        if mask < 0 or mask > 0xFFFFFFFF:
-            raise ValueError('expected 32 bit integer')
-        config = {}
-        mask_h = mask >> 16;
-        mask_l = mask & 0xFFFF;
-        config['REG_selectMask_h'] = mask_h
-        config['REG_selectMask_l'] = mask_l
-        if window < 0 or window > 63:
-            raise ValueError('valid hit window length range: 0..63')
-        config['REG_hitWindowLength'] = window
-        self.write_registerfile(config)
 
     def filter(self, enable=None, scale=None, offset=None,
                      coeffa=None, coeffb=None, norm=False):
