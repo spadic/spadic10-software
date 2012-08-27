@@ -48,13 +48,16 @@ def _filter_coeffb(coeff, norm=False):
 #================================================================
 # LED control
 #================================================================
+_LED_USERPIN1 = 0
+_LED_USERPIN2 = 0
 class Led:
     """Controls the userpin1/2 LEDs."""
-    _userpin1 = 0
-    _userpin2 = 0
-
     def __init__(self, registerfile):
         self._registerfile = registerfile
+        self.reset()
+
+    def reset(self):
+        self(_LED_USERPIN1, _LED_USERPIN2)
 
     def __call__(self, userpin1=None, userpin2=None):
         """Turn the userpin1/2 LEDs on or off."""
@@ -66,9 +69,6 @@ class Led:
                  (0x20 * self._userpin2))
         self._registerfile['overrides'] = value
 
-    def reset(self):
-        self(0, 0)
-
     def __str__(self):
         return ('userpin1: %s  userpin2: %s' %
                 (ONOFF[self._userpin1], ONOFF[self._userpin2]))
@@ -77,13 +77,16 @@ class Led:
 #================================================================
 # Test data control
 #================================================================
+_TESTDATAIN = 0
+_TESTDATAOUT = 0
 class TestData:
     """Controls the test data input and output."""
-    _testdatain = 0
-    _testdataout = 0
-
     def __init__(self, registerfile):
         self._registerfile = registerfile
+        self.reset()
+
+    def reset(self):
+        self(_TESTDATAIN, _TESTDATAOUT)
 
     def __call__(self, testdatain=None, testdataout=None):
         """Turn the test data input and output on or off."""
@@ -94,9 +97,6 @@ class TestData:
         self._registerfile['REG_enableTestInput'] = self._testdatain
         self._registerfile['REG_enableTestOutput'] = self._testdataout
 
-    def reset(self):
-        self(0, 0)
-
     def __str__(self):
         return ('test data input: %s  test data output: %s' %
                 (ONOFF[self._testdatain], ONOFF[self._testdataout]))
@@ -105,14 +105,17 @@ class TestData:
 #================================================================
 # Comparator control
 #================================================================
+_CMP_TH1 = 0
+_CMP_TH2 = 0
+_CMP_DIFFMODE = 0
 class Comparator:
     """Controls the digital comparators."""
-    _threshold1 = 0
-    _threshold2 = 0
-    _diffmode = 0
-
     def __init__(self, registerfile):
         self._registerfile = registerfile
+        self.reset()
+
+    def reset(self):
+        self(_CMP_TH1, _CMP_TH2, _CMP_DIFFMODE)
 
     def __call__(self, threshold1=None, threshold2=None, diffmode=None):
         """Set the two thresholds and turn the diff mode on or off."""
@@ -130,9 +133,6 @@ class Comparator:
         self._registerfile['REG_threshold2'] = self._threshold2 % 512
         self._registerfile['REG_compDiffMode'] = self._diffmode
 
-    def reset(self):
-        self(0, 0, 0)
-
     def __str__(self):
         return ('threshold 1: %i  threshold 2: %i\ndiff mode: %s' %
                 (self._threshold1, self._threshold2, ONOFF[self._diffmode]))
@@ -141,13 +141,16 @@ class Comparator:
 #================================================================
 # Hit logic control
 #================================================================
+_HITLOGIC_MASK = 0x00000000
+_HITLOGIC_WINDOW = 0
 class HitLogic:
     """Controls the hit logic."""
-    _mask = 0xFFFF0000
-    _window = 16
-
     def __init__(self, registerfile):
         self._registerfile = registerfile
+        self.reset()
+
+    def reset(self):
+        self(_HITLOGIC_MASK, _HITLOGIC_WINDOW)
 
     def __call__(self, mask=None, window=None):
         """Set the selection mask and the hit window length."""
@@ -165,9 +168,6 @@ class HitLogic:
         self._registerfile['REG_selectMask_h'] = mask_h
         self._registerfile['REG_selectMask_l'] = mask_l
         self._registerfile['REG_hitWindowLength'] = self._window
-
-    def reset(self):
-        self(0xFFFF0000, 16)
 
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
