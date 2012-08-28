@@ -323,60 +323,48 @@ class Frontend:
     def __call__(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
                  psourcebias=None, nsourcebias=None, xfb=None):
         """Select N/P frontend, set global baseline trim, set CSA bias."""
+
         if frontend is not None:
             self._frontend = (0 if str(frontend) in 'nN' else
                              (1 if str(frontend) in 'pP' else
                              (1 if frontend else 0)))
             for ch in self.channel:
                 ch._select_frontend(frontend)
+
+        def checkvalue(v, name):
+            if v < 0 or v > 127:
+                raise ValueError('valid %s range: 0..127' % name)
         if baseline is not None:
-            if baseline < 0 or baseline > 127:
-                raise ValueError('valid baseline range: 0..127')
+            checkvalue(baseline, 'baseline')
             self._baseline = baseline
         if pcasc is not None:
-            if pcasc < 0 or pcasc > 127:
-                raise ValueError('valid pcasc range: 0..127')
+            checkvalue(pcasc, 'pcasc')
             self._pcasc = pcasc
         if ncasc is not None:
-            if ncasc < 0 or ncasc > 127:
-                raise ValueError('valid ncasc range: 0..127')
+            checkvalue(ncasc, 'ncasc')
             self._ncasc = ncasc
         if psourcebias is not None:
-            if psourcebias < 0 or psourcebias > 127:
-                raise ValueError('valid psourcebias range: 0..127')
+            checkvalue(psourcebias, 'psourcebias')
             self._psourcebias = psourcebias
         if nsourcebias is not None:
-            if nsourcebias < 0 or nsourcebias > 127:
-                raise ValueError('valid nsourcebias range: 0..127')
+            checkvalue(nsourcebias, 'nsourcebias')
             self._nsourcebias = nsourcebias
         if xfb is not None:
-            if xfb < 0 or xfb > 127:
-                raise ValueError('valid xfb range: 0..127')
+            checkvalue(xfb, 'xfb')
             self._xfb = xfb
 
         self._shiftregister['baselineTrimN'] = self._baseline
         self._shiftregister['DecSelectNP'] = self._frontend
-        # TODO: do the following in some clever way
-        self._shiftregister['pCascP']       = (self._pcasc
-                                              if self._frontend == 1 else 0)
-        self._shiftregister['pCascN']       = (self._pcasc
-                                              if self._frontend == 0 else 0)
-        self._shiftregister['nCascP']       = (self._ncasc
-                                              if self._frontend == 1 else 0)
-        self._shiftregister['nCascN']       = (self._ncasc
-                                              if self._frontend == 0 else 0)
-        self._shiftregister['pSourceBiasP'] = (self._psourcebias
-                                              if self._frontend == 1 else 0)
-        self._shiftregister['pSourceBiasN'] = (self._psourcebias
-                                              if self._frontend == 0 else 0)
-        self._shiftregister['nSourceBiasP'] = (self._nsourcebias
-                                              if self._frontend == 1 else 0)
-        self._shiftregister['nSourceBiasN'] = (self._nsourcebias
-                                              if self._frontend == 0 else 0)
-        self._shiftregister['nFBP']         = (self._xfb
-                                              if self._frontend == 1 else 0)
-        self._shiftregister['pFBN']         = (self._xfb
-                                              if self._frontend == 0 else 0)
+
+        r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
+             1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
+        v = [self._pcasc, self._ncasc,
+                        self._psourcebias, self._nsourcebias, self._xfb]
+
+        for name in r[1-self._frontend]:
+            self._shiftregister[name] = 0
+        for (name, value) in zip(r[self._frontend], v):
+            self._shiftregister[name] = value
 
     def __str__(self):
         pass
