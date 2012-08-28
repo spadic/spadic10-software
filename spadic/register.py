@@ -60,12 +60,12 @@ RF_MAP = {
    "REG_enableTestOutput"    : Register(addr=0x2a8, size=1 ), # sw="rw", hw="ro"
    "REG_testOutputSelGroup"  : Register(addr=0x2b0, size=1 ), # sw="rw", hw="ro"
    "REG_enableTestInput"     : Register(addr=0x2b8, size=1 ), # sw="rw", hw="ro"
-   "REG_enableAdcDec_l"      : Register(addr=0x2c0, size=16), # sw="rw", hw="ro"
-   "REG_enableAdcDec_h"      : Register(addr=0x2c8, size=5 ), # sw="rw", hw="ro"
-   "REG_triggerMaskA"        : Register(addr=0x2d0, size=16), # sw="rw", hw="ro"
+   "REG_enableAdcDec_l"      : Register(addr=0x2c0, size=16), # sw="rw", hw="ro" # ???
+   "REG_enableAdcDec_h"      : Register(addr=0x2c8, size=5 ), # sw="rw", hw="ro" # ???
+   "REG_triggerMaskA"        : Register(addr=0x2d0, size=16), # sw="rw", hw="ro" # enables DLM11 to trigger the hit logic
    "REG_triggerMaskB"        : Register(addr=0x2d8, size=16), # sw="rw", hw="ro"
-   "REG_enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # sw="rw", hw="ro"
-   "REG_enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # sw="rw", hw="ro"
+   "REG_enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # sw="rw", hw="ro" # enables DLM12 to inject an analog pulse into ch. 31
+   "REG_enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # sw="rw", hw="ro" # enables DLM10 to generate the "TriggerOut" signal
    # TODO hide the following two somehow, they should not be used in
    # RegisterFile, but are needed for ShiftRegister.write
    "control"                 : Register(addr=0x2f0, size=14), # sw="wo", hw="ro"

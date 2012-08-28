@@ -46,6 +46,7 @@ class Led:
 #================================================================
 _TESTDATAIN = 0
 _TESTDATAOUT = 0
+_TESTDATAGROUP = 0
 class TestData:
     """Controls the test data input and output."""
     def __init__(self, registerfile):
@@ -53,20 +54,26 @@ class TestData:
         self.reset()
 
     def reset(self):
-        self(_TESTDATAIN, _TESTDATAOUT)
+        self(_TESTDATAIN, _TESTDATAOUT, _TESTDATAGROUP)
 
-    def __call__(self, testdatain=None, testdataout=None):
-        """Turn the test data input and output on or off."""
+    def __call__(self, testdatain=None, testdataout=None, group=None):
+        """Turn test data input/output on or off and select the group."""
         if testdatain is not None:
             self._testdatain = 1 if testdatain else 0
         if testdataout is not None:
             self._testdataout = 1 if testdataout else 0
+        if group is not None:
+            self._group = (0 if str(group) in 'aA' else
+                          (1 if str(group) in 'bB' else
+                          (1 if group else 0)))
         self._registerfile['REG_enableTestInput'] = self._testdatain
         self._registerfile['REG_enableTestOutput'] = self._testdataout
+        self._registerfile['REG_testOutputSelGroup'] = self._group
 
     def __str__(self):
-        return ('test data input: %s  test data output: %s' %
-                (onoff(self._testdatain), onoff(self._testdataout)))
+        return ('test data input: %s  test data output: %s  group: %s' %
+                (onoff(self._testdatain), onoff(self._testdataout),
+                 {0: 'A', 1: 'B'}[self._group]))
 
 
 #================================================================
@@ -284,6 +291,61 @@ class Filter:
 
 
 #================================================================
+# Channel
+#================================================================
+class Channel:
+    """SPADIC Channel controller."""
+
+    def __init__(self, registerfile, shiftregister):
+        self._registerfile = registerfile
+        self._shiftregister = shiftregister
+
+
+#================================================================
+# Monitor
+#================================================================
+_MON_SOURCE = 1 # ADC=0, CSA=1
+_MON_CHANNEL = 0
+_MON_ENABLE = 0
+class Monitor:
+    """Monitor controller."""
+
+    def __init__(self, shiftregister):
+        self._shiftregister = shiftregister
+        self.reset()
+
+    def reset(self):
+        self(_MON_SOURCE, _MON_CHANNEL, _MON_ENABLE)
+        
+    def __call__(self, source=None, channel=None, enable=None):
+        """Select the monitor source, channel, and turn it on or off."""
+        if source is not None:
+            self._source = (1 if str(source).lower() == 'csa' else
+                           (0 if str(source).lower() == 'adc' else
+                           (1 if source else 0)))
+        if channel is not None:
+            if not channel in range(32):
+                raise ValueError('valid channel range: 0..31')
+            self._channel = channel
+        if enable is not None:
+            self._enable = 1 if enable else 0
+
+        self._shiftregister['SelMonitor'] = self._source
+        enMonitorAdc = [0]*32
+        ampToBus = [0]*32
+        if self._enable:
+            {0: enMonitorAdc, 1: ampToBus}[self._source][self._channel] = 1
+        for ch in range(32):
+            self._shiftregister['enMonitorAdc_'+str(ch)] = enMonitorAdc[ch]
+            self._shiftregister['ampToBus_'+str(ch)] = ampToBus[ch]
+
+    def __str__(self):
+        return ('monitor source: %s  channel: %2i  enabled: %s' %
+                ({0: 'ADC', 1: 'CSA'}[self._source], self._channel,
+                 onoff(self._enable)))
+
+
+#================================================================
 # Main control
 #================================================================
 class Controller:
@@ -306,6 +368,8 @@ class Controller:
         self._units['Hit logic'] = self.hitlogic
         self.filter = Filter(self.registerfile)
         self._units['Filter'] = self.filter
+        self.monitor = Monitor(self.shiftregister)
+        self._units['Monitor'] = self.monitor
 
         self.reset()
 
