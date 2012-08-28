@@ -291,14 +291,145 @@ class Filter:
 
 
 #================================================================
-# Channel
+# Analog frontend
 #================================================================
-class Channel:
-    """SPADIC Channel controller."""
 
-    def __init__(self, registerfile, shiftregister):
-        self._registerfile = registerfile
+#----------------------------------------------------------------
+# Global settings
+#----------------------------------------------------------------
+_FRONTEND_SELECT = 1 # N=0, P=1
+_FRONTEND_BASELINE = 0
+_FRONTEND_PCASC = 0
+_FRONTEND_NCASC = 0
+_FRONTEND_PSOURCEBIAS = 0
+_FRONTEND_NSOURCEBIAS = 0
+_FRONTEND_XFB = 0
+class Frontend:
+    """SPADIC analog frontend controller."""
+
+    def __init__(self, shiftregister):
         self._shiftregister = shiftregister
+        self.channel = [FrontendChannel(self._shiftregister, i)
+                        for i in range(32)]
+        self.reset()
+
+    def reset(self):
+        for ch in self.channel:
+            ch.reset()
+        self(_FRONTEND_SELECT, _FRONTEND_BASELINE,
+             _FRONTEND_PCASC, _FRONTEND_NCASC,
+             _FRONTEND_PSOURCEBIAS, _FRONTEND_NSOURCEBIAS, _FRONTEND_XFB)
+
+    def __call__(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
+                 psourcebias=None, nsourcebias=None, xfb=None):
+        """Select N/P frontend, set global baseline trim, set CSA bias."""
+        if frontend is not None:
+            self._frontend = (0 if str(frontend) in 'nN' else
+                             (1 if str(frontend) in 'pP' else
+                             (1 if frontend else 0)))
+            for ch in self.channel:
+                ch._select_frontend(frontend)
+        if baseline is not None:
+            if baseline < 0 or baseline > 127:
+                raise ValueError('valid baseline range: 0..127')
+            self._baseline = baseline
+        if pcasc is not None:
+            if pcasc < 0 or pcasc > 127:
+                raise ValueError('valid pcasc range: 0..127')
+            self._pcasc = pcasc
+        if ncasc is not None:
+            if ncasc < 0 or ncasc > 127:
+                raise ValueError('valid ncasc range: 0..127')
+            self._ncasc = ncasc
+        if psourcebias is not None:
+            if psourcebias < 0 or psourcebias > 127:
+                raise ValueError('valid psourcebias range: 0..127')
+            self._psourcebias = psourcebias
+        if nsourcebias is not None:
+            if nsourcebias < 0 or nsourcebias > 127:
+                raise ValueError('valid nsourcebias range: 0..127')
+            self._nsourcebias = nsourcebias
+        if xfb is not None:
+            if xfb < 0 or xfb > 127:
+                raise ValueError('valid xfb range: 0..127')
+            self._xfb = xfb
+
+        self._shiftregister['baselineTrimN'] = self._baseline
+        self._shiftregister['DecSelectNP'] = self._frontend
+        # TODO: do the following in some clever way
+        self._shiftregister['pCascP']       = (self._pcasc
+                                              if self._frontend == 1 else 0)
+        self._shiftregister['pCascN']       = (self._pcasc
+                                              if self._frontend == 0 else 0)
+        self._shiftregister['nCascP']       = (self._ncasc
+                                              if self._frontend == 1 else 0)
+        self._shiftregister['nCascN']       = (self._ncasc
+                                              if self._frontend == 0 else 0)
+        self._shiftregister['pSourceBiasP'] = (self._psourcebias
+                                              if self._frontend == 1 else 0)
+        self._shiftregister['pSourceBiasN'] = (self._psourcebias
+                                              if self._frontend == 0 else 0)
+        self._shiftregister['nSourceBiasP'] = (self._nsourcebias
+                                              if self._frontend == 1 else 0)
+        self._shiftregister['nSourceBiasN'] = (self._nsourcebias
+                                              if self._frontend == 0 else 0)
+        self._shiftregister['nFBP']         = (self._xfb
+                                              if self._frontend == 1 else 0)
+        self._shiftregister['pFBN']         = (self._xfb
+                                              if self._frontend == 0 else 0)
+
+    def __str__(self):
+        pass
+        #return ('frontend: %s  baseline: %3i
+
+#'frontend: %s  ' % {0: 'N', 1: 'P'}[self._frontend]
+
+#----------------------------------------------------------------
+# Channel-specific settings
+#----------------------------------------------------------------
+_FECHANNEL_BASELINE = 0
+_FECHANNEL_ENCSA = 0
+_FECHANNEL_ENADC = 0
+class FrontendChannel:
+    """Analog frontend channel specific controller."""
+
+    def __init__(self, shiftregister, channel):
+        self._shiftregister = shiftregister
+        self._channel = channel
+        self.reset()
+
+    def reset(self):
+        self._frontend = _FRONTEND_SELECT
+        self(_FECHANNEL_BASELINE, _FECHANNEL_ENCSA, _FECHANNEL_ENADC)
+
+    def __call__(self, baseline=None, enablecsa=None, enableadc=None):
+        """Trim the baseline, turn the CSA on/off, turn the ADC on/off."""
+        if baseline is not None:
+            if baseline < 0 or baseline > 127:
+                raise ValueError('valid baseline range: 0..127')
+            self._baseline = baseline
+        if enablecsa is not None:
+            self._enablecsa = 1 if enablecsa else 0
+        if enableadc is not None:
+            self._enableadc = 1 if enableadc else 0
+
+        ch = str(self._channel)
+        self._shiftregister['baselineTrimP_'+ch] = self._baseline
+        self._shiftregister['frontEndSelNP_'+ch] = self._frontend
+        self._shiftregister['enSignalAdc_'+ch] = self._enableadc
+        self._shiftregister['enAmpN_'+ch] = (1 if (self._enablecsa and
+                                               self._frontend == 0) else 0)
+        self._shiftregister['enAmpP_'+ch] = (1 if (self._enablecsa and
+                                               self._frontend == 1) else 0)
+
+    def _select_frontend(self, frontend):
+        self._frontend = frontend
+        self.__call__()
+
+    def __str__(self):
+        return ('baseline trim: %3i  CSA enabled: %s  ADC connected: %s' %
+                (self._baseline, onoff(self._enablecsa).rjust(3),
+                                 onoff(self._enableadc).rjust(3)))
 
 
 #================================================================
@@ -370,6 +501,10 @@ class Controller:
         self._units['Filter'] = self.filter
         self.monitor = Monitor(self.shiftregister)
         self._units['Monitor'] = self.monitor
+
+        # still testing
+        self.frontendchannel = FrontendChannel(self.shiftregister, 3)
+        self._units['Frontend Channel'] = self.frontendchannel
 
         self.reset()
 
