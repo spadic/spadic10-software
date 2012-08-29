@@ -113,10 +113,10 @@ class RegisterFile:
             raise ValueError('value for %s must be in the range 0..%i' %
                              (name, 2**self.size(name)-1))
         self._registers[name] = value
-        if directmode:
+        if self._directmode:
             self._spadic.write_register(RF_MAP[name].addr, value)
 
-    def set_directmode(mode=True):
+    def set_directmode(self, mode=True):
         """Set direct mode.
 
         In direct mode, assigning a value directly performs the register
@@ -128,7 +128,7 @@ class RegisterFile:
 
     def apply(self):
         """Write all values to SPADIC register file."""
-        for name in self:
+        for name in self.dict(nonzero_only=True):
             self._spadic.write_register(RF_MAP[name].addr, self[name])
 
     def size(self, name):
@@ -506,12 +506,12 @@ class ShiftRegister:
         if self._directmode:
             self.apply()
 
-    def set_directmode(mode=True):
+    def set_directmode(self, mode=True):
         """Set direct mode.
 
         In direct mode, assigning a value directly performs the shift
-        register write operation. If direct mode is disabled, apply() must be
-        called after the values have been assigned.
+        register write operation. If direct mode is disabled, apply() must
+        be called after the values have been assigned.
 
         """
         self._directmode = mode
@@ -529,7 +529,8 @@ class ShiftRegister:
 
         for name in self:
             pos = SR_MAP[name]
-            n = len(pos)
+            n = self.size(name)
+            value = self[name]
             for (i, b) in enumerate(int2bitstring(value, n)):
                 bits[pos[i]] = b
 
@@ -557,7 +558,7 @@ class ShiftRegister:
             self[name] = 0
 
     def dict(self, nonzero_only=True):
-        """Return a dictionary with the current shift register configuration.
+        """Return a dictionary with current shift register configuration.
         
         If 'nonzero_only' is True, include only the registers containing a
         nonzero value, else include all registers."""

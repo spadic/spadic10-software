@@ -8,21 +8,33 @@ s = spadic.Spadic()
 c = spadic.Controller(s)
 r = spadic.MessageReader(s)
 
+# for interactive use
+c.set_directmode(True)
+
 
 def ledtest():
+    mode = c.registerfile._directmode
+    c.registerfile._directmode = True
     c.led(1, 0)
     c.led(0, 0)
+    c.registerfile._directmode = mode
 
 
 def config_ftdireadtest():
+    c.set_directmode(False) # avoid numerous write operations
     c.reset()
+
     c.testdata(testdatain=True, testdataout=True)
     c.digital.channel[0](enable=True)
+
     c.apply()
+    c.set_directmode(True)
 
 
 def config_analogtest():
+    c.set_directmode(False) # avoid numerous write operations
     c.reset()
+
     # analog settings
     c.frontend(frontend='P', baseline=10,
                psourcebias=60, nsourcebias=60,
@@ -36,7 +48,10 @@ def config_analogtest():
     c.hitlogic(mask=0xFFFFF000, window=20)
     c.digital.channel[31](enable=1)
     c.testdata(testdatain=1, testdataout=1, group='B')
+
     c.apply()
+    c.set_directmode(True)
+
 
 
 def randdata(n):

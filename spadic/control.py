@@ -428,6 +428,9 @@ class FrontendChannel:
         if enableadc is not None:
             self._enableadc = 1 if enableadc else 0
 
+        directmode = self._shiftregister._directmode
+        self._shiftregister._directmode = False
+
         i = str(self._id)
         self._shiftregister['baselineTrimP_'+i] = self._baseline
         self._shiftregister['frontEndSelNP_'+i] = self._frontend
@@ -436,6 +439,9 @@ class FrontendChannel:
                                               self._frontend == 0) else 0)
         self._shiftregister['enAmpP_'+i] = (1 if (self._enablecsa and
                                               self._frontend == 1) else 0)
+        if directmode:
+            self._shiftregister.apply()
+        self._shiftregister._directmode = directmode
 
     def _select_frontend(self, frontend):
         self._frontend = frontend
@@ -522,6 +528,9 @@ class Frontend:
             checkvalue(xfb, 0, 127, 'xfb')
             self._xfb = xfb
 
+        directmode = self._shiftregister._directmode
+        self._shiftregister._directmode = False
+
         self._shiftregister['baselineTrimN'] = self._baseline
         self._shiftregister['DecSelectNP'] = self._frontend
 
@@ -534,6 +543,10 @@ class Frontend:
             self._shiftregister[name] = 0
         for (name, value) in zip(r[self._frontend], v):
             self._shiftregister[name] = value
+
+        if directmode:
+            self._shiftregister.apply()
+        self._shiftregister._directmode = directmode
 
     def __str__(self):
         s = [('frontend: %s  baseline: %3i  pCasc: %3i  nCasc: %3i\n'
@@ -585,12 +598,20 @@ class AdcBias:
         if vpamp is not None:
             checkvalue(vpamp, 0, 127, 'VPAmp')
             self._vpamp = vpamp
+
+        directmode = self._shiftregister._directmode
+        self._shiftregister._directmode = False
+
         self._shiftregister['VNDel'] = self._vndel
         self._shiftregister['VPDel'] = self._vpdel
         self._shiftregister['VPLoadFB'] = self._vploadfb
         self._shiftregister['VPLoadFB2'] = self._vploadfb2
         self._shiftregister['VPFB'] = self._vpfb
         self._shiftregister['VPAmp'] = self._vpamp
+
+        if directmode:
+            self._shiftregister.apply()
+        self._shiftregister._directmode = directmode
 
     def __str__(self):
         return ('VNDel: %3i  VPDel: %3i  VPLoadFB: %3i\n'
@@ -634,6 +655,9 @@ class Monitor:
         if enable is not None:
             self._enable = 1 if enable else 0
 
+        directmode = self._shiftregister._directmode
+        self._shiftregister._directmode = False
+
         self._shiftregister['SelMonitor'] = self._source
         enMonitorAdc = [0]*32
         ampToBus = [0]*32
@@ -642,6 +666,10 @@ class Monitor:
         for ch in range(32):
             self._shiftregister['enMonitorAdc_'+str(ch)] = enMonitorAdc[ch]
             self._shiftregister['ampToBus_'+str(ch)] = ampToBus[ch]
+
+        if directmode:
+            self._shiftregister.apply()
+        self._shiftregister._directmode = directmode
 
     def __str__(self):
         return ('monitor source: %s  channel: %2i  enabled: %s' %
@@ -678,6 +706,7 @@ class Controller:
     """
     def __init__(self, spadic):
         self._spadic = spadic
+        self._directmode = False
         self.registerfile = RegisterFile(spadic)
         self.shiftregister = ShiftRegister(spadic)
 
@@ -703,12 +732,15 @@ class Controller:
         self._units['Digital'] = self.digital
 
         self.reset()
-        self.apply()
 
     def reset(self):
         """Reset all control units."""
+        mode = self._directmode
+        self.set_directmode(False)
         for unit in self._units.itervalues():
             unit.reset()
+        self.apply()
+        self.set_directmode(mode)
 
     def apply(self):
         """Update register values from control units and write RF/SR."""
@@ -716,6 +748,12 @@ class Controller:
             unit.__call__()
         self.registerfile.apply()
         self.shiftregister.apply()
+
+    def set_directmode(self, mode):
+        """Set direct mode of register file and shift register."""
+        self._directmode = mode
+        self.registerfile.set_directmode(mode)
+        self.shiftregister.set_directmode(mode)
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
