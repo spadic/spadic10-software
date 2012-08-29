@@ -12,17 +12,9 @@ def ledtest():
     c.led(1, 0)
     c.led(0, 0)
 
-# TODO: include in Controller
-def enablechannel0(x):
-    if x not in [0, 1]:
-        raise ValueError('only 0 or 1 allowed!')
-    c.registerfile['REG_disableChannelA'] = 0xFFFF-x
-    c.registerfile['REG_disableChannelB'] = 0xFFFF
-
 def config_ftdireadtest():
-    c.clear_shiftregister()
     c.testdata(testdatain=True, testdataout=True)
-    enablechannel0(1)
+    c.digital.channel[0](enable=True)
 
 #def config_analogtest():
 #    s.write_register(8, 0x10)

@@ -121,7 +121,13 @@ class Comparator:
 _HITLOGIC_MASK = 0xFFFF0000
 _HITLOGIC_WINDOW = 16
 class HitLogic:
-    """Controls the hit logic."""
+    """Controls the hit logic.
+    
+    The following settings are controlled globally for all channels:
+    - selection mask
+    - hit window length
+    
+    """
     def __init__(self, registerfile):
         self._registerfile = registerfile
         self.reset()
@@ -267,7 +273,18 @@ class ScalingOffset:
 # Whole filter
 #----------------------------------------------------------------
 class Filter:
-    """Collection of several filter stages."""
+    """Controls the digital filter settings.
+    
+    Individual filter stages are accessed by
+      <name of controller instance>.filter.stage[<index>]
+      
+    Index    Type             Settings
+    ---------------------------------------------------
+      0      half stage       coefficient b, enable
+     1-3     full stage       coefficients a, b, enable
+      4      scaling/offset   scaling, offset, enable
+
+    """
     def __init__(self, registerfile):
         self._registerfile = registerfile
         self._coeffa = [_FILTER_COEFFA for _ in range(4)]
@@ -288,6 +305,10 @@ class Filter:
         for s in self.stage:
             s.reset()
 
+    def __call__(self):
+        for s in self.stage:
+            s.__call__()
+
     def __str__(self):
         return '\n'.join(('Stage %i: ' % i) + str(s)
                          for (i, s) in enumerate(self.stage))
@@ -297,6 +318,81 @@ class Filter:
 # Digital channel settings
 #================================================================
 
+#----------------------------------------------------------------
+# Channel-specific settings
+#----------------------------------------------------------------
+_DIGCHANNEL_ENABLE = 0
+_DIGCHANNEL_ENTRIGGER = 0
+class DigitalChannel:
+    """Controls the digital channel settings."""
+    def __init__(self, registerfile, channel_id):
+        self._registerfile = registerfile
+        self._id = channel_id
+        self.reset()
+
+    def reset(self):
+        self(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
+
+    def __call__(self, enable=None, entrigger=None, neighbor=None):
+        """Turn the channel on/off, enable trigger input."""#, set neighbors."""
+        if enable is not None:
+            self._enable = 1 if enable else 0
+        if entrigger is not None:
+            self._entrigger = 1 if entrigger else 0
+        if neighbor is not None:
+            raise NotImplementedError
+
+        i = self._id % 16
+
+        reg_disable = {0: 'REG_disableChannelA',
+                       1: 'REG_disableChannelB'}[self._id//16]
+        basevalue = self._registerfile[reg_disable] & (0xFFFF-(1<<i))
+        newvalue = basevalue + (0 if self._enable else (1<<i))
+        self._registerfile[reg_disable] = newvalue
+
+        reg_trigger = {0: 'REG_triggerMaskA',
+                       1: 'REG_triggerMaskB'}[self._id//16]
+        basevalue = self._registerfile[reg_trigger] & (0xFFFF-(1<<i))
+        newvalue = basevalue + ((1<<i) if self._entrigger else 0)
+        self._registerfile[reg_trigger] = newvalue
+
+    def __str__(self):
+        return ('enabled: %s  trigger input: %s' %
+                (onoff(self._enable).ljust(3),
+                 onoff(self._entrigger).ljust(3)))
+
+#----------------------------------------------------------------
+# All channels
+#----------------------------------------------------------------
+class Digital:
+    """Collection of digital channel controllers.
+
+    Controls the following channel-specific digital settings:
+    - channel enable/disable
+    - trigger input enable/disable (DLM11)
+    - neighbor selection (not yet implemented)
+    
+    Individual channels are accessed by 
+      <name of Controller instance>.digital.channel[<channel id>]
+
+    """
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+        self.channel = [DigitalChannel(self._registerfile, i)
+                        for i in range(32)]
+        self.reset()
+            
+    def reset(self):
+        for ch in self.channel:
+            ch.reset()
+
+    def __call__(self):
+        for ch in self.channel:
+            ch.__call__()
+
+    def __str__(self):
+        s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
+        return '\n'.join(s)
 
 
 #================================================================
@@ -312,9 +408,9 @@ _FECHANNEL_ENADC = 0
 class FrontendChannel:
     """Analog frontend channel specific controller."""
 
-    def __init__(self, shiftregister, channel):
+    def __init__(self, shiftregister, channel_id):
         self._shiftregister = shiftregister
-        self._channel = channel
+        self._id = channel_id
         self.reset()
 
     def reset(self):
@@ -332,14 +428,14 @@ class FrontendChannel:
         if enableadc is not None:
             self._enableadc = 1 if enableadc else 0
 
-        ch = str(self._channel)
-        self._shiftregister['baselineTrimP_'+ch] = self._baseline
-        self._shiftregister['frontEndSelNP_'+ch] = self._frontend
-        self._shiftregister['enSignalAdc_'+ch] = self._enableadc
-        self._shiftregister['enAmpN_'+ch] = (1 if (self._enablecsa and
-                                               self._frontend == 0) else 0)
-        self._shiftregister['enAmpP_'+ch] = (1 if (self._enablecsa and
-                                               self._frontend == 1) else 0)
+        i = str(self._id)
+        self._shiftregister['baselineTrimP_'+i] = self._baseline
+        self._shiftregister['frontEndSelNP_'+i] = self._frontend
+        self._shiftregister['enSignalAdc_'+i] = self._enableadc
+        self._shiftregister['enAmpN_'+i] = (1 if (self._enablecsa and
+                                              self._frontend == 0) else 0)
+        self._shiftregister['enAmpP_'+i] = (1 if (self._enablecsa and
+                                              self._frontend == 1) else 0)
 
     def _select_frontend(self, frontend):
         self._frontend = frontend
@@ -361,8 +457,28 @@ _FRONTEND_PSOURCEBIAS = 0
 _FRONTEND_NSOURCEBIAS = 0
 _FRONTEND_XFB = 0
 class Frontend:
-    """SPADIC analog frontend controller."""
+    """SPADIC 1.0 analog frontend controller.
 
+    Controls the following global settings of the analog frontend:
+    - frontend N or P
+    - baseline trim
+    - CSA bias settings (pCasc, nCasc, pSourceBias, nSourceBias, xFB)
+    
+    Additionally controls the following channel-specific settings:
+    - baseline trim
+    - CSA enable/disable
+    - ADC enable/disable
+
+    Individual channels are accessed by 
+      <name of Controller instance>.frontend.channel[<channel id>]
+
+    For example, after
+      c = Controller(...)
+    the channel-specific settings of the analog frontend in channel number 3
+    are accessed by
+      c.frontend.channel[3]
+
+    """
     def __init__(self, shiftregister):
         self._shiftregister = shiftregister
         self.channel = [FrontendChannel(self._shiftregister, i)
@@ -425,8 +541,7 @@ class Frontend:
               ({0: 'N', 1: 'P'}[self._frontend], self._baseline,
               self._pcasc, self._ncasc, self._psourcebias,
               self._nsourcebias, self._xfb))]
-        for ch in self.channel:
-            s.append(('channel %2i: ' % ch._channel) + str(ch))
+        s += [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
         return '\n'.join(s)
 
 
@@ -451,6 +566,7 @@ class AdcBias:
 
     def __call__(self, vndel=None, vpdel=None, vploadfb=None,
                  vploadfb2=None, vpfb=None, vpamp=None):
+        """Set VNDel, VPDel, VPLoadFB, VPLoadFB2, VPFB, VPAmp values."""
         if vndel is not None:
             checkvalue(vndel, 0, 127, 'VNDel')
             self._vndel = vndel
@@ -490,8 +606,14 @@ _MON_SOURCE = 1 # ADC=0, CSA=1
 _MON_CHANNEL = 0
 _MON_ENABLE = 0
 class Monitor:
-    """Monitor controller."""
+    """Monitor controller.
+    
+    Controls the following settings of the monitor bus:
+    - enable/disable
+    - source selection: ADC or CSA
+    - channel selection
 
+    """
     def __init__(self, shiftregister):
         self._shiftregister = shiftregister
         self.reset()
@@ -531,8 +653,29 @@ class Monitor:
 # Main control
 #================================================================
 class Controller:
-    """SPADIC configuration controller."""
+    """SPADIC 1.0 configuration controller.
+    
+    Contains the following control units:
 
+    adcbias
+    comparator
+    digital
+    filter
+    frontend
+    hitlogic
+    led
+    monitor
+    testdata
+    
+    To get help on one of the units, type
+      help(<name of controller variable>.<name of unit>)
+
+    For example, if a Controller instance was created by
+      c = Controller(...)
+    and documentation about the hit logic settings is needed, type
+      help(c.hitlogic)
+
+    """
     def __init__(self, spadic):
         self._spadic = spadic
         self.registerfile = RegisterFile(spadic)
@@ -556,6 +699,8 @@ class Controller:
         self._units['Frontend'] = self.frontend
         self.adcbias = AdcBias(self.shiftregister)
         self._units['ADC bias'] = self.adcbias
+        self.digital = Digital(self.registerfile)
+        self._units['Digital'] = self.digital
 
         self.reset()
         self.apply()
