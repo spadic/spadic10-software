@@ -711,28 +711,29 @@ class Controller:
             unit.reset()
 
     def apply(self):
-        """Update all control units and perform shiftregister write."""
+        """Update register values from control units and write RF/SR."""
         for unit in self._units.itervalues():
             unit.__call__()
-        self._write_shiftregister()
+        self.registerfile.apply()
+        self.shiftregister.apply()
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
-    def _write_shiftregister(self, config=None):
-        """Perform the shift register write operation."""
-        if config is not None:
-            self.shiftregister.load(config)
-        self.led(1)
-        self.shiftregister.write()
-        self.led(0)
+    #def _write_shiftregister(self, config=None):
+    #    """Perform the shift register write operation."""
+    #    if config is not None:
+    #        self.shiftregister.load(config)
+    #    self.led(1)
+    #    self.shiftregister.write()
+    #    self.led(0)
 
-    def _write_registerfile(self, config):
-        """Write a configuration into the register file."""
-        self.led(1)
-        self.registerfile.load(config)
-        self.led(0)
+    #def _write_registerfile(self, config):
+    #    """Write a configuration into the register file."""
+    #    self.led(1)
+    #    self.registerfile.load(config)
+    #    self.led(0)
 
     def save(self, f=None, nonzero=True):
         """Save the current configuration to a text file."""

@@ -80,11 +80,15 @@ RF_MAP = {
 class RegisterFile:
     """Representation of the SPADIC register file.
     
-    Emulates the behaviour of a dictionary. Registers are accessed by their
-    names. Assigning a value to a name directly performs the write operation and
-    remembers the value so that it can be accessed later."""
-
+    Emulates the behaviour of a dictionary, i.e. registers are accessed by
+    their names. Assigning a value to a name writes to an internal
+    dictionary, if "direct mode" is enabled, the register file write
+    operation is performed immediately, otherwise the apply() method must be
+    called.
+    
+    """
     _registers = {}
+    _directmode = False
 
     def __init__(self, spadic):
         self._spadic = spadic
@@ -105,8 +109,27 @@ class RegisterFile:
     def __setitem__(self, name, value):
         if name not in self:
             raise KeyError('%s not in register file' % name)
-        self._spadic.write_register(RF_MAP[name].addr, value)
+        if value not in range(2**self.size(name)):
+            raise ValueError('value for %s must be in the range 0..%i' %
+                             (name, 2**self.size(name)-1))
         self._registers[name] = value
+        if directmode:
+            self._spadic.write_register(RF_MAP[name].addr, value)
+
+    def set_directmode(mode=True):
+        """Set direct mode.
+
+        In direct mode, assigning a value directly performs the register
+        file write operation. If direct mode is disabled, apply() must be
+        called after the values have been assigned.
+
+        """
+        self._directmode = mode
+
+    def apply(self):
+        """Write all values to SPADIC register file."""
+        for name in self:
+            self._spadic.write_register(RF_MAP[name].addr, self[name])
 
     def size(self, name):
         """Return the size of a register in bits."""
@@ -447,31 +470,31 @@ SR_MAP = {
 class ShiftRegister:
     """Representation of the SPADIC shift register.
     
-    Emulates the behaviour of a dictionary. Registers are accessed by their
-    names. Assigning a value to a name only writes to an internal
-    dictionary, to perform the actual write operation, the write() method
-    must be called."""
+    Emulates the behaviour of a dictionary, i.e. registers are accessed by
+    their names. Assigning a value to a name writes to an internal
+    dictionary, if "direct mode" is enabled, the shift register write
+    operation is performed immediately, otherwise the apply() method must be
+    called.
+    
+    """
+    _registers = {}
+    _directmode = False
 
     def __init__(self, spadic):
         self._spadic = spadic
-        self._bits = ['0']*SR_LENGTH
-        # bits[0] = MSB (on the left side, shifted last)
-        # bits[-1] = LSB (on the right side, shifted first)
-
-    def __str__(self):
-        return ''.join(self._bits)
-        # use this as argument for Spadic.write_shiftregister
+        for name in SR_MAP:
+            self._registers[name] = 0
 
     def __contains__(self, name):
-        return name in SR_MAP
+        return name in self._registers
 
     def __iter__(self):
-        return iter(SR_MAP)
+        return iter(self._registers)
 
     def __getitem__(self, name):
         if name not in self:
             raise KeyError('%s not in shift register' % name)
-        return int(''.join([self._bits[p] for p in SR_MAP[name]]), 2)
+        return self._registers[name]
 
     def __setitem__(self, name, value):
         if name not in self:
@@ -479,18 +502,36 @@ class ShiftRegister:
         if value not in range(2**self.size(name)):
             raise ValueError('value for %s must be in the range 0..%i' %
                              (name, 2**self.size(name)-1))
-        pos = SR_MAP[name]
-        n = len(pos)
-        for (i, b) in enumerate(int2bitstring(value, n)):
-            self._bits[pos[i]] = b
+        self._registers[name] = value
+        if self._directmode:
+            self.apply()
+
+    def set_directmode(mode=True):
+        """Set direct mode.
+
+        In direct mode, assigning a value directly performs the shift
+        register write operation. If direct mode is disabled, apply() must be
+        called after the values have been assigned.
+
+        """
+        self._directmode = mode
 
     def size(self, name):
         """Return the size of a register in bits."""
         return len(SR_MAP[name])
 
-    def write(self):
-        """Perform the shift register write operation, using the previously
-        stored values."""
+    def apply(self):
+        """Write all values to SPADIC shift register."""
+
+        bits = ['0']*SR_LENGTH
+        # bits[0] = MSB (on the left side, shifted last)
+        # bits[-1] = LSB (on the right side, shifted first)
+
+        for name in self:
+            pos = SR_MAP[name]
+            n = len(pos)
+            for (i, b) in enumerate(int2bitstring(value, n)):
+                bits[pos[i]] = b
 
         chain = '0' # ?
         mode = '10' # write mode
@@ -499,26 +540,21 @@ class ShiftRegister:
         self._spadic.write_register(RF_MAP['control'].addr, ctrl_data)
 
         # divide bit string into 16 bit chunks
-        bits = str(self)
+        bits = ''.join(bits)
         while bits: # should iterate int(SR_LENGTH/16) times
             chunk = int(bits[-16:], 2) # take the last 16 bits
             bits = bits[:-16]          # remove the last 16 bits
             self._spadic.write_register(RF_MAP['data'].addr, chunk)
 
-    def load(self, config, write=False):
-        """Load the shift register configuration from a dictionary.
-        
-        Optionally perform the write operation."""
+    def load(self, config):
+        """Load the shift register configuration from a dictionary."""
         for name in config:
             self[name] = config[name]
-        if write:
-            self.write()
 
     def clear(self):
         """Reset every register to zero."""
         for name in self:
             self[name] = 0
-        self.write()
 
     def dict(self, nonzero_only=True):
         """Return a dictionary with the current shift register configuration.
