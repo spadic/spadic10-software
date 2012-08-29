@@ -337,3 +337,6 @@ class MessageReader:
         m = self._read_messages(w)
         return [Message(mi) for mi in m]
 
+    def resync(self):
+        self._read_words.resync()
+
