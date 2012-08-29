@@ -295,84 +295,6 @@ class Filter:
 #================================================================
 
 #----------------------------------------------------------------
-# Global settings
-#----------------------------------------------------------------
-_FRONTEND_SELECT = 1 # N=0, P=1
-_FRONTEND_BASELINE = 0
-_FRONTEND_PCASC = 0
-_FRONTEND_NCASC = 0
-_FRONTEND_PSOURCEBIAS = 0
-_FRONTEND_NSOURCEBIAS = 0
-_FRONTEND_XFB = 0
-class Frontend:
-    """SPADIC analog frontend controller."""
-
-    def __init__(self, shiftregister):
-        self._shiftregister = shiftregister
-        self.channel = [FrontendChannel(self._shiftregister, i)
-                        for i in range(32)]
-        self.reset()
-
-    def reset(self):
-        for ch in self.channel:
-            ch.reset()
-        self(_FRONTEND_SELECT, _FRONTEND_BASELINE,
-             _FRONTEND_PCASC, _FRONTEND_NCASC,
-             _FRONTEND_PSOURCEBIAS, _FRONTEND_NSOURCEBIAS, _FRONTEND_XFB)
-
-    def __call__(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
-                 psourcebias=None, nsourcebias=None, xfb=None):
-        """Select N/P frontend, set global baseline trim, set CSA bias."""
-
-        if frontend is not None:
-            self._frontend = (0 if str(frontend) in 'nN' else
-                             (1 if str(frontend) in 'pP' else
-                             (1 if frontend else 0)))
-            for ch in self.channel:
-                ch._select_frontend(frontend)
-
-        def checkvalue(v, name):
-            if v < 0 or v > 127:
-                raise ValueError('valid %s range: 0..127' % name)
-        if baseline is not None:
-            checkvalue(baseline, 'baseline')
-            self._baseline = baseline
-        if pcasc is not None:
-            checkvalue(pcasc, 'pcasc')
-            self._pcasc = pcasc
-        if ncasc is not None:
-            checkvalue(ncasc, 'ncasc')
-            self._ncasc = ncasc
-        if psourcebias is not None:
-            checkvalue(psourcebias, 'psourcebias')
-            self._psourcebias = psourcebias
-        if nsourcebias is not None:
-            checkvalue(nsourcebias, 'nsourcebias')
-            self._nsourcebias = nsourcebias
-        if xfb is not None:
-            checkvalue(xfb, 'xfb')
-            self._xfb = xfb
-
-        self._shiftregister['baselineTrimN'] = self._baseline
-        self._shiftregister['DecSelectNP'] = self._frontend
-
-        r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
-             1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
-        v = [self._pcasc, self._ncasc,
-                        self._psourcebias, self._nsourcebias, self._xfb]
-
-        for name in r[1-self._frontend]:
-            self._shiftregister[name] = 0
-        for (name, value) in zip(r[self._frontend], v):
-            self._shiftregister[name] = value
-
-    def __str__(self):
-        pass
-        #return ('frontend: %s  baseline: %3i
-
-#'frontend: %s  ' % {0: 'N', 1: 'P'}[self._frontend]
-
-#----------------------------------------------------------------
 # Channel-specific settings
 #----------------------------------------------------------------
 _FECHANNEL_BASELINE = 0
@@ -416,8 +338,90 @@ class FrontendChannel:
 
     def __str__(self):
         return ('baseline trim: %3i  CSA enabled: %s  ADC connected: %s' %
-                (self._baseline, onoff(self._enablecsa).rjust(3),
-                                 onoff(self._enableadc).rjust(3)))
+                (self._baseline, onoff(self._enablecsa).ljust(3),
+                                 onoff(self._enableadc).ljust(3)))
+
+#----------------------------------------------------------------
+# Global settings
+#----------------------------------------------------------------
+_FRONTEND_SELECT = 1 # N=0, P=1
+_FRONTEND_BASELINE = 0
+_FRONTEND_PCASC = 0
+_FRONTEND_NCASC = 0
+_FRONTEND_PSOURCEBIAS = 0
+_FRONTEND_NSOURCEBIAS = 0
+_FRONTEND_XFB = 0
+class Frontend:
+    """SPADIC analog frontend controller."""
+
+    def __init__(self, shiftregister):
+        self._shiftregister = shiftregister
+        self.channel = [FrontendChannel(self._shiftregister, i)
+                        for i in range(32)]
+        self.reset()
+
+    def reset(self):
+        for ch in self.channel:
+            ch.reset()
+        self(_FRONTEND_SELECT, _FRONTEND_BASELINE,
+             _FRONTEND_PCASC, _FRONTEND_NCASC,
+             _FRONTEND_PSOURCEBIAS, _FRONTEND_NSOURCEBIAS, _FRONTEND_XFB)
+
+    def __call__(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
+                 psourcebias=None, nsourcebias=None, xfb=None):
+        """Select N/P frontend, set global baseline trim, set CSA bias."""
+
+        if frontend is not None:
+            self._frontend = (0 if str(frontend) in 'nN' else
+                             (1 if str(frontend) in 'pP' else
+                             (1 if frontend else 0)))
+            for ch in self.channel:
+                ch._select_frontend(self._frontend)
+
+        def checkvalue(v, name):
+            if v < 0 or v > 127:
+                raise ValueError('valid %s range: 0..127' % name)
+        if baseline is not None:
+            checkvalue(baseline, 'baseline')
+            self._baseline = baseline
+        if pcasc is not None:
+            checkvalue(pcasc, 'pcasc')
+            self._pcasc = pcasc
+        if ncasc is not None:
+            checkvalue(ncasc, 'ncasc')
+            self._ncasc = ncasc
+        if psourcebias is not None:
+            checkvalue(psourcebias, 'psourcebias')
+            self._psourcebias = psourcebias
+        if nsourcebias is not None:
+            checkvalue(nsourcebias, 'nsourcebias')
+            self._nsourcebias = nsourcebias
+        if xfb is not None:
+            checkvalue(xfb, 'xfb')
+            self._xfb = xfb
+
+        self._shiftregister['baselineTrimN'] = self._baseline
+        self._shiftregister['DecSelectNP'] = self._frontend
+
+        r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
+             1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
+        v = [self._pcasc, self._ncasc,
+                        self._psourcebias, self._nsourcebias, self._xfb]
+
+        for name in r[1-self._frontend]:
+            self._shiftregister[name] = 0
+        for (name, value) in zip(r[self._frontend], v):
+            self._shiftregister[name] = value
+
+    def __str__(self):
+        s = [('frontend: %s  baseline: %3i  pCasc: %3i  nCasc: %3i\n'
+              'pSourceBias: %3i  nSourceBias: %3i  xFB: %3i\n' %
+              ({0: 'N', 1: 'P'}[self._frontend], self._baseline,
+              self._pcasc, self._ncasc, self._psourcebias,
+              self._nsourcebias, self._xfb))]
+        for ch in self.channel:
+            s.append(('channel %2i: ' % ch._channel) + str(ch))
+        return '\n'.join(s)
 
 
 #================================================================
@@ -489,10 +493,8 @@ class Controller:
         self._units['Filter'] = self.filter
         self.monitor = Monitor(self.shiftregister)
         self._units['Monitor'] = self.monitor
-
-        # still testing
-        self.frontendchannel = FrontendChannel(self.shiftregister, 3)
-        self._units['Frontend Channel'] = self.frontendchannel
+        self.frontend = Frontend(self.shiftregister)
+        self._units['Frontend'] = self.frontend
 
         self.reset()
 

@@ -2,7 +2,9 @@ import time
 import random
 import spadic
 
-s = spadic.Spadic()
+from spadic.basic import SpadicDummy
+s = SpadicDummy()
+#s = spadic.Spadic()
 c = spadic.Controller(s)
 r = spadic.MessageReader(s)
 

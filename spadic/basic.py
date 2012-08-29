@@ -36,6 +36,7 @@ PACKAGE_SIZE = 9
 #====================================================================
 
 class Spadic(iom.FtdiIom):
+    """SPADIC communication via FTDI -> IO Manager -> I2C."""
     #----------------------------------------------------------------
     # register file access
     #----------------------------------------------------------------
@@ -84,4 +85,17 @@ class Spadic(iom.FtdiIom):
         if len(data) == 1:
             data.append(0) # test input interface needs at least 2 values
         self._iom_write(IOM_ADDR_TDA, [(x%512)>>1 for x in data])
+
+
+class SpadicDummy:
+    """Fake the Spadic interface to test without USB connection."""
+    def write_register(self, address, data):
+        pass
+    def read_register(self, address):
+        return 0
+    def read_data(self, num_bytes=None, timeout=1):
+        for byte in []:
+            yield byte
+    def write_data(self, data):
+        pass
             
