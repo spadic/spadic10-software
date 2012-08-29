@@ -558,16 +558,24 @@ class Controller:
         self._units['ADC bias'] = self.adcbias
 
         self.reset()
+        self.apply()
 
     def reset(self):
+        """Reset all control units."""
         for unit in self._units.itervalues():
             unit.reset()
+
+    def apply(self):
+        """Update all control units and perform shiftregister write."""
+        for unit in self._units.itervalues():
+            unit.__call__()
+        self._write_shiftregister()
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
-    def write_shiftregister(self, config=None):
+    def _write_shiftregister(self, config=None):
         """Perform the shift register write operation."""
         if config is not None:
             self.shiftregister.load(config)
@@ -575,12 +583,7 @@ class Controller:
         self.shiftregister.write()
         self.led(0)
 
-    def clear_shiftregister(self):
-        """Fill the shift register with zeros."""
-        config = dict((name, 0) for name in self.shiftregister)
-        self.write_shiftregister(config)
-
-    def write_registerfile(self, config):
+    def _write_registerfile(self, config):
         """Write a configuration into the register file."""
         self.led(1)
         self.registerfile.load(config)
@@ -614,7 +617,7 @@ class Controller:
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
 
+    def load(self, f):
+        """Load the configuration from a text file."""
+        raise NotImplementedError
 
-#    def config(self, rf_dict, sr_dict):
-#        self.configrf(rf_dict)
-#        self.configsr(sr_dict)
