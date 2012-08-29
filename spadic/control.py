@@ -763,6 +763,8 @@ class Controller:
         print >> f, '\n'.join(lines)
 
     def load(self, f):
-        """Load the configuration from a text file."""
+        """Load the configuration from a text file.
+        
+        (not yet implemented)"""
         raise NotImplementedError
 
