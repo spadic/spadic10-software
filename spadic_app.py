@@ -24,6 +24,11 @@ def config_ftdireadtest():
     c.testdata(testdatain=True, testdataout=True)
     enablechannel0(1)
 
+#def config_analogtest():
+#    s.write_register(8, 0x10)
+#    s.config(RF_DEFAULT, SR_DEFAULT)
+#    s.write_register(8, 0x00)
+
 def randdata(n):
     return [random.randint(0, 120) for i in range(n)]
     

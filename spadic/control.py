@@ -11,6 +11,11 @@ def frame(title, symbol='=', width=60):
                       '# '+title,
                       '#' + symbol*(width-1)])
 
+def checkvalue(v, vmin, vmax, name):
+    if v < vmin or v > vmax:
+        raise ValueError('valid %s range: %i..%i' %
+                         (name, vmin, vmax))
+
 
 #================================================================
 # LEDs
@@ -93,13 +98,11 @@ class Comparator:
 
     def __call__(self, threshold1=None, threshold2=None, diffmode=None):
         """Set the two thresholds and turn the diff mode on or off."""
-        thresholds_to_check = [th for th in [threshold1, threshold2]
-                               if th is not None]
-        if any(th < -256 or th > 255 for th in thresholds_to_check):
-            raise ValueError('valid threshold range: -256..255')
         if threshold1 is not None:
+            checkvalue(threshold1, -256, 255, 'threshold1')
             self._threshold1 = threshold1
         if threshold2 is not None:
+            checkvalue(threshold2, -256, 255, 'threshold2')
             self._threshold2 = threshold2
         if diffmode is not None:
             self._diffmode = 1 if diffmode else 0
@@ -131,10 +134,10 @@ class HitLogic:
         if mask is not None:
             if mask < 0 or mask > 0xFFFFFFFF:
                 raise ValueError('valid mask range: 0..0xFFFFFFFF')
+                # checkvalue() not used here because of hex format
             self._mask = mask
         if window is not None:
-            if window < 0 or window > 63:
-                raise ValueError('valid hit window length range: 0..63')
+            checkvalue(window, 0, 63, 'hit window length')
             self._window = window
 
         mask_h = self._mask >> 16;
@@ -291,6 +294,12 @@ class Filter:
 
 
 #================================================================
+# Digital channel settings
+#================================================================
+
+
+
+#================================================================
 # Analog frontend
 #================================================================
 
@@ -378,26 +387,23 @@ class Frontend:
             for ch in self.channel:
                 ch._select_frontend(self._frontend)
 
-        def checkvalue(v, name):
-            if v < 0 or v > 127:
-                raise ValueError('valid %s range: 0..127' % name)
         if baseline is not None:
-            checkvalue(baseline, 'baseline')
+            checkvalue(baseline, 0, 127, 'baseline')
             self._baseline = baseline
         if pcasc is not None:
-            checkvalue(pcasc, 'pcasc')
+            checkvalue(pcasc, 0, 127, 'pcasc')
             self._pcasc = pcasc
         if ncasc is not None:
-            checkvalue(ncasc, 'ncasc')
+            checkvalue(ncasc, 0, 127, 'ncasc')
             self._ncasc = ncasc
         if psourcebias is not None:
-            checkvalue(psourcebias, 'psourcebias')
+            checkvalue(psourcebias, 0, 127, 'psourcebias')
             self._psourcebias = psourcebias
         if nsourcebias is not None:
-            checkvalue(nsourcebias, 'nsourcebias')
+            checkvalue(nsourcebias, 0, 127, 'nsourcebias')
             self._nsourcebias = nsourcebias
         if xfb is not None:
-            checkvalue(xfb, 'xfb')
+            checkvalue(xfb, 0, 127, 'xfb')
             self._xfb = xfb
 
         self._shiftregister['baselineTrimN'] = self._baseline
@@ -422,6 +428,59 @@ class Frontend:
         for ch in self.channel:
             s.append(('channel %2i: ' % ch._channel) + str(ch))
         return '\n'.join(s)
+
+
+#================================================================
+# ADC bias
+#================================================================
+_ADC_VNDEL = 0
+_ADC_VPDEL = 0
+_ADC_VPLOADFB = 0
+_ADC_VPLOADFB2 = 0
+_ADC_VPFB = 0
+_ADC_VPAMP = 0
+class AdcBias:
+    """Controls the ADC bias settings."""
+    def __init__(self, shiftregister):
+        self._shiftregister = shiftregister
+        self.reset()
+
+    def reset(self):
+        self(_ADC_VNDEL, _ADC_VPDEL, _ADC_VPLOADFB, _ADC_VPLOADFB2,
+             _ADC_VPFB, _ADC_VPAMP)
+
+    def __call__(self, vndel=None, vpdel=None, vploadfb=None,
+                 vploadfb2=None, vpfb=None, vpamp=None):
+        if vndel is not None:
+            checkvalue(vndel, 0, 127, 'VNDel')
+            self._vndel = vndel
+        if vpdel is not None:
+            checkvalue(vpdel, 0, 127, 'VPDel')
+            self._vpdel = vpdel
+        if vploadfb is not None:
+            checkvalue(vploadfb, 0, 127, 'VPLoadFB')
+            self._vploadfb = vploadfb
+        if vploadfb2 is not None:
+            checkvalue(vploadfb2, 0, 127, 'VPLoadFB2')
+            self._vploadfb2 = vploadfb2
+        if vpfb is not None:
+            checkvalue(vpfb, 0, 127, 'VPFB')
+            self._vpfb = vpfb
+        if vpamp is not None:
+            checkvalue(vpamp, 0, 127, 'VPAmp')
+            self._vpamp = vpamp
+        self._shiftregister['VNDel'] = self._vndel
+        self._shiftregister['VPDel'] = self._vpdel
+        self._shiftregister['VPLoadFB'] = self._vploadfb
+        self._shiftregister['VPLoadFB2'] = self._vploadfb2
+        self._shiftregister['VPFB'] = self._vpfb
+        self._shiftregister['VPAmp'] = self._vpamp
+
+    def __str__(self):
+        return ('VNDel: %3i  VPDel: %3i  VPLoadFB: %3i\n'
+                'VPLoadFB2: %3i  VPFB: %3i  VPAmp: %3i' %
+                (self._vndel, self._vpdel, self._vploadfb,
+                 self._vploadfb2, self._vpfb, self._vpamp))
 
 
 #================================================================
@@ -495,6 +554,8 @@ class Controller:
         self._units['Monitor'] = self.monitor
         self.frontend = Frontend(self.shiftregister)
         self._units['Frontend'] = self.frontend
+        self.adcbias = AdcBias(self.shiftregister)
+        self._units['ADC bias'] = self.adcbias
 
         self.reset()
 
@@ -557,33 +618,3 @@ class Controller:
 #    def config(self, rf_dict, sr_dict):
 #        self.configrf(rf_dict)
 #        self.configsr(sr_dict)
-#
-#            
-#            
-#
-##--------------------------------------------------------------------
-## prepare some stuff that is frequently used
-##--------------------------------------------------------------------
-#import time, random
-#s = Spadic()
-#
-#def config_analogtest():
-#    s.write_register(8, 0x10)
-#    s.config(RF_DEFAULT, SR_DEFAULT)
-#    s.write_register(8, 0x00)
-#
-#def getmessages():
-#    for m in messages(message_words(s.read_data())):
-#        yield Message(m)
-#
-#def enableamp(channel, only=True):
-#  if only:
-#    for i in range(32):
-#        reg = 'enAmpP_' + str(i)
-#        SR_DEFAULT[reg] = 1 if (i == channel) else 0
-#    s.configsr(SR_DEFAULT)
-#  else:
-#    reg = 'enAmpP_' + str(channel)
-#    SR_DEFAULT[reg] = 1
-#    s.configsr(SR_DEFAULT)
-    
