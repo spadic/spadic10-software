@@ -13,14 +13,15 @@ c.set_directmode(True)
 
 
 def ledtest():
-    mode = c.registerfile._directmode
-    c.registerfile._directmode = True
+    mode = c._directmode
+    c.set_directmode(True)
     c.led(1, 0)
     c.led(0, 0)
-    c.registerfile._directmode = mode
+    c.set_directmode(mode)
 
 
 def config_ftdireadtest():
+    mode = c._directmode
     c.set_directmode(False) # avoid numerous write operations
     c.reset()
 
@@ -28,29 +29,33 @@ def config_ftdireadtest():
     c.digital.channel[0](enable=True)
 
     c.apply()
-    c.set_directmode(True)
+    c.set_directmode(mode)
 
 
 def config_analogtest():
+    mode = c._directmode
     c.set_directmode(False) # avoid numerous write operations
     c.reset()
 
-    # analog settings
+    # global analog settings
     c.frontend(frontend='P', baseline=10,
                psourcebias=60, nsourcebias=60,
                pcasc=60, ncasc=60, xfb=60)
-    c.frontend.channel[31](baseline=10, enablecsa=1, enableadc=1)
     c.adcbias(vndel=70, vpdel=100, vploadfb=70,
               vploadfb2=70, vpfb=70, vpamp=70)
 
-    # digital settings
-    c.comparator(threshold1=-255, threshold2=-210, diffmode=0)
+    # global digital settings
+    c.filter.stage[4](scaling=0.5, norm=True, offset=128, enable=1)
+    c.comparator(threshold1=20, threshold2=30, diffmode=0)
     c.hitlogic(mask=0xFFFFF000, window=20)
-    c.digital.channel[31](enable=1)
-    c.testdata(testdatain=1, testdataout=1, group='B')
+    c.testdata(testdatain=1, testdataout=1, group='A')
+
+    # channel settings
+    c.digital.channel[0](enable=1)
+    c.frontend.channel[0](baseline=10, enablecsa=1, enableadc=1)
 
     c.apply()
-    c.set_directmode(True)
+    c.set_directmode(mode)
 
 
 

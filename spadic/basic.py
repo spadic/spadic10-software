@@ -37,10 +37,13 @@ PACKAGE_SIZE = 9
 
 class Spadic(iom.FtdiIom):
     """SPADIC communication via FTDI -> IO Manager -> I2C."""
+    _debug = False
     #----------------------------------------------------------------
     # register file access
     #----------------------------------------------------------------
     def write_register(self, address, data):
+        if self._debug:
+            print 'RF[0x%03X] = 0x%04X' % (address, data)
         iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
         self._iom_write(IOM_ADDR_I2C, iom_payload)
 

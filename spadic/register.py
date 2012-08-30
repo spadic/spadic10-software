@@ -60,10 +60,10 @@ RF_MAP = {
    "REG_enableTestOutput"    : Register(addr=0x2a8, size=1 ), # sw="rw", hw="ro"
    "REG_testOutputSelGroup"  : Register(addr=0x2b0, size=1 ), # sw="rw", hw="ro"
    "REG_enableTestInput"     : Register(addr=0x2b8, size=1 ), # sw="rw", hw="ro"
-   "REG_enableAdcDec_l"      : Register(addr=0x2c0, size=16), # sw="rw", hw="ro" # ???
-   "REG_enableAdcDec_h"      : Register(addr=0x2c8, size=5 ), # sw="rw", hw="ro" # ???
+   "REG_enableAdcDec_l"      : Register(addr=0x2c0, size=16), # sw="rw", hw="ro" # multiplex ADC signals to decoupling
+   "REG_enableAdcDec_h"      : Register(addr=0x2c8, size=5 ), # sw="rw", hw="ro" # "
    "REG_triggerMaskA"        : Register(addr=0x2d0, size=16), # sw="rw", hw="ro" # enables DLM11 to trigger the hit logic
-   "REG_triggerMaskB"        : Register(addr=0x2d8, size=16), # sw="rw", hw="ro"
+   "REG_triggerMaskB"        : Register(addr=0x2d8, size=16), # sw="rw", hw="ro" # "
    "REG_enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # sw="rw", hw="ro" # enables DLM12 to inject an analog pulse into ch. 31
    "REG_enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # sw="rw", hw="ro" # enables DLM10 to generate the "TriggerOut" signal
    # TODO hide the following two somehow, they should not be used in
@@ -88,6 +88,7 @@ class RegisterFile:
     
     """
     _registers = {}
+    _changed = {}
     _directmode = False
 
     def __init__(self, spadic):
@@ -115,6 +116,8 @@ class RegisterFile:
         self._registers[name] = value
         if self._directmode:
             self._spadic.write_register(RF_MAP[name].addr, value)
+        else:
+            self._changed[name] = True
 
     def set_directmode(self, mode=True):
         """Set direct mode.
@@ -128,8 +131,9 @@ class RegisterFile:
 
     def apply(self):
         """Write all values to SPADIC register file."""
-        for name in self.dict(nonzero_only=True):
+        for name in self._changed:
             self._spadic.write_register(RF_MAP[name].addr, self[name])
+        self._changed = {}
 
     def size(self, name):
         """Return the size of a register in bits."""

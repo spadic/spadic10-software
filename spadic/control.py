@@ -732,15 +732,12 @@ class Controller:
         self._units['Digital'] = self.digital
 
         self.reset()
+        self.apply()
 
     def reset(self):
         """Reset all control units."""
-        mode = self._directmode
-        self.set_directmode(False)
         for unit in self._units.itervalues():
             unit.reset()
-        self.apply()
-        self.set_directmode(mode)
 
     def apply(self):
         """Update register values from control units and write RF/SR."""
