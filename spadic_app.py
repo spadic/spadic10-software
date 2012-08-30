@@ -58,6 +58,32 @@ def config_analogtest():
     c.set_directmode(mode)
 
 
+def config_adctest():
+    mode = c._directmode
+    c.set_directmode(False) # avoid numerous write operations
+    c.reset()
+    
+    # global analog settings
+    c.frontend(frontend='P', baseline=10,
+               psourcebias=60, nsourcebias=60,
+               pcasc=60, ncasc=60, xfb=60)
+    c.adcbias(vndel=70, vpdel=100, vploadfb=70,
+              vploadfb2=70, vpfb=70, vpamp=70)
+
+    # global digital settings
+    c.hitlogic(mask=0xFFFFF000, window=20)
+    c.testdata(testdatain=1, testdataout=1, group='A')
+
+    # setup channel 0 --> channel 3 trigger
+    c.digital.channel[0](enable=True)
+    c.digital.channel[3](enable=True)
+    c.digital.neighbor['A'](source=0, target=3, enable=1)
+    c.frontend.channel[3](baseline=10, enablecsa=1, enableadc=1)
+
+    c.apply()
+    c.set_directmode(mode)
+
+
 
 def randdata(n):
     return [random.randint(0, 120) for i in range(n)]

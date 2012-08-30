@@ -155,6 +155,146 @@ class HitLogic:
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
                 (self._mask, self._window))
+
+
+#================================================================
+# Digital channel settings
+#================================================================
+
+#----------------------------------------------------------------
+# Channel-specific settings
+#----------------------------------------------------------------
+_DIGCHANNEL_ENABLE = 0
+_DIGCHANNEL_ENTRIGGER = 0
+class DigitalChannel:
+    """Controls the digital channel settings."""
+    def __init__(self, registerfile, channel_id):
+        self._registerfile = registerfile
+        self._id = channel_id
+        self.reset()
+
+    def reset(self):
+        self(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
+
+    def __call__(self, enable=None, entrigger=None):
+        """Turn the channel on/off, enable trigger input."""
+        if enable is not None:
+            self._enable = 1 if enable else 0
+        if entrigger is not None:
+            self._entrigger = 1 if entrigger else 0
+
+        i = self._id % 16
+
+        reg_disable = {0: 'REG_disableChannelA',
+                       1: 'REG_disableChannelB'}[self._id//16]
+        basevalue = self._registerfile[reg_disable] & (0xFFFF-(1<<i))
+        newvalue = basevalue + (0 if self._enable else (1<<i))
+        self._registerfile[reg_disable] = newvalue
+
+        reg_trigger = {0: 'REG_triggerMaskA',
+                       1: 'REG_triggerMaskB'}[self._id//16]
+        basevalue = self._registerfile[reg_trigger] & (0xFFFF-(1<<i))
+        newvalue = basevalue + ((1<<i) if self._entrigger else 0)
+        self._registerfile[reg_trigger] = newvalue
+
+    def __str__(self):
+        return ('enabled: %s  trigger input: %s' %
+                (onoff(self._enable).ljust(3),
+                 onoff(self._entrigger).ljust(3)))
+
+
+#----------------------------------------------------------------
+# Neighbor select matrix
+#----------------------------------------------------------------
+class NeighborMatrix:
+    """Controls the neighbor select matrix of one channel group."""
+    def __init__(self, registerfile, group):
+        self._registerfile = registerfile
+        self._group = (0 if str(group) in 'aA' else
+                      (1 if str(group) in 'bB' else
+                      (1 if group else 0)))
+        self._map = {'u0': 0, 'u1': 1, 'u2': 2,
+                     'l0': 19, 'l1': 20, 'l2': 21}
+        for i in range(16):
+            self._map[str(i)] = i+3
+        self.reset()
+
+    def reset(self):
+        self._targets = ([[0]*3 + [0]*16 + [0]*3 for _ in range(3)] +
+                         [[0]*3 + [0]*16 + [0]*3 for _ in range(16)] +
+                         [[0]*3 + [0]*16 + [0]*3 for _ in range(3)])
+        self.__call__()
+
+    def __call__(self, target=None, source=None, enable=None):
+        """Turn 'target is triggered by source' on or off."""
+        if all(p is not None for p in [target, source, enable]):
+            self._set(target, source, enable)
+        
+        bits = [1 if enable else 0
+                for target in self._targets for enable in target]
+        for i in range(31):
+            name = ('REG_neighborSelectMatrix%s_%i' % 
+                    ({0: 'A', 1: 'B'}[self._group], i))
+            part = bits[16*i:16*(i+1)]
+            value = sum((1<<i)*bit for (i, bit) in enumerate(part))
+            self._registerfile[name] = value
+
+    def _set(self, target, source, enable):
+        tgt_idx = self._map[str(target).lower()]
+        src_idx = self._map[str(source).lower()]
+        if ((tgt_idx in [0, 1, 2]    and src_idx in [0, 1, 2]   ) or
+            (tgt_idx in [19, 20, 21] and src_idx in [19, 20, 21]) or
+            (tgt_idx == src_idx)):
+            raise ValueError('loops are not allowed!')
+        value = 1 if enable else 0
+        self._targets[tgt_idx][src_idx] = value
+
+    def __str__(self):
+        return '\n'.join(' '.join('x' if enable else '.'
+                                  for enable in target)
+                         for target in self._targets)
+
+
+#----------------------------------------------------------------
+# All channels
+#----------------------------------------------------------------
+class Digital:
+    """Collection of digital channel controllers.
+
+    Controls the following channel-specific digital settings:
+    - channel enable/disable
+    - trigger input enable/disable (DLM11)
+    - neighbor selection matrix
+    
+    Individual channels are accessed by 
+      <name of Controller instance>.digital.channel[<channel id>]
+
+    Neighbor matrix of groups A/B is accessed by
+      <name of Controller instance>.digital.neighbor[<'A' or 'B'>]
+
+    """
+    def __init__(self, registerfile):
+        self._registerfile = registerfile
+        self.channel = [DigitalChannel(self._registerfile, i)
+                        for i in range(32)]
+        self.neighbor = {'A': NeighborMatrix(self._registerfile, 'A'),
+                         'B': NeighborMatrix(self._registerfile, 'B')}
+        self.reset()
+            
+    def reset(self):
+        for ch in self.channel:
+            ch.reset()
+
+    def __call__(self):
+        for ch in self.channel:
+            ch.__call__()
+
+    def __str__(self):
+        s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
+        s += ['\nNeighbor matrix (group A)\n'+str(self.neighbor['A'])]
+        s += ['\nNeighbor matrix (group B)\n'+str(self.neighbor['B'])]
+        return '\n'.join(s)
+
         
 #================================================================
 # Filter
@@ -312,138 +452,6 @@ class Filter:
     def __str__(self):
         return '\n'.join(('Stage %i: ' % i) + str(s)
                          for (i, s) in enumerate(self.stage))
-
-
-#================================================================
-# Digital channel settings
-#================================================================
-
-#----------------------------------------------------------------
-# Channel-specific settings
-#----------------------------------------------------------------
-_DIGCHANNEL_ENABLE = 0
-_DIGCHANNEL_ENTRIGGER = 0
-class DigitalChannel:
-    """Controls the digital channel settings."""
-    def __init__(self, registerfile, channel_id):
-        self._registerfile = registerfile
-        self._id = channel_id
-        self.reset()
-
-    def reset(self):
-        self(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
-
-    def __call__(self, enable=None, entrigger=None):
-        """Turn the channel on/off, enable trigger input."""
-        if enable is not None:
-            self._enable = 1 if enable else 0
-        if entrigger is not None:
-            self._entrigger = 1 if entrigger else 0
-
-        i = self._id % 16
-
-        reg_disable = {0: 'REG_disableChannelA',
-                       1: 'REG_disableChannelB'}[self._id//16]
-        basevalue = self._registerfile[reg_disable] & (0xFFFF-(1<<i))
-        newvalue = basevalue + (0 if self._enable else (1<<i))
-        self._registerfile[reg_disable] = newvalue
-
-        reg_trigger = {0: 'REG_triggerMaskA',
-                       1: 'REG_triggerMaskB'}[self._id//16]
-        basevalue = self._registerfile[reg_trigger] & (0xFFFF-(1<<i))
-        newvalue = basevalue + ((1<<i) if self._entrigger else 0)
-        self._registerfile[reg_trigger] = newvalue
-
-    def __str__(self):
-        return ('enabled: %s  trigger input: %s' %
-                (onoff(self._enable).ljust(3),
-                 onoff(self._entrigger).ljust(3)))
-
-
-#----------------------------------------------------------------
-# Neighbor select matrix
-#----------------------------------------------------------------
-class NeighborMatrix:
-    """Controls the neighbor select matrix of one channel group."""
-    def __init__(self, registerfile, group):
-        self._registerfile = registerfile
-        self._group = (0 if str(group) in 'aA' else
-                      (1 if str(group) in 'bB' else
-                      (1 if group else 0)))
-        self._map = {'u0': 0, 'u1': 1, 'u2': 2,
-                     'l0': 19, 'l1': 20, 'l2': 21}
-        for i in range(16):
-            self._map[str(i)] = i+3
-        self.reset()
-
-    def reset(self):
-        self._targets = ([[0]*3 + [0]*16 + [0]*3 for _ in range(3)] +
-                         [[0]*3 + [0]*16 + [0]*3 for _ in range(16)] +
-                         [[0]*3 + [0]*16 + [0]*3 for _ in range(3)])
-        self.__call__()
-
-    def __call__(self, target=None, source=None, enable=None):
-        """Turn 'target is triggered by source' on or off."""
-        if all(p is not None for p in [target, source, enable]):
-            self._set(target, source, enable)
-        
-        bits = [1 if enable else 0
-                for target in self._targets for enable in target]
-        for i in range(31):
-            name = ('REG_neighborSelectMatrix%s_%i' % 
-                    ({0: 'A', 1: 'B'}[self._group], i))
-            part = bits[16*i:16*(i+1)]
-            value = sum((1<<i)*bit for (i, bit) in enumerate(part))
-            self._registerfile[name] = value
-
-    def _set(self, target, source, enable):
-        tgt_idx = self._map[str(target).lower()]
-        src_idx = self._map[str(source).lower()]
-        if ((tgt_idx in [0, 1, 2]    and src_idx in [0, 1, 2]   ) or
-            (tgt_idx in [19, 20, 21] and src_idx in [19, 20, 21]) or
-            (tgt_idx == src_idx)):
-            raise ValueError('loops are not allowed!')
-        value = 1 if enable else 0
-        self._targets[tgt_idx][src_idx] = value
-
-    def __str__(self):
-        return '\n'.join(' '.join('x' if enable else '.'
-                                  for enable in target)
-                         for target in self._targets)
-
-
-#----------------------------------------------------------------
-# All channels
-#----------------------------------------------------------------
-class Digital:
-    """Collection of digital channel controllers.
-
-    Controls the following channel-specific digital settings:
-    - channel enable/disable
-    - trigger input enable/disable (DLM11)
-    - neighbor selection (not yet implemented)
-    
-    Individual channels are accessed by 
-      <name of Controller instance>.digital.channel[<channel id>]
-
-    """
-    def __init__(self, registerfile):
-        self._registerfile = registerfile
-        self.channel = [DigitalChannel(self._registerfile, i)
-                        for i in range(32)]
-        self.reset()
-            
-    def reset(self):
-        for ch in self.channel:
-            ch.reset()
-
-    def __call__(self):
-        for ch in self.channel:
-            ch.__call__()
-
-    def __str__(self):
-        s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
-        return '\n'.join(s)
 
 
 #================================================================
@@ -781,9 +789,6 @@ class Controller:
         self._units['ADC bias'] = self.adcbias
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
-        # still testing
-        self.neighbormatrix = NeighborMatrix(self.registerfile, 'a')
-        self._units['Neighbor matrix A'] = self.neighbormatrix
 
         self.reset()
         self.apply()
