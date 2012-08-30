@@ -47,12 +47,13 @@ RF_MAP = {
    "REG_offsetFilter"     : Register(addr=0x80, size=9 ), # sw="rw", hw="ro"
    "REG_groupIdA"         : Register(addr=0x88, size=8 ), # sw="rw", hw="ro"
    "REG_groupIdB"         : Register(addr=0x90, size=8 ), # sw="rw", hw="ro"
-  
-   # "REG_neighborSelectMatrixA"
-   # "REG_neighborSelectMatrixA_H"
-   # "REG_neighborSelectMatrixB"
-   # "REG_neighborSelectMatrixB_H"
-  
+#  "REG_neighborSelectMatrixA_0":  Register(addr=0x98, size=16), # see below
+#  "REG_neighborSelectMatrixA_1":  Register(addr=0xA0, size=16),
+#  ...
+#  "REG_neighborSelectMatrixA_30": Register(addr=0x188, size=4),
+#  "REG_neighborSelectMatrixB_0":  Register(addr=0x190, size=16),
+#  ...
+#  "REG_neighborSelectMatrixB_30": Register(addr=0x280, size=4),
    "REG_disableChannelA"     : Register(addr=0x288, size=16), # sw="rw", hw="ro"
    "REG_disableChannelB"     : Register(addr=0x290, size=16), # sw="rw", hw="ro"
    "REG_disableEpochChannelA": Register(addr=0x298, size=1 ), # sw="rw", hw="ro"
@@ -73,6 +74,20 @@ RF_MAP = {
    # hide this as well, it can not be written anyway
 #  "status"                  : Register(addr=0x2f8, size=16) # sw="ro", hw="wo"
 }
+  
+# neighbor select matrix registers are a special case
+for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
+    for i in range(31): # 30*16 + 4 = 484
+        name = 'REG_neighborSelectMatrix%s_%i' % (group, i)
+        addr = base_addr + 8*i
+        RF_MAP[name] = Register(addr, (4 if i==30 else 16))
+
+# original definition:
+# "REG_neighborSelectMatrixA"   addr=0x98  size=16 # repeats 30 times, address increments by 8 each time
+# "REG_neighborSelectMatrixA_H" addr=0x188 size=4  # until here
+# "REG_neighborSelectMatrixB"   addr=0x190 size=16 # same for group B
+# "REG_neighborSelectMatrixB_H" addr=0x280 size=4
+  
 
 #--------------------------------------------------------------------
 # register file control class

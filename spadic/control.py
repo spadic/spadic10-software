@@ -333,14 +333,12 @@ class DigitalChannel:
     def reset(self):
         self(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
 
-    def __call__(self, enable=None, entrigger=None, neighbor=None):
-        """Turn the channel on/off, enable trigger input."""#, set neighbors."""
+    def __call__(self, enable=None, entrigger=None):
+        """Turn the channel on/off, enable trigger input."""
         if enable is not None:
             self._enable = 1 if enable else 0
         if entrigger is not None:
             self._entrigger = 1 if entrigger else 0
-        if neighbor is not None:
-            raise NotImplementedError
 
         i = self._id % 16
 
@@ -360,6 +358,59 @@ class DigitalChannel:
         return ('enabled: %s  trigger input: %s' %
                 (onoff(self._enable).ljust(3),
                  onoff(self._entrigger).ljust(3)))
+
+
+#----------------------------------------------------------------
+# Neighbor select matrix
+#----------------------------------------------------------------
+class NeighborMatrix:
+    """Controls the neighbor select matrix of one channel group."""
+    def __init__(self, registerfile, group):
+        self._registerfile = registerfile
+        self._group = (0 if str(group) in 'aA' else
+                      (1 if str(group) in 'bB' else
+                      (1 if group else 0)))
+        self._map = {'u0': 0, 'u1': 1, 'u2': 2,
+                     'l0': 19, 'l1': 20, 'l2': 21}
+        for i in range(16):
+            self._map[str(i)] = i+3
+        self.reset()
+
+    def reset(self):
+        self._targets = ([[0]*3 + [0]*16 + [0]*3 for _ in range(3)] +
+                         [[0]*3 + [0]*16 + [0]*3 for _ in range(16)] +
+                         [[0]*3 + [0]*16 + [0]*3 for _ in range(3)])
+        self.__call__()
+
+    def __call__(self, target=None, source=None, enable=None):
+        """Turn 'target is triggered by source' on or off."""
+        if all(p is not None for p in [target, source, enable]):
+            self._set(target, source, enable)
+        
+        bits = [1 if enable else 0
+                for target in self._targets for enable in target]
+        for i in range(31):
+            name = ('REG_neighborSelectMatrix%s_%i' % 
+                    ({0: 'A', 1: 'B'}[self._group], i))
+            part = bits[16*i:16*(i+1)]
+            value = sum((1<<i)*bit for (i, bit) in enumerate(part))
+            self._registerfile[name] = value
+
+    def _set(self, target, source, enable):
+        tgt_idx = self._map[str(target).lower()]
+        src_idx = self._map[str(source).lower()]
+        if ((tgt_idx in [0, 1, 2]    and src_idx in [0, 1, 2]   ) or
+            (tgt_idx in [19, 20, 21] and src_idx in [19, 20, 21]) or
+            (tgt_idx == src_idx)):
+            raise ValueError('loops are not allowed!')
+        value = 1 if enable else 0
+        self._targets[tgt_idx][src_idx] = value
+
+    def __str__(self):
+        return '\n'.join(' '.join('x' if enable else '.'
+                                  for enable in target)
+                         for target in self._targets)
+
 
 #----------------------------------------------------------------
 # All channels
@@ -730,6 +781,9 @@ class Controller:
         self._units['ADC bias'] = self.adcbias
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
+        # still testing
+        self.neighbormatrix = NeighborMatrix(self.registerfile, 'a')
+        self._units['Neighbor matrix A'] = self.neighbormatrix
 
         self.reset()
         self.apply()
