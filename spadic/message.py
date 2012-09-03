@@ -138,6 +138,7 @@ class _message_words:
 
     def resync(self):
         self._sync = False
+        self._remainder += [int2bitstring(0, 8)]*5
 
 
 #====================================================================
@@ -249,7 +250,8 @@ class Message():
             # extract information for different cases
             if w.startswith(preamble['wEOM']):
                 self.num_data = int(w[4:10], 2)
-                self.data = self.data[:self.num_data] # discard last 0 value
+                if self.data is not None: # discard last 0 value
+                    self.data = self.data[:self.num_data]
                 self.hit_type = hittype_str[w[10:12]]
                 self.stop_type = endofmessage_str[w[13:16]]
 
