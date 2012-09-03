@@ -1,5 +1,7 @@
 #!/usr/bin/env python -i
 
+import os
+import sys
 import time
 import random
 import spadic
@@ -89,6 +91,13 @@ def config_adctest(channel):
 # utility
 #====================================================================
 
+def stdout(s):
+    """Write to stdout and flush buffer."""
+    sys.stdout.write(s)
+    sys.stdout.flush()
+
+#--------------------------------------------------------------------
+
 def ledtest():
     """Turn one LED on and off."""
     mode = c._directmode
@@ -102,6 +111,23 @@ def ledtest():
 def randdata(n):
     """Generate a list of random numbers."""
     return [random.randint(0, 120) for i in range(n)]
+
+#--------------------------------------------------------------------
+    
+def ftdiflush(max_timeout=1, timeout_init=1e-6):
+    """Read from FTDI until empty."""
+    start = time.time()
+    timeout = timeout_init
+    while True:
+        d = s._ftdi_read(9, 1)
+        if d:
+            timeout = timeout_init
+            yield d
+        else:
+            if timeout > max_timeout:
+                break
+            time.sleep(timeout)
+            timeout = 2*timeout
 
 #--------------------------------------------------------------------
     
@@ -134,4 +160,74 @@ def quickwrite(data):
         return M[-1].data
     else:
         print 'no messages found!'
+
+#--------------------------------------------------------------------
+
+def ask_overwrite(filename):
+    if os.path.isfile(filename):
+        answer = raw_input('file \'%s\' already exists. overwrite? [y/n] '
+                           % filename)
+        write = True if answer in 'yY' else False
+    else:
+        write = True
+    return write
+
+
+# measurements
+#====================================================================
+
+def measure_baseline(channels):
+    baseline = {}
+    for ch in channels:
+        print 'baseline measurement for channel', ch
+        print '-----------------------------------'
+        config_adctest(ch) # this already sleeps 1.5 seconds
+        time.sleep(3) # better wait a bit longer until all register writing
+                      # is finished
+        stdout('flushing FTDI buffers... ')
+        for d in ftdiflush():
+            stdout('.')
+        stdout('\n')
+        b = []
+        for j in range(10):
+            stdout('writing data')
+            for i in range(5):
+                stdout('.')
+                s.write_data([100, 150])
+                time.sleep(0.1)
+            stdout(' reading messages...')
+            try:
+                M = r.read()
+            except: # many things can go wrong, just proceed then
+                for d in ftdiflush():
+                    pass
+                M = []
+            stdout(' found %i' % len(M))
+            b += [x for m in M if m.channel_id==ch
+                    for x in (m.data if m.data is not None else [])]
+            stdout('\n')
+        stdout('\n')
+        baseline[ch] = b
+    return baseline
+
+def save_baseline(baseline, filename, sep='\n'):
+    """Write measured baselines to file.
+    
+    Use '\n' as separator to produce a file suitable as input for gnuplot,
+    or e.g. ' ' for fitting more data on a  page.
+    """
+    write_permission = ask_overwrite(filename)
+    if write_permission:
+        sys.stdout.write('writing file... ')
+        sys.stdout.flush()
+        with open(filename, 'w') as f:
+            for ch in baseline:
+                f.write('# channel %i' % ch)
+                f.write('\n')
+                f.write(sep.join(str(x) for x in baseline[ch]))
+                f.write('\n'*3)
+        sys.stdout.write('done.\n')
+    else:
+        print 'not writing to file.'
+
 
