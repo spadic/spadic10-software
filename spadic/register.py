@@ -1,4 +1,5 @@
 from bit_byte_helper import int2bitstring
+import time
 
 #====================================================================
 # SPADIC Register File representation
@@ -68,7 +69,7 @@ RF_MAP = {
    "REG_enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # sw="rw", hw="ro" # enables DLM12 to inject an analog pulse into ch. 31
    "REG_enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # sw="rw", hw="ro" # enables DLM10 to generate the "TriggerOut" signal
    # TODO hide the following two somehow, they should not be used in
-   # RegisterFile, but are needed for ShiftRegister.write
+   # RegisterFile, but are needed for ShiftRegister.apply
    "control"                 : Register(addr=0x2f0, size=14), # sw="wo", hw="ro"
    "data"                    : Register(addr=0x300)
    # hide this as well, it can not be written anyway
@@ -539,7 +540,7 @@ class ShiftRegister:
         """Return the size of a register in bits."""
         return len(SR_MAP[name])
 
-    def apply(self):
+    def apply(self, userfeedback=True):
         """Write all values to SPADIC shift register."""
 
         bits = ['0']*SR_LENGTH
@@ -553,6 +554,9 @@ class ShiftRegister:
             for (i, b) in enumerate(int2bitstring(value, n)):
                 bits[pos[i]] = b
 
+        if userfeedback:
+            print 'writing shift register...'
+
         chain = '0' # ?
         mode = '10' # write mode
         ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
@@ -565,6 +569,9 @@ class ShiftRegister:
             chunk = int(bits[-16:], 2) # take the last 16 bits
             bits = bits[:-16]          # remove the last 16 bits
             self._spadic.write_register(RF_MAP['data'].addr, chunk)
+
+        if userfeedback:
+            time.sleep(1.5) # wait until SR is written
 
     def load(self, config):
         """Load the shift register configuration from a dictionary."""
