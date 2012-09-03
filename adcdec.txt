@@ -1,0 +1,128 @@
+13 voltages (12 without analogTrigger):
+
+AmpCasc (analogTrigger) RefFB RefNwell VCascNFB VCascPFB
+VNDel VNFB VPAmp VPDel VPFB VPLoadFB VPLoadFB2
+
+7 decoupling pads, multiplexing 3 predefined voltages --> 3^7 = 2187 combinations
+
+   without analogTrigger: 1458
+only unique combinations:  117
+
+  0: AmpCasc     RefNwell    VNDel       VNFB        VPAmp       VPLoadFB    VPLoadFB2  
+  1: AmpCasc     RefFB       VCascNFB    VNFB        VPAmp       VPFB        VPLoadFB2  
+  2: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNDel       VPLoadFB    VPLoadFB2  
+  3: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNDel       VPDel       VPLoadFB2  
+  4: AmpCasc     RefNwell    VCascNFB    VNDel       VPAmp       VPDel       VPLoadFB2  
+  5: AmpCasc     RefFB       VCascNFB    VCascPFB    VNFB        VPDel       VPFB       
+  6: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNFB        VPDel       VPLoadFB2  
+  7: AmpCasc     RefFB       VCascPFB    VNDel       VNFB        VPDel       VPFB       
+  8: AmpCasc     RefFB       VCascNFB    VNDel       VPAmp       VPFB        VPLoadFB2  
+  9: AmpCasc     RefFB       VCascPFB    VNDel       VNFB        VPAmp       VPFB       
+ 10: AmpCasc     RefFB       VCascNFB    VCascPFB    VNFB        VPAmp       VPFB       
+ 11: AmpCasc     RefNwell    VNDel       VNFB        VPAmp       VPDel       VPFB       
+ 12: AmpCasc     RefFB       VCascNFB    VNFB        VPDel       VPFB        VPLoadFB2  
+ 13: AmpCasc     RefFB       VNDel       VNFB        VPDel       VPFB        VPLoadFB2  
+ 14: AmpCasc     RefNwell    VCascNFB    VNDel       VPAmp       VPDel       VPFB       
+ 15: AmpCasc     RefFB       VCascPFB    VNDel       VNFB        VPDel       VPLoadFB2  
+ 16: AmpCasc     RefFB       VCascNFB    VNFB        VPFB        VPLoadFB    VPLoadFB2  
+ 17: AmpCasc     RefNwell    VCascNFB    VNFB        VPAmp       VPLoadFB    VPLoadFB2  
+ 18: AmpCasc     RefNwell    VCascNFB    VNDel       VPDel       VPFB        VPLoadFB2  
+ 19: AmpCasc     RefNwell    VNDel       VNFB        VPAmp       VPDel       VPLoadFB2  
+ 20: AmpCasc     RefFB       VCascPFB    VNDel       VNFB        VPAmp       VPLoadFB2  
+ 21: AmpCasc     RefNwell    VCascNFB    VNFB        VPAmp       VPDel       VPLoadFB2  
+ 22: AmpCasc     RefFB       VCascNFB    VNDel       VPAmp       VPDel       VPFB       
+ 23: AmpCasc     RefNwell    VCascNFB    VNFB        VPAmp       VPDel       VPFB       
+ 24: AmpCasc     RefNwell    VNDel       VNFB        VPAmp       VPFB        VPLoadFB   
+ 25: AmpCasc     RefNwell    VCascNFB    VNFB        VPAmp       VPFB        VPLoadFB   
+ 26: AmpCasc     RefFB       VCascNFB    VNDel       VPDel       VPFB        VPLoadFB2  
+ 27: AmpCasc     RefNwell    VCascNFB    VNDel       VPAmp       VPFB        VPLoadFB2  
+ 28: AmpCasc     RefFB       VCascNFB    VCascPFB    VNFB        VPLoadFB    VPLoadFB2  
+ 29: AmpCasc     RefNwell    VCascPFB    VNDel       VNFB        VPFB        VPLoadFB   
+ 30: AmpCasc     RefFB       VCascPFB    VNDel       VNFB        VPLoadFB    VPLoadFB2  
+ 31: AmpCasc     RefFB       VCascNFB    VNDel       VPAmp       VPDel       VPLoadFB2  
+ 32: AmpCasc     RefFB       VNDel       VNFB        VPFB        VPLoadFB    VPLoadFB2  
+ 33: AmpCasc     RefFB       VCascNFB    VCascPFB    VNFB        VPAmp       VPLoadFB2  
+ 34: AmpCasc     RefFB       VCascNFB    VCascPFB    VNFB        VPFB        VPLoadFB   
+ 35: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNFB        VPAmp       VPLoadFB2  
+ 36: AmpCasc     RefFB       VCascNFB    VCascPFB    VNDel       VPDel       VPLoadFB2  
+ 37: AmpCasc     RefFB       VCascNFB    VCascPFB    VNDel       VPLoadFB    VPLoadFB2  
+ 38: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNFB        VPFB        VPLoadFB   
+ 39: AmpCasc     RefFB       VCascNFB    VNFB        VPAmp       VPFB        VPLoadFB   
+ 40: AmpCasc     RefFB       VNDel       VNFB        VPAmp       VPFB        VPLoadFB   
+ 41: AmpCasc     RefFB       VCascNFB    VCascPFB    VNDel       VPFB        VPLoadFB   
+ 42: AmpCasc     RefFB       VCascNFB    VNFB        VPAmp       VPDel       VPFB       
+ 43: AmpCasc     RefFB       VCascNFB    VCascPFB    VNDel       VPDel       VPFB       
+ 44: AmpCasc     RefFB       VCascNFB    VCascPFB    VNDel       VPAmp       VPLoadFB2  
+ 45: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNDel       VPAmp       VPFB       
+ 46: AmpCasc     RefNwell    VNDel       VNFB        VPFB        VPLoadFB    VPLoadFB2  
+ 47: AmpCasc     RefNwell    VCascNFB    VNDel       VPAmp       VPLoadFB    VPLoadFB2  
+ 48: AmpCasc     RefFB       VCascNFB    VNDel       VPAmp       VPFB        VPLoadFB   
+ 49: AmpCasc     RefNwell    VCascPFB    VNDel       VNFB        VPLoadFB    VPLoadFB2  
+ 50: AmpCasc     RefFB       VCascPFB    VNDel       VNFB        VPFB        VPLoadFB   
+ 51: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNFB        VPLoadFB    VPLoadFB2  
+ 52: AmpCasc     RefFB       VCascNFB    VNFB        VPAmp       VPDel       VPLoadFB2  
+ 53: AmpCasc     RefNwell    VCascPFB    VNDel       VNFB        VPAmp       VPLoadFB2  
+ 54: AmpCasc     RefFB       VNDel       VNFB        VPAmp       VPDel       VPLoadFB2  
+ 55: AmpCasc     RefFB       VCascNFB    VNDel       VPFB        VPLoadFB    VPLoadFB2  
+ 56: AmpCasc     RefFB       VCascNFB    VNFB        VPAmp       VPLoadFB    VPLoadFB2  
+ 57: AmpCasc     RefNwell    VCascNFB    VNDel       VPAmp       VPFB        VPLoadFB   
+ 58: AmpCasc     RefFB       VCascNFB    VNDel       VPAmp       VPLoadFB    VPLoadFB2  
+ 59: AmpCasc     RefFB       VCascNFB    VCascPFB    VNDel       VPAmp       VPFB       
+ 60: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNDel       VPAmp       VPLoadFB2  
+ 61: AmpCasc     RefFB       VNDel       VNFB        VPAmp       VPDel       VPFB       
+ 62: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNFB        VPAmp       VPFB       
+ 63: AmpCasc     RefNwell    VCascPFB    VNDel       VNFB        VPAmp       VPFB       
+ 64: AmpCasc     RefNwell    VCascNFB    VNDel       VPFB        VPLoadFB    VPLoadFB2  
+ 65: AmpCasc     RefNwell    VCascNFB    VNFB        VPFB        VPLoadFB    VPLoadFB2  
+ 66: AmpCasc     RefNwell    VCascPFB    VNDel       VNFB        VPDel       VPLoadFB2  
+ 67: AmpCasc     RefNwell    VNDel       VNFB        VPDel       VPFB        VPLoadFB2  
+ 68: AmpCasc     RefNwell    VCascNFB    VNFB        VPDel       VPFB        VPLoadFB2  
+ 69: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNDel       VPDel       VPFB       
+ 70: AmpCasc     RefNwell    VCascNFB    VNFB        VPAmp       VPFB        VPLoadFB2  
+ 71: AmpCasc     RefFB       VNDel       VNFB        VPAmp       VPLoadFB    VPLoadFB2  
+ 72: AmpCasc     RefNwell    VNDel       VNFB        VPAmp       VPFB        VPLoadFB2  
+ 73: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNDel       VPFB        VPLoadFB   
+ 74: AmpCasc     RefNwell    VCascPFB    VNDel       VNFB        VPDel       VPFB       
+ 75: AmpCasc     RefFB       VCascNFB    VCascPFB    VNFB        VPDel       VPLoadFB2  
+ 76: AmpCasc     RefNwell    VCascNFB    VCascPFB    VNFB        VPDel       VPFB       
+ 77: AmpCasc     RefFB       VNDel       VNFB        VPAmp       VPFB        VPLoadFB2  
+ 78: RefFB       RefNwell    VCascNFB    VCascPFB    VNDel       VPAmp       VPLoadFB2  
+ 79: RefFB       RefNwell    VCascNFB    VCascPFB    VNFB        VPAmp       VPLoadFB2  
+ 80: RefFB       RefNwell    VCascNFB    VCascPFB    VNFB        VPDel       VPLoadFB2  
+ 81: RefFB       RefNwell    VCascNFB    VNDel       VPAmp       VPLoadFB    VPLoadFB2  
+ 82: RefFB       RefNwell    VCascNFB    VCascPFB    VNDel       VPLoadFB    VPLoadFB2  
+ 83: RefFB       RefNwell    VCascNFB    VNDel       VPAmp       VPFB        VPLoadFB2  
+ 84: RefFB       RefNwell    VCascNFB    VNFB        VPAmp       VPDel       VPFB       
+ 85: RefFB       RefNwell    VCascNFB    VCascPFB    VNDel       VPDel       VPFB       
+ 86: RefFB       RefNwell    VCascPFB    VNDel       VNFB        VPDel       VPLoadFB2  
+ 87: RefFB       RefNwell    VCascNFB    VNFB        VPFB        VPLoadFB    VPLoadFB2  
+ 88: RefFB       RefNwell    VCascNFB    VNFB        VPAmp       VPLoadFB    VPLoadFB2  
+ 89: RefFB       RefNwell    VCascNFB    VCascPFB    VNDel       VPDel       VPLoadFB2  
+ 90: RefFB       RefNwell    VCascNFB    VCascPFB    VNFB        VPDel       VPFB       
+ 91: RefFB       RefNwell    VCascPFB    VNDel       VNFB        VPDel       VPFB       
+ 92: RefFB       RefNwell    VNDel       VNFB        VPAmp       VPDel       VPFB       
+ 93: RefFB       RefNwell    VCascNFB    VNFB        VPAmp       VPFB        VPLoadFB   
+ 94: RefFB       RefNwell    VNDel       VNFB        VPAmp       VPFB        VPLoadFB   
+ 95: RefFB       RefNwell    VCascNFB    VCascPFB    VNDel       VPFB        VPLoadFB   
+ 96: RefFB       RefNwell    VCascNFB    VNDel       VPAmp       VPDel       VPLoadFB2  
+ 97: RefFB       RefNwell    VNDel       VNFB        VPFB        VPLoadFB    VPLoadFB2  
+ 98: RefFB       RefNwell    VCascNFB    VNFB        VPDel       VPFB        VPLoadFB2  
+ 99: RefFB       RefNwell    VNDel       VNFB        VPDel       VPFB        VPLoadFB2  
+100: RefFB       RefNwell    VNDel       VNFB        VPAmp       VPLoadFB    VPLoadFB2  
+101: RefFB       RefNwell    VCascNFB    VNFB        VPAmp       VPDel       VPLoadFB2  
+102: RefFB       RefNwell    VNDel       VNFB        VPAmp       VPDel       VPLoadFB2  
+103: RefFB       RefNwell    VCascNFB    VNDel       VPFB        VPLoadFB    VPLoadFB2  
+104: RefFB       RefNwell    VCascNFB    VCascPFB    VNFB        VPFB        VPLoadFB   
+105: RefFB       RefNwell    VCascNFB    VNDel       VPAmp       VPDel       VPFB       
+106: RefFB       RefNwell    VCascNFB    VCascPFB    VNFB        VPLoadFB    VPLoadFB2  
+107: RefFB       RefNwell    VCascPFB    VNDel       VNFB        VPLoadFB    VPLoadFB2  
+108: RefFB       RefNwell    VCascNFB    VNDel       VPAmp       VPFB        VPLoadFB   
+109: RefFB       RefNwell    VCascPFB    VNDel       VNFB        VPFB        VPLoadFB   
+110: RefFB       RefNwell    VCascPFB    VNDel       VNFB        VPAmp       VPLoadFB2  
+111: RefFB       RefNwell    VNDel       VNFB        VPAmp       VPFB        VPLoadFB2  
+112: RefFB       RefNwell    VCascNFB    VNFB        VPAmp       VPFB        VPLoadFB2  
+113: RefFB       RefNwell    VCascNFB    VCascPFB    VNDel       VPAmp       VPFB       
+114: RefFB       RefNwell    VCascNFB    VNDel       VPDel       VPFB        VPLoadFB2  
+115: RefFB       RefNwell    VCascPFB    VNDel       VNFB        VPAmp       VPFB       
+116: RefFB       RefNwell    VCascNFB    VCascPFB    VNFB        VPAmp       VPFB       
+
