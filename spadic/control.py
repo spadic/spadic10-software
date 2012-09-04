@@ -284,6 +284,8 @@ class Digital:
     def reset(self):
         for ch in self.channel:
             ch.reset()
+        for nb in self.neighbor.itervalues():
+            nb.reset()
 
     def __call__(self):
         for ch in self.channel:
