@@ -106,6 +106,8 @@ class RegisterFile:
     _registers = {}
     _changed = {}
     _directmode = False
+    _duration = 0.045 # duration of single register write operation by
+                      # experiment: (41.82 ± 0.17) ms
 
     def __init__(self, spadic):
         self._spadic = spadic
@@ -132,6 +134,7 @@ class RegisterFile:
         self._registers[name] = value
         if self._directmode:
             self._spadic.write_register(RF_MAP[name].addr, value)
+            time.sleep(self._duration)
         else:
             self._changed[name] = True
 
@@ -149,6 +152,7 @@ class RegisterFile:
         """Write all values to SPADIC register file."""
         for name in self._changed:
             self._spadic.write_register(RF_MAP[name].addr, self[name])
+            time.sleep(self._duration)
         self._changed = {}
 
     def size(self, name):
@@ -499,6 +503,8 @@ class ShiftRegister:
     """
     _registers = {}
     _directmode = False
+    _duration = 1.7 # duration of write operation by experiment:
+                    # (1.578 ± 0.052) s
 
     def __init__(self, spadic):
         self._spadic = spadic
@@ -540,7 +546,7 @@ class ShiftRegister:
         """Return the size of a register in bits."""
         return len(SR_MAP[name])
 
-    def apply(self, userfeedback=True):
+    def apply(self):
         """Write all values to SPADIC shift register."""
 
         bits = ['0']*SR_LENGTH
@@ -553,9 +559,6 @@ class ShiftRegister:
             value = self[name]
             for (i, b) in enumerate(int2bitstring(value, n)):
                 bits[pos[i]] = b
-
-        if userfeedback:
-            print 'writing shift register...'
 
         chain = '0' # ?
         mode = '10' # write mode
@@ -570,8 +573,7 @@ class ShiftRegister:
             bits = bits[:-16]          # remove the last 16 bits
             self._spadic.write_register(RF_MAP['data'].addr, chunk)
 
-        if userfeedback:
-            time.sleep(1.5) # wait until SR is written
+        time.sleep(self._duration)
 
     def load(self, config):
         """Load the shift register configuration from a dictionary."""
