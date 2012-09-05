@@ -9,6 +9,7 @@ import spadic
 # setup
 #====================================================================
 
+print 'initializing...'
 s = spadic.Spadic()
 c = spadic.Controller(s)
 r = spadic.MessageReader(s)
@@ -20,7 +21,7 @@ c.set_directmode(True)
 # configs
 #====================================================================
 
-def config_ftdireadtest():
+def config_ftdireadtest(direct=True, quiet=False):
     mode = c._directmode
     c.set_directmode(False) # avoid numerous write operations
     c.reset()
@@ -28,12 +29,15 @@ def config_ftdireadtest():
     c.testdata(testdatain=True, testdataout=True)
     c.digital.channel[0](enable=True)
 
-    c.apply()
+    if direct:
+        if not quiet:
+            print 'writing configuration...'
+        c.apply()
     c.set_directmode(mode)
 
 #--------------------------------------------------------------------
 
-def config_analogtest(channel):
+def config_analogtest(channel, direct=True, quiet=False):
     mode = c._directmode
     c.set_directmode(False) # avoid numerous write operations
     c.reset()
@@ -57,18 +61,21 @@ def config_analogtest(channel):
     c.digital.channel[channel](enable=1)
     c.frontend.channel[channel](baseline=64, enablecsa=1, enableadc=1)
 
-    c.apply()
+    if direct:
+        if not quiet:
+            print 'writing configuration...'
+        c.apply()
     c.set_directmode(mode)
 
 #--------------------------------------------------------------------
 
-def config_adctest(channel):
+def config_adctest(channel, direct=True, quiet=False):
     mode = c._directmode
     c.set_directmode(False) # avoid numerous write operations
     c.reset()
     
     # global analog settings
-    c.frontend(frontend='P', baseline=64,
+    c.frontend(frontend='P', baseline=0,
                psourcebias=60, nsourcebias=60,
                pcasc=60, ncasc=60, xfb=60)
     c.adcbias(vndel=70, vpdel=100, vploadfb=70,
@@ -84,7 +91,10 @@ def config_adctest(channel):
     c.digital.neighbor['A'](source=0, target=channel, enable=1)
     c.frontend.channel[channel](baseline=64, enablecsa=1, enableadc=1)
 
-    c.apply()
+    if direct:
+        if not quiet:
+            print 'writing configuration...'
+        c.apply()
     c.set_directmode(mode)
 
 
@@ -167,7 +177,8 @@ def ask_overwrite(filename):
     if os.path.isfile(filename):
         answer = raw_input('file \'%s\' already exists. overwrite? [y/n] '
                            % filename)
-        write = True if answer in 'yY' else False
+        write = True if answer and answer in 'yY' else False
+                     # ('' in 'yY') == True !!!
     else:
         write = True
     return write
@@ -177,24 +188,52 @@ def ask_overwrite(filename):
 #====================================================================
 
 def measure_baseline(channels):
+    mode = c._directmode
+    c.set_directmode(False)
+
     baseline = {}
+
     for ch in channels:
         print 'baseline measurement for channel', ch
         print '-----------------------------------'
-        config_adctest(ch) # this already sleeps 1.5 seconds
-        time.sleep(3) # better wait a bit longer until all register writing
-                      # is finished
+
+        stdout('writing configuration... ')
+        config_adctest(ch, direct=False, quiet=True)
+        c.digital.channel[ch](enable=False)
+        c.apply()
+
+        print('enable channel %i... ' % ch)
+        c.set_directmode(True)
+        c.digital.channel[ch](enable=True)
+
         stdout('flushing FTDI buffers... ')
+        ftdicount = 0
+        ftdistr = '%i bytes' % ftdicount
+        stdout(ftdistr)
         for d in ftdiflush():
-            stdout('.')
+            ftdicount += len(d)
+            stdout('\b'*len(ftdistr))
+            ftdistr = '%i bytes' % ftdicount
+            stdout(ftdistr)
+        for i in range(5):
+            s.write_data([100, 150])
+            time.sleep(0.1)
+        for d in ftdiflush():
+            ftdicount += len(d)
+            stdout('\b'*len(ftdistr))
+            ftdistr = '%i bytes' % ftdicount
+            stdout(ftdistr)
         stdout('\n')
+
         b = []
+
         for j in range(10):
             stdout('writing data')
             for i in range(5):
                 stdout('.')
                 s.write_data([100, 150])
                 time.sleep(0.1)
+
             stdout(' reading messages...')
             try:
                 M = r.read()
@@ -206,14 +245,19 @@ def measure_baseline(channels):
             b += [x for m in M if m.channel_id==ch
                     for x in (m.data if m.data is not None else [])]
             stdout('\n')
+
         stdout('\n')
         baseline[ch] = b
+
+    c.set_directmode(mode)
     return baseline
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def save_baseline(baseline, filename, sep='\n'):
     """Write measured baselines to file.
     
-    Use '\n' as separator to produce a file suitable as input for gnuplot,
+    Use '\\n' as separator to produce a file suitable as input for gnuplot,
     or e.g. ' ' for fitting more data on a  page.
     """
     write_permission = ask_overwrite(filename)
@@ -221,7 +265,7 @@ def save_baseline(baseline, filename, sep='\n'):
         sys.stdout.write('writing file... ')
         sys.stdout.flush()
         with open(filename, 'w') as f:
-            for ch in baseline:
+            for ch in sorted(baseline):
                 f.write('# channel %i' % ch)
                 f.write('\n')
                 f.write(sep.join(str(x) for x in baseline[ch]))
