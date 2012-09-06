@@ -106,6 +106,7 @@ class RegisterFile:
     _registers = {}
     _changed = {}
     _directmode = False
+    _debug = False
     _duration = 0.045 # duration of single register write operation by
                       # experiment: (41.82 ± 0.17) ms
 
@@ -126,6 +127,8 @@ class RegisterFile:
         return self._registers[name]
 
     def __setitem__(self, name, value):
+        if self._debug:
+            print 'RF: %s -> %i' % (name, value)
         if name not in self:
             raise KeyError('%s not in register file' % name)
         if value not in range(2**self.size(name)):
@@ -503,6 +506,7 @@ class ShiftRegister:
     """
     _registers = {}
     _directmode = False
+    _debug = False
     _duration = 1.7 # duration of write operation by experiment:
                     # (1.578 ± 0.052) s
 
@@ -523,6 +527,8 @@ class ShiftRegister:
         return self._registers[name]
 
     def __setitem__(self, name, value):
+        if self._debug:
+            print 'SR: %s -> %i' % (name, value)
         if name not in self:
             raise KeyError('%s not in shift register' % name)
         if value not in range(2**self.size(name)):
