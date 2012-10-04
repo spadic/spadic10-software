@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='spadic',
-      version='0.9',
+      version='0.91',
       description='Susibo -> Spadic 1.0 control software',
       author='Michael Krieger',
       author_email='michael.krieger@ziti.uni-heidelberg.de',

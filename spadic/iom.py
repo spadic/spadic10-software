@@ -41,7 +41,10 @@ class FtdiIom:
 
     def __del__(self):
         if self.ftdic is not None:
-            ftdi.ftdi_usb_close(self.ftdic)
+            #ftdi.ftdi_usb_close(self.ftdic) <-- ftdi_free already calls
+            #                                    ftdi_deinit, which calls
+            #                                    ftdi_usb_close_internal,
+            #                                    which calls ftdi_usb_close.
             ftdi.ftdi_free(self.ftdic)
 
     #----------------------------------------------------------------
