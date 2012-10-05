@@ -1,3 +1,5 @@
+#-*- coding=utf8 *-*
+
 from bit_byte_helper import int2bitstring
 import time
 
