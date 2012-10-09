@@ -5,7 +5,7 @@ from control import Controller
 
 #del basic, message, register, control
 
-__version__ = '0.92'
+__version__ = '0.9.3'
 
 __all__ = [
     'Spadic', 'MessageReader', 'RegisterFile', 'ShiftRegister', 'Controller'

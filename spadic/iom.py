@@ -45,14 +45,23 @@ class FtdiIom:
             ftdi.ftdi_free(self.ftdic)
                     # free -> deinit -> usb_close_internal -> usb_close
 
-    #----------------------------------------------------------------
-    # reset FTDI, or reconnect entirely
-    #----------------------------------------------------------------
+    def purge(self):
+        """Purge all FTDI buffers."""
+        if self.ftdic is not None:
+            ftdi.ftdi_usb_purge_buffers(self.ftdic)
+        
     def reset(self):
+        """Reset the FTDI chip."""
         if self.ftdic is not None:
             ftdi.ftdi_usb_reset(self.ftdic)
 
     def reconnect(self):
+        """Close and re-open FTDI connection.
+        
+        Sets the FTDI bitmode to BITMODE_RESET before disconnecting, and
+        back to BITMODE_SYNCFF after reconnecting. This disables the FTDI
+        output clock during this period.
+        """
         self.__del__()
         self.__init__()
 
