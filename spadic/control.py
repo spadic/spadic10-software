@@ -401,8 +401,8 @@ class ScalingOffset:
         if enable is not None:
             self._enable[self._position] = 1 if enable else 0
 
-        self._registerfile['REG_offsetFilter'] = self._offset
-        self._registerfile['REG_scalingFilter'] = self._scaling
+        self._registerfile['REG_offsetFilter'] = self._offset % 512
+        self._registerfile['REG_scalingFilter'] = self._scaling % 512
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
         self._registerfile['REG_bypassFilterStage'] = (~value_enable) % 32
 
