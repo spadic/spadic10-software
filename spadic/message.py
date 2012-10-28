@@ -190,6 +190,7 @@ class Message():
     buffer_overflow_count = None
     epoch_count           = None
     info_type             = None
+    _valid                = True
 
     def __init__(self, message): # message = output of messages()
         self.words = message     # i.e. some raw 16-bit words
@@ -252,8 +253,11 @@ class Message():
                 self.num_data = int(w[4:10], 2)
                 if self.data is not None: # discard last 0 value
                     self.data = self.data[:self.num_data]
-                self.hit_type = hittype_str[w[10:12]]
-                self.stop_type = endofmessage_str[w[13:16]]
+                try:
+                    self.hit_type = hittype_str[w[10:12]]
+                    self.stop_type = endofmessage_str[w[13:16]]
+                except KeyError:
+                    self._valid = False
 
             elif w.startswith(preamble['wBOM']):
                 self.buffer_overflow_count = int(w[8:16], 2)
@@ -269,7 +273,10 @@ class Message():
         
         if info_words:
             w = info_words[0]
-            self.info_type = infotype_str[w[4:8]]
+            try:
+                self.info_type = infotype_str[w[4:8]]
+            except KeyError:
+                self._valid = False
             # channel_id only for some info types
             if w[4:8] in [infotype[t] for t in ['iDIS', 'iNGT']]:
                 self.channel_id = int(word[8:12], 2)
@@ -337,7 +344,8 @@ class MessageReader:
         d = self._spadic.read_data(num_bytes)
         w = self._read_words(d)
         m = self._read_messages(w)
-        return [Message(mi) for mi in m]
+        M = [Message(mi) for mi in m]
+        return [Mi for Mi in M if Mi._valid]
 
     def resync(self):
         self._read_words.resync()
