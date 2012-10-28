@@ -1,4 +1,4 @@
-from basic import Spadic
+from basic import Spadic, SpadicDummy
 from message import MessageReader
 from register import RegisterFile, ShiftRegister
 from control import Controller
@@ -8,6 +8,6 @@ from control import Controller
 __version__ = '0.9.4'
 
 __all__ = [
-    'Spadic', 'MessageReader', 'RegisterFile', 'ShiftRegister', 'Controller'
+    'Spadic', 'SpadicDummy', 'MessageReader', 'RegisterFile', 'ShiftRegister', 'Controller'
 ]
 

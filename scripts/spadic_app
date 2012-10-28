@@ -9,8 +9,14 @@ import spadic
 # setup
 #====================================================================
 
-print 'initializing...'
-s = spadic.Spadic()
+if len(sys.argv) > 1:
+    if sys.argv[1] == '--dummy':
+        print 'entering dummy mode...'
+        s = spadic.SpadicDummy()
+else:
+    print 'initializing...'
+    s = spadic.Spadic()
+
 c = spadic.Controller(s)
 r = spadic.MessageReader(s)
 
