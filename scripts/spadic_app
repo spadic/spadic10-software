@@ -9,6 +9,7 @@ import spadic
 # setup
 #====================================================================
 
+print '=== spadic_app v%s ===' % spadic.__version__
 if len(sys.argv) > 1:
     if sys.argv[1] == '--dummy':
         print 'entering dummy mode...'
