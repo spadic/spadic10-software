@@ -92,8 +92,10 @@ class Spadic(iom.FtdiIom):
 
 class SpadicDummy:
     """Fake the Spadic interface to test without USB connection."""
+    _debug = False
     def write_register(self, address, data):
-        pass
+        if self._debug:
+            print 'RF[0x%03X] = 0x%04X' % (address, data)
     def read_register(self, address):
         return 0
     def read_data(self, num_bytes=None, timeout=1):
