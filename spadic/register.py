@@ -139,7 +139,8 @@ class RegisterFile:
         self._registers[name] = value
         if self._directmode:
             self._spadic.write_register(RF_MAP[name].addr, value)
-            time.sleep(self._duration)
+            if not self._spadic._dummy:
+                time.sleep(self._duration)
         else:
             self._changed[name] = True
 
@@ -157,7 +158,8 @@ class RegisterFile:
         """Write all values to SPADIC register file."""
         for name in self._changed:
             self._spadic.write_register(RF_MAP[name].addr, self[name])
-            time.sleep(self._duration)
+            if not self._spadic._dummy:
+                time.sleep(self._duration)
         self._changed = {}
 
     def size(self, name):
@@ -581,7 +583,8 @@ class ShiftRegister:
             bits = bits[:-16]          # remove the last 16 bits
             self._spadic.write_register(RF_MAP['data'].addr, chunk)
 
-        time.sleep(self._duration)
+        if not self._spadic._dummy:
+            time.sleep(self._duration)
 
     def load(self, config):
         """Load the shift register configuration from a dictionary."""

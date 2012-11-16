@@ -38,6 +38,7 @@ PACKAGE_SIZE = 9
 class Spadic(iom.FtdiIom):
     """SPADIC communication via FTDI -> IO Manager -> I2C."""
     _debug = False
+    _dummy = False
     #----------------------------------------------------------------
     # register file access
     #----------------------------------------------------------------
@@ -93,6 +94,7 @@ class Spadic(iom.FtdiIom):
 class SpadicDummy:
     """Fake the Spadic interface to test without USB connection."""
     _debug = False
+    _dummy = True
     def write_register(self, address, data):
         if self._debug:
             print 'RF[0x%03X] = 0x%04X' % (address, data)
