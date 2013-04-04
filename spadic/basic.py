@@ -1,6 +1,6 @@
 import signal
 
-import iom
+import ftdi_cbmnet
 from bit_byte_helper import int2bitstring, int2bytelist
 
 
@@ -21,10 +21,10 @@ signal.signal(signal.SIGALRM, timeout_handler)
 #====================================================================
 
 #--------------------------------------------------------------------
-# IO Manager addresses
+# CBMnet <-> Register file read/write commands
 #--------------------------------------------------------------------
-IOM_ADDR_I2C = 0x20
-IOM_ADDR_TDA = 0x30
+RF_WRITE = 1
+RF_READ = 2
 
 # size of package parts in IOM package mode
 # first byte is always 0xFF --> discard after read
@@ -35,8 +35,8 @@ PACKAGE_SIZE = 9
 # FTDI -> IO Manager -> SPADIC communication
 #====================================================================
 
-class Spadic(iom.FtdiIom):
-    """SPADIC communication via FTDI -> IO Manager -> I2C."""
+class Spadic(ftdi_cbmnet.FtdiCbmnet):
+    """SPADIC communication via FTDI -> CBMnet interface."""
     _debug = False
     _dummy = False
     #----------------------------------------------------------------
@@ -45,18 +45,14 @@ class Spadic(iom.FtdiIom):
     def write_register(self, address, data):
         if self._debug:
             print 'RF[0x%03X] = 0x%04X' % (address, data)
-        iom_payload = int2bytelist(address, 3) + int2bytelist(data, 8)
-        self._iom_write(IOM_ADDR_I2C, iom_payload)
+        self._cbmif_write([RF_WRITE, address, data])
 
     def read_register(self, address):
-        i2c_read_implemented = False # TODO fix i2c read
-        if not i2c_read_implemented:
-            raise NotImplementedError
         # write register address
-        iom_payload = int2bytelist(address, 3)
-        self._iom_write(IOM_ADDR_I2C, iom_payload)
-        # read register value (always 64 bits)
-        return self._iom_read(IOM_ADDR_I2C, 8)
+        self._cbmif_write([RF_READ, address, 0])
+        # read register value
+        (src, data) = self._cbmif_read()
+        return data
 
     #----------------------------------------------------------------
     # read data from test output -> IOM -> FTDI
@@ -81,14 +77,6 @@ class Spadic(iom.FtdiIom):
                 yield byte
             if num_bytes_left:
                 num_bytes_left -= len(bytes_read)
-            
-    #----------------------------------------------------------------
-    # write data to test FTDI -> IOM -> test input
-    #----------------------------------------------------------------
-    def write_data(self, data):
-        if len(data) == 1:
-            data.append(0) # test input interface needs at least 2 values
-        self._iom_write(IOM_ADDR_TDA, [(x%512)>>1 for x in data])
 
 
 class SpadicDummy:
@@ -103,6 +91,4 @@ class SpadicDummy:
     def read_data(self, num_bytes=None, timeout=1):
         for byte in []:
             yield byte
-    def write_data(self, data):
-        pass
             
