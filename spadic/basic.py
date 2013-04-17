@@ -1,5 +1,6 @@
-import ftdi_cbmnet
 import threading, Queue
+import ftdi_cbmnet
+from message import MessageSplitter
 
 
 # CBMnet control port <-> register file read/write commands
@@ -13,12 +14,14 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
     def __init__(self):
         ftdi_cbmnet.FtdiCbmnet.__init__(self)
 
+        # message splitters for group A and B
+        self._dataA_splitter = MessageSplitter()
+        self._dataB_splitter = MessageSplitter()
+
+        # message output Queues and register read Queue
         self._dataA_queue = Queue.Queue()
         self._dataB_queue = Queue.Queue()
-
-        # register read buffer
-        self._rf_read_buffer = {}
-        self._rf_read_done = threading.Event()
+        self._ctrl_queue = Queue.Queue()
 
         # Threads
         self._data_proc_thread = threading.Thread()
@@ -33,15 +36,16 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
             (addr, words) = self._cbmif_read()
 
             if addr == ftdi_cbmnet.ADDR_DATA_A:
-                self._dataA_queue.put(words)
+                for m in self._dataA_splitter(words):
+                    self._dataA_queue.put(m)
 
             elif addr == ftdi_cbmnet.ADDR_DATA_B:
-                self._dataB_queue.put(words)
+                for m in self._dataB_splitter(words):
+                    self._dataB_queue.put(m)
 
             elif addr == ftdi_cbmnet.ADDR_CTRL:
                 [reg_addr, reg_val] = words
-                self._rf_read_buffer[reg_addr] = reg_val
-                self._rf_read_done.set()
+                self._ctrl_queue.put((reg_addr, reg_val))
 
         
     #----------------------------------------------------------------
@@ -59,11 +63,12 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
         addr = ftdi_cbmnet.ADDR_CTRL
         words = [RF_READ, address, 0]
 
-        self._rf_read_done.clear()
         self._cbmif_write(addr, words)
-        self._rf_read_done.wait()
-        return self._rf_read_buffer[address]
+        (reg_addr, reg_val) = self._ctrl_queue.get()
+        if reg_addr == address:
+            return reg_val
         
+
     #----------------------------------------------------------------
     # DLM control
     #----------------------------------------------------------------

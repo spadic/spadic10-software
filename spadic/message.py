@@ -6,149 +6,102 @@ from bit_byte_helper import int2bitstring
 #====================================================================
 
 #--------------------------------------------------------------------
-# preambles 
+# preambles (value, mask)
 #--------------------------------------------------------------------
 preamble = {
-  'wSOM': '1000', # start of message
-  'wTSW': '1001', # time stamp
-  'wRDA': '1010', # raw data
-  'wEOM': '1011', # end of data message
-  'wBOM': '1100', # buffer overflow counter, end of message
-  'wEPM': '1101', # epoch marker, end of message 
-  'wEXD': '1110', # extracted data 
-  'wINF': '1111', # information 
-  'wCON': '0'     # continuation preamble
+  'wSOM': (0x8000, 0xF000), # start of message
+  'wTSW': (0x9000, 0xF000), # time stamp
+  'wRDA': (0xA000, 0xF000), # raw data
+  'wEOM': (0xB000, 0xF000), # end of data message
+  'wBOM': (0xC000, 0xF000), # buffer overflow counter, end of message
+  'wEPM': (0xD000, 0xF000), # epoch marker, end of message 
+  'wEXD': (0xE000, 0xF000), # extracted data 
+  'wINF': (0xF000, 0xF000), # information 
+  'wCON': (0x0000, 0x8000)  # continuation preamble
 }
 
 #--------------------------------------------------------------------
 # end of message types
 #--------------------------------------------------------------------
 endofmessage = {
-  'eEND': '000', # normal end of message
-  'eEBF': '001', # buffer full 
-  'eEFF': '010', # ordering fifo full
-  'eEDH': '011', # multi hit
-  'eEDB': '100', # multi hit but buffer full
-  'eEDO': '101', # multi hit but ordering fifo full
-  'eXX1': '110', # unused
-  'eXX2': '111'  # unused
+  'eEND': (0x0000, 0x0007),
+  'eEBF': (0x0001, 0x0007),
+  'eEFF': (0x0002, 0x0007),
+  'eEDH': (0x0003, 0x0007),
+  'eEDB': (0x0004, 0x0007),
+  'eEDO': (0x0005, 0x0007),
+  'eXX1': (0x0006, 0x0007), # unused
+  'eXX2': (0x0007, 0x0007)  # unused
 }
 endofmessage_str = {
-  endofmessage['eEND']: 'normal end of message',
-  endofmessage['eEBF']: 'buffer full',
-  endofmessage['eEFF']: 'ordering fifo full',
-  endofmessage['eEDH']: 'multi hit',
-  endofmessage['eEDB']: 'multi hit but buffer full',
-  endofmessage['eEDO']: 'multi hit but ordering fifo full'
+  'eEND': 'normal end of message',
+  'eEBF': 'buffer full',
+  'eEFF': 'ordering fifo full',
+  'eEDH': 'multi hit',
+  'eEDB': 'multi hit but buffer full',
+  'eEDO': 'multi hit but ordering fifo full'
 }
 
 #--------------------------------------------------------------------
-# info types
+# info types (value, mask)
 #--------------------------------------------------------------------
 infotype = {
-  'iDIS': '0000', # corruption: disable channel during message readout, read from disabled channel
-  'iNGT': '0001', # corruption: next grant timeout in switch, e.g. due to SEU
-  'iNRT': '0010', # corruption: next request timeout in switch, e.g. due to SEU
-  'iNBE': '0011', # corruption: new grant but channel empty in switch, e.g. due to SEU
-  'iMSB': '0100', # corruption: corruption in message builder
-  'iNOP': '0101', # empty word from cbm net wrapper, can be removed anytime
-  'iSYN': '0110', # out of sync warning
-  'iXX3': '0111', # unused
-  'iXX4': '1000', # unused
-  'iXX5': '1001', # unused
-  'iXX6': '1010', # unused
-  'iXX7': '1011', # unused
-  'iXX8': '1100', # unused
-  'iXX9': '1101', # unused
-  'iXXA': '1110', # unused
-  'iXXB': '1111'  # unused
+  'iDIS': (0x0000, 0x0F00),
+  'iNGT': (0x0100, 0x0F00),
+  'iNRT': (0x0200, 0x0F00),
+  'iNBE': (0x0300, 0x0F00),
+  'iMSB': (0x0400, 0x0F00),
+  'iNOP': (0x0500, 0x0F00),
+  'iSYN': (0x0600, 0x0F00),
+  'iXX3': (0x0700, 0x0F00), # unused
+  'iXX4': (0x0800, 0x0F00), # unused
+  'iXX5': (0x0900, 0x0F00), # unused
+  'iXX6': (0x0A00, 0x0F00), # unused
+  'iXX7': (0x0B00, 0x0F00), # unused
+  'iXX8': (0x0C00, 0x0F00), # unused
+  'iXX9': (0x0D00, 0x0F00), # unused
+  'iXXA': (0x0E00, 0x0F00), # unused
+  'iXXB': (0x0F00, 0x0F00)  # unused
 }
 infotype_str = {
-  infotype['iDIS']: 'corruption: disable channel during message readout, read from disabled channel',
-  infotype['iNGT']: 'corruption: next grant timeout in switch, e.g. due to SEU',
-  infotype['iNRT']: 'corruption: next request timeout in switch, e.g. due to SEU',
-  infotype['iNBE']: 'corruption: new grant but channel empty in switch, e.g. due to SEU',
-  infotype['iMSB']: 'corruption: corruption in message builder',
-  infotype['iNOP']: 'empty word from cbm net wrapper, can be removed anytime',
-  infotype['iSYN']: 'out of sync warning'
+  'iDIS': 'disable channel during message readout',
+  'iNGT': 'next grant timeout',
+  'iNRT': 'next request timeout',
+  'iNBE': 'new grant but channel empty',
+  'iMSB': 'corruption in message builder',
+  'iNOP': 'empty word',
+  'iSYN': 'out of sync'
 }
 
 #--------------------------------------------------------------------
 # hit types
 #--------------------------------------------------------------------
 hittype = {
-  'eNON': '00', # no hit, error
-  'eINT': '01', # internal hit 
-  'eEXT': '10', # external hit
-  'eIAE': '11'  # int+ext hit
+  'eNON': (0x0000, 0x0030),
+  'eINT': (0x0010, 0x0030),
+  'eEXT': (0x0020, 0x0030),
+  'eIAE': (0x0030, 0x0030) 
 }
 hittype_str = {
-  hittype['eNON']: 'no hit, error',
-  hittype['eINT']: 'internal hit',
-  hittype['eEXT']: 'external hit',
-  hittype['eIAE']: 'int+ext hit'
+  'eNON': 'no hit, error',
+  'eINT': 'internal hit',
+  'eEXT': 'external hit',
+  'eIAE': 'int+ext hit'
 }
 
-
-
-#====================================================================
-# test data output reconstruction
-#====================================================================
-
-class _message_words:
-    def __init__(self):
-        self._sync = False
-        self._remainder = [int2bitstring(0, 8)]*5 # at the time the first
-                                        # pattern matching attempt is made,
-                                        # the buffer must contain five bytes
-
-    def __call__(self, byte_sequence): # byte_sequence must be an iterator
-        # initialize buffer with the remainder from the last time
-        buf = self._remainder
-
-        # search for wSOM, wTSW and wRDA in successive 2-byte words:
-        # [wSOM, ...] [wTSW, ...] [wRDA, ...
-        #  0     1     2     3     4
-        while not self._sync:
-            # shift next byte into the buffer (must discard old bytes until
-            # in sync, in order to guarantee that the very first word that
-            # is yielded marks the beginning of a message)
-            try:
-                buf.append(int2bitstring(byte_sequence.next(), 8))
-                buf = buf[1:] # do this after appending, so when
-                              # StopIteration is raised, buf remains
-                              # untouched
-            except StopIteration:
-                self._remainder = buf
-                return
-            # search the pattern in the newest five bytes
-            self._sync = (buf[0].startswith(preamble['wSOM']) and
-                          buf[2].startswith(preamble['wTSW']) and
-                          buf[4].startswith(preamble['wRDA']))
-
-        # once in sync, yield the oldest two bytes of the buffer
-        for byte in byte_sequence:
-            buf.append(int2bitstring(byte, 8))
-            if len(buf) > 1:
-                yield buf[0]+buf[1]
-                buf = buf[2:]
-
-        # store the remaining byte (if left over) for the next time
-        self._remainder = buf
-
-    def resync(self):
-        self._sync = False
-        self._remainder += [int2bitstring(0, 8)]*5
 
 
 #====================================================================
 # message reconstruction & interpretation
 #====================================================================
 
+def match_word(word, (value, mask)):
+    return word & mask == value
+
 #--------------------------------------------------------------------
 # split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
-class _messages:
+class MessageSplitter:
     def __init__(self):
         self._remainder = []
 
@@ -156,19 +109,24 @@ class _messages:
         # recall remainder from the last time
         message = self._remainder
 
-        for word in message_words:
-            # start new message at start of message marker or info marker
-            if any(word.startswith(preamble[p])
-                   for p in ['wSOM', 'wINF']):
+        for w in message_words:
+            # first check if info word and discard NOP words
+            if match_word(w, preamble['wINF']):
+                if not match_word(w, infotype['iNOP']):
+                    yield [w]
+                    message = []
+                    continue
+            # start new message at start of message marker
+            elif match_word(w, preamble['wSOM']):
                 message = []
 
             # build up message
-            message.append(word)
+            message.append(w)
 
             # yield message at all possible end of message markers
             # also clear it so it is not stored as remainder
-            if any(word.startswith(preamble[p])
-                   for p in ['wEOM', 'wBOM', 'wEPM', 'wINF']):
+            if any(match_word(w, preamble[p])
+                   for p in ['wEOM', 'wBOM', 'wEPM']):
                 yield message
                 message = []
 
@@ -330,23 +288,4 @@ class Message():
                             for (x, y) in zip(t, self.data))
 
 
-#--------------------------------------------------------------------
-# Message reader
-#--------------------------------------------------------------------
-class MessageReader:
-    _read_words = _message_words()
-    _read_messages = _messages()
-
-    def __init__(self, spadic):
-        self._spadic = spadic
-
-    def read(self, num_bytes=None):
-        d = self._spadic.read_data(num_bytes)
-        w = self._read_words(d)
-        m = self._read_messages(w)
-        M = [Message(mi) for mi in m]
-        return [Mi for Mi in M if Mi._valid]
-
-    def resync(self):
-        self._read_words.resync()
 
