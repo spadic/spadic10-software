@@ -1,8 +1,6 @@
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
-import threading
-
 
 #--------------------------------------------------------------------
 # dictionary of known USB error codes
@@ -32,7 +30,6 @@ class Ftdi:
             raise IOError('could not open USB connection!')
         ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
-        self.lock = threading.Lock()
 
     def __del__(self):
         """Deinitialize FTDI context and close USB connection."""
@@ -61,7 +58,6 @@ class Ftdi:
     #----------------------------------------------------------------
     def _ftdi_write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
-        self.lock.acquire()
         bytes_left = byte_list
         iter_left = max_iter
         while bytes_left:
@@ -76,13 +72,11 @@ class Ftdi:
             bytes_left = bytes_left[n:]
             if iter_left is not None:
                 iter_left -= 1
-        self.lock.release()
         # number of bytes that were written
         return len(byte_list)-len(bytes_left)
 
     def _ftdi_read(self, num_bytes, max_iter=None):
         """Read data from the FTDI chip."""
-        self.lock.acquire()
         buf = chr(0)*num_bytes
         bytes_read = []
         iter_left = max_iter
@@ -98,6 +92,5 @@ class Ftdi:
             buf = buf[n:]
             if iter_left is not None:
                 iter_left -= 1
-        self.lock.release()
         return bytes_read
 

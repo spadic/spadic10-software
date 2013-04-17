@@ -1,5 +1,4 @@
 import Ftdi
-import time
 
 
 # CBMnet port addresses
@@ -15,15 +14,12 @@ WRITE_LEN = {
 }
 
 
-#====================================================================
-# FTDI -> CBMnet interface communication wrapper
-#====================================================================
 class FtdiCbmnet(Ftdi.Ftdi):
     """Wrapper for FTDI <-> CBMnet interface communication."""
 
 
     def _cbmif_write(self, addr, words):
-        "Write words to the CBMnet send interface."""
+        """Write words to the CBMnet send interface."""
 
         if addr not in WRITE_LEN:
             raise ValueError("Cannot write to this CBMnet port.")
@@ -42,7 +38,7 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
 
     def _cbmif_read(self):
-        "Read words from the CBMnet receive interface."
+        """Read words from the CBMnet receive interface."""
 
         header = self._ftdi_read(2, max_iter=10)
         if len(header) < 2:
