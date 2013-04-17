@@ -1,4 +1,6 @@
 import Ftdi
+import threading, Queue
+import time
 
 
 # CBMnet port addresses
@@ -17,10 +19,27 @@ WRITE_LEN = {
 class FtdiCbmnet(Ftdi.Ftdi):
     """Wrapper for FTDI <-> CBMnet interface communication."""
 
+    def __init__(self):
+        Ftdi.Ftdi.__init__(self)
+
+        # set up write and read Queues
+        self._write_queue = Queue.Queue()
+        self._read_queue = Queue.Queue()
+
+        # set up write/read Thread
+        self._cbmif_thread = threading.Thread()
+        self._cbmif_thread.run = self._cbmif_task
+        self._cbmif_thread.daemon = True
+        self._cbmif_thread.start()
+
 
     def _cbmif_write(self, addr, words):
         """Write words to the CBMnet send interface."""
+        self._write_queue.put((addr, words))
 
+
+    def _cbmif_ftdi_write(self, addr, words):
+        """Perform the actual write operation."""
         if addr not in WRITE_LEN:
             raise ValueError("Cannot write to this CBMnet port.")
         if len(words) != WRITE_LEN[addr]:
@@ -39,7 +58,13 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
     def _cbmif_read(self):
         """Read words from the CBMnet receive interface."""
+        while self._read_queue.empty():
+            time.sleep(0.1)
+        return self._read_queue.get()
 
+
+    def _cbmif_ftdi_read(self):
+        """Perform the actual read operation."""
         header = self._ftdi_read(2, max_iter=10)
         if len(header) < 2:
             return None
@@ -53,4 +78,20 @@ class FtdiCbmnet(Ftdi.Ftdi):
             words.append(w)
 
         return (addr, words)
+
+
+    def _cbmif_task(self):
+        """Process write tasks and read all available data."""
+        while True:
+            while not self._write_queue.empty():
+                (addr, words) = self._write_queue.get()
+                self._cbmif_ftdi_write(addr, words)
+
+            try:
+                (addr, words) = self._cbmif_ftdi_read()
+                self._read_queue.put((addr, words))
+            except TypeError: # read result is None
+                if self._write_queue.empty():
+                    time.sleep(0.1)
+                continue
 
