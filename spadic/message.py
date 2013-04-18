@@ -182,6 +182,8 @@ class Message():
                 if any(match_word(w, infotype[it])
                        for it in ['iDIS', 'iNGT', 'iNBE', 'iMSB']):
                     self.channel_id = (w & 0x00F0) >> 4
+                elif match_word(w, infotype['iSYN']):
+                    self.epoch_count = (w & 0x00FF)
 
 
     def _update_data(self):
