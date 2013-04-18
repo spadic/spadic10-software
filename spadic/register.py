@@ -13,84 +13,57 @@ class Register:
         self.size = size
 
 #--------------------------------------------------------------------
-# dictionary of SPADIC 1.0 register file (contains addresses)
+# dictionary of user accessible registers
 #--------------------------------------------------------------------
 RF_MAP = {
-   "loopback": Register(addr=0x0, size=3), # sw="rw", hw="ro"
-                    # [2] DES2BS Loopback
-                    # [1] BS2DEC Loopback
-                    # [0] DEC2USR Loopback
-                    # Sets loopback modes.
+   "overrides": Register(addr=0x8, size=7),
 
-   "overrides": Register(addr=0x8, size=7), # sw="rw", hw="ro"
-                     # [6] link_active;
-                     # [5] user_pin2;
-                     # [4] user_pin1;
-                     # [3] align_initovr;
-                     # [2] link_ready;
-                     # [1] rxpcs_initovr;
-                     # [0] txpcs_initovr.
-   # Delivers user pins and override pins for link_active, align_initovr,
-   # link_ready, rxpcs_initovr, txpcs_initovr - physical link init.
-
-   "REG_CbmNetAddr"       : Register(addr=0x10, size=16), # sw="rw", hw="ro"
-   "REG_EpochCounter"     : Register(addr=0x18, size=16), # sw="rw", hw="ro"
-   "REG_threshold1"       : Register(addr=0x20, size=9 ), # sw="rw", hw="ro"
-   "REG_threshold2"       : Register(addr=0x28, size=9 ), # sw="rw", hw="ro"
-   "REG_compDiffMode"     : Register(addr=0x30, size=1 ), # sw="rw", hw="ro"
-   "REG_hitWindowLength"  : Register(addr=0x38, size=6 ), # sw="rw", hw="ro"
-   "REG_selectMask_l"     : Register(addr=0x40, size=16), # sw="rw", hw="ro"
-   "REG_selectMask_h"     : Register(addr=0x48, size=16), # sw="rw", hw="ro"
-   "REG_bypassFilterStage": Register(addr=0x50, size=5 ), # sw="rw", hw="ro"
-   "REG_aCoeffFilter_l"   : Register(addr=0x58, size=16), # sw="rw", hw="ro"
-   "REG_aCoeffFilter_h"   : Register(addr=0x60, size=2 ), # sw="rw", hw="ro"
-   "REG_bCoeffFilter_l"   : Register(addr=0x68, size=16), # sw="rw", hw="ro"
-   "REG_bCoeffFilter_h"   : Register(addr=0x70, size=8 ), # sw="rw", hw="ro"
-   "REG_scalingFilter"    : Register(addr=0x78, size=9 ), # sw="rw", hw="ro"
-   "REG_offsetFilter"     : Register(addr=0x80, size=9 ), # sw="rw", hw="ro"
-   "REG_groupIdA"         : Register(addr=0x88, size=8 ), # sw="rw", hw="ro"
-   "REG_groupIdB"         : Register(addr=0x90, size=8 ), # sw="rw", hw="ro"
-#  "REG_neighborSelectMatrixA_0":  Register(addr=0x98, size=16), # see below
-#  "REG_neighborSelectMatrixA_1":  Register(addr=0xA0, size=16),
+   "CbmNetAddr"       : Register(addr=0x10, size=16),
+   "EpochCounter"     : Register(addr=0x18, size=16),
+   "threshold1"       : Register(addr=0x20, size=9 ),
+   "threshold2"       : Register(addr=0x28, size=9 ),
+   "compDiffMode"     : Register(addr=0x30, size=1 ),
+   "hitWindowLength"  : Register(addr=0x38, size=6 ),
+   "selectMask_l"     : Register(addr=0x40, size=16),
+   "selectMask_h"     : Register(addr=0x48, size=16),
+   "bypassFilterStage": Register(addr=0x50, size=5 ),
+   "aCoeffFilter_l"   : Register(addr=0x58, size=16),
+   "aCoeffFilter_h"   : Register(addr=0x60, size=2 ),
+   "bCoeffFilter_l"   : Register(addr=0x68, size=16),
+   "bCoeffFilter_h"   : Register(addr=0x70, size=8 ),
+   "scalingFilter"    : Register(addr=0x78, size=9 ),
+   "offsetFilter"     : Register(addr=0x80, size=9 ),
+   "groupIdA"         : Register(addr=0x88, size=8 ),
+   "groupIdB"         : Register(addr=0x90, size=8 ),
+#  "neighborSelectMatrixA_0":  Register(addr=0x98,  size=16), # generated below
+#  "neighborSelectMatrixA_1":  Register(addr=0xA0,  size=16),
 #  ...
-#  "REG_neighborSelectMatrixA_30": Register(addr=0x188, size=4),
-#  "REG_neighborSelectMatrixB_0":  Register(addr=0x190, size=16),
+#  "neighborSelectMatrixA_30": Register(addr=0x188, size=4),
+#  "neighborSelectMatrixB_0":  Register(addr=0x190, size=16),
 #  ...
-#  "REG_neighborSelectMatrixB_30": Register(addr=0x280, size=4),
-   "REG_disableChannelA"     : Register(addr=0x288, size=16), # sw="rw", hw="ro"
-   "REG_disableChannelB"     : Register(addr=0x290, size=16), # sw="rw", hw="ro"
-   "REG_disableEpochChannelA": Register(addr=0x298, size=1 ), # sw="rw", hw="ro"
-   "REG_disableEpochChannelB": Register(addr=0x2a0, size=1 ), # sw="rw", hw="ro"
-   "REG_enableTestOutput"    : Register(addr=0x2a8, size=1 ), # sw="rw", hw="ro"
-   "REG_testOutputSelGroup"  : Register(addr=0x2b0, size=1 ), # sw="rw", hw="ro"
-   "REG_enableTestInput"     : Register(addr=0x2b8, size=1 ), # sw="rw", hw="ro"
-   "REG_enableAdcDec_l"      : Register(addr=0x2c0, size=16), # sw="rw", hw="ro" # multiplex ADC signals to decoupling
-   "REG_enableAdcDec_h"      : Register(addr=0x2c8, size=5 ), # sw="rw", hw="ro" # "
-   "REG_triggerMaskA"        : Register(addr=0x2d0, size=16), # sw="rw", hw="ro" # enables DLM11 to trigger the hit logic
-   "REG_triggerMaskB"        : Register(addr=0x2d8, size=16), # sw="rw", hw="ro" # "
-   "REG_enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # sw="rw", hw="ro" # enables DLM12 to inject an analog pulse into ch. 31
-   "REG_enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # sw="rw", hw="ro" # enables DLM10 to generate the "TriggerOut" signal
-   # TODO hide the following two somehow, they should not be used in
-   # RegisterFile, but are needed for ShiftRegister.apply
-   "control"                 : Register(addr=0x2f0, size=14), # sw="wo", hw="ro"
-   "data"                    : Register(addr=0x300)
-   # hide this as well, it can not be written anyway
-#  "status"                  : Register(addr=0x2f8, size=16) # sw="ro", hw="wo"
+#  "neighborSelectMatrixB_30": Register(addr=0x280, size=4),
+   "disableChannelA"     : Register(addr=0x288, size=16),
+   "disableChannelB"     : Register(addr=0x290, size=16),
+   "disableEpochChannelA": Register(addr=0x298, size=1 ),
+   "disableEpochChannelB": Register(addr=0x2a0, size=1 ),
+   "enableTestOutput"    : Register(addr=0x2a8, size=1 ),
+   "testOutputSelGroup"  : Register(addr=0x2b0, size=1 ),
+   "enableTestInput"     : Register(addr=0x2b8, size=1 ),
+   "enableAdcDec_l"      : Register(addr=0x2c0, size=16), # multiplex ADC signals to decoupling
+   "enableAdcDec_h"      : Register(addr=0x2c8, size=5 ),
+   "triggerMaskA"        : Register(addr=0x2d0, size=16), # enables DLM11 to trigger the hit logic
+   "triggerMaskB"        : Register(addr=0x2d8, size=16),
+   "enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # enables DLM12 to inject an analog pulse into ch. 31
+   "enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # enables DLM10 to generate the "TriggerOut" signal
 }
   
-# neighbor select matrix registers are a special case
+# neighborSelectMatrix registers are generated here
 for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
     for i in range(31): # 30*16 + 4 = 484
-        name = 'REG_neighborSelectMatrix%s_%i' % (group, i)
+        name = 'neighborSelectMatrix%s_%i' % (group, i)
         addr = base_addr + 8*i
         RF_MAP[name] = Register(addr, (4 if i==30 else 16))
 
-# original definition:
-# "REG_neighborSelectMatrixA"   addr=0x98  size=16 # repeats 30 times, address increments by 8 each time
-# "REG_neighborSelectMatrixA_H" addr=0x188 size=4  # until here
-# "REG_neighborSelectMatrixB"   addr=0x190 size=16 # same for group B
-# "REG_neighborSelectMatrixB_H" addr=0x280 size=4
-  
 
 #--------------------------------------------------------------------
 # register file control class
@@ -574,14 +547,14 @@ class ShiftRegister:
         mode = '10' # write mode
         ctrl_bits = int2bitstring(SR_LENGTH)+chain+mode
         ctrl_data = int(ctrl_bits, 2) # should be 0x1242 for 584 bits
-        self._spadic.write_register(RF_MAP['control'].addr, ctrl_data)
+        self._spadic.write_register(0x2F0, ctrl_data)
 
         # divide bit string into 16 bit chunks
         bits = ''.join(bits)
         while bits: # should iterate int(SR_LENGTH/16) times
             chunk = int(bits[-16:], 2) # take the last 16 bits
             bits = bits[:-16]          # remove the last 16 bits
-            self._spadic.write_register(RF_MAP['data'].addr, chunk)
+            self._spadic.write_register(0x300, chunk)
 
         if not self._spadic._dummy:
             time.sleep(self._duration)

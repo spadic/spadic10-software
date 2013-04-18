@@ -71,9 +71,9 @@ class TestData:
             self._group = (0 if str(group) in 'aA' else
                           (1 if str(group) in 'bB' else
                           (1 if group else 0)))
-        self._registerfile['REG_enableTestInput'] = self._testdatain
-        self._registerfile['REG_enableTestOutput'] = self._testdataout
-        self._registerfile['REG_testOutputSelGroup'] = self._group
+        self._registerfile['enableTestInput'] = self._testdatain
+        self._registerfile['enableTestOutput'] = self._testdataout
+        self._registerfile['testOutputSelGroup'] = self._group
 
     def __str__(self):
         return ('test data input: %s  test data output: %s  group: %s' %
@@ -106,9 +106,9 @@ class Comparator:
             self._threshold2 = threshold2
         if diffmode is not None:
             self._diffmode = 1 if diffmode else 0
-        self._registerfile['REG_threshold1'] = self._threshold1 % 512
-        self._registerfile['REG_threshold2'] = self._threshold2 % 512
-        self._registerfile['REG_compDiffMode'] = self._diffmode
+        self._registerfile['threshold1'] = self._threshold1 % 512
+        self._registerfile['threshold2'] = self._threshold2 % 512
+        self._registerfile['compDiffMode'] = self._diffmode
 
     def __str__(self):
         return ('threshold 1: %i  threshold 2: %i  diff mode: %s' %
@@ -148,9 +148,9 @@ class HitLogic:
 
         mask_h = self._mask >> 16;
         mask_l = self._mask & 0xFFFF;
-        self._registerfile['REG_selectMask_h'] = mask_h
-        self._registerfile['REG_selectMask_l'] = mask_l
-        self._registerfile['REG_hitWindowLength'] = self._window
+        self._registerfile['selectMask_h'] = mask_h
+        self._registerfile['selectMask_l'] = mask_l
+        self._registerfile['hitWindowLength'] = self._window
 
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
@@ -185,14 +185,14 @@ class DigitalChannel:
 
         i = self._id % 16
 
-        reg_disable = {0: 'REG_disableChannelA',
-                       1: 'REG_disableChannelB'}[self._id//16]
+        reg_disable = {0: 'disableChannelA',
+                       1: 'disableChannelB'}[self._id//16]
         basevalue = self._registerfile[reg_disable] & (0xFFFF-(1<<i))
         newvalue = basevalue + (0 if self._enable else (1<<i))
         self._registerfile[reg_disable] = newvalue
 
-        reg_trigger = {0: 'REG_triggerMaskA',
-                       1: 'REG_triggerMaskB'}[self._id//16]
+        reg_trigger = {0: 'triggerMaskA',
+                       1: 'triggerMaskB'}[self._id//16]
         basevalue = self._registerfile[reg_trigger] & (0xFFFF-(1<<i))
         newvalue = basevalue + ((1<<i) if self._entrigger else 0)
         self._registerfile[reg_trigger] = newvalue
@@ -233,7 +233,7 @@ class NeighborMatrix:
         bits = [1 if enable else 0
                 for target in self._targets for enable in target]
         for i in range(31):
-            name = ('REG_neighborSelectMatrix%s_%i' % 
+            name = ('neighborSelectMatrix%s_%i' % 
                     ({0: 'A', 1: 'B'}[self._group], i))
             part = bits[16*i:16*(i+1)]
             value = sum((1<<i)*bit for (i, bit) in enumerate(part))
@@ -343,12 +343,12 @@ class Stage:
 
         value_a = sum(c%64 << 6*i for (i, c) in enumerate(self._coeffa)) >> 6
         value_b = sum(c%64 << 6*i for (i, c) in enumerate(self._coeffb))
-        self._registerfile['REG_aCoeffFilter_h'] = value_a >> 16
-        self._registerfile['REG_aCoeffFilter_l'] = value_a & 0xFFFF
-        self._registerfile['REG_bCoeffFilter_h'] = value_b >> 16
-        self._registerfile['REG_bCoeffFilter_l'] = value_b & 0xFFFF
+        self._registerfile['aCoeffFilter_h'] = value_a >> 16
+        self._registerfile['aCoeffFilter_l'] = value_a & 0xFFFF
+        self._registerfile['bCoeffFilter_h'] = value_b >> 16
+        self._registerfile['bCoeffFilter_l'] = value_b & 0xFFFF
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
-        self._registerfile['REG_bypassFilterStage'] = (~value_enable) % 32
+        self._registerfile['bypassFilterStage'] = (~value_enable) % 32
 
     def __str__(self):
         p = self._position
@@ -401,10 +401,10 @@ class ScalingOffset:
         if enable is not None:
             self._enable[self._position] = 1 if enable else 0
 
-        self._registerfile['REG_offsetFilter'] = self._offset % 512
-        self._registerfile['REG_scalingFilter'] = self._scaling % 512
+        self._registerfile['offsetFilter'] = self._offset % 512
+        self._registerfile['scalingFilter'] = self._scaling % 512
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
-        self._registerfile['REG_bypassFilterStage'] = (~value_enable) % 32
+        self._registerfile['bypassFilterStage'] = (~value_enable) % 32
 
     def __str__(self):
         p = self._position
