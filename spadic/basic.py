@@ -1,6 +1,6 @@
 import threading, Queue
 import ftdi_cbmnet
-from message import MessageSplitter
+from message import MessageSplitter, Message
 
 
 # CBMnet control port <-> register file read/write commands
@@ -14,7 +14,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
     def __init__(self):
         ftdi_cbmnet.FtdiCbmnet.__init__(self)
 
-        # message splitters for group A and B
+        # message splitters for groups A and B
         self._dataA_splitter = MessageSplitter()
         self._dataB_splitter = MessageSplitter()
 
@@ -23,15 +23,15 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
         self._dataB_queue = Queue.Queue()
         self._ctrl_queue = Queue.Queue()
 
-        # Threads
-        self._data_proc_thread = threading.Thread()
-        self._data_proc_thread.run = self._data_proc_task
-        self._data_proc_thread.daemon = True
-        self._data_proc_thread.start()
+        # data reader thread
+        self._cbmif_read_thread = threading.Thread()
+        self._cbmif_read_thread.run = self._cbmif_read_task
+        self._cbmif_read_thread.daemon = True
+        self._cbmif_read_thread.start()
 
 
-    def _data_proc_task(self):
-        """Process all read data."""
+    def _cbmif_read_task(self):
+        """Read and process data from the CBMnet interface."""
         while True:
             (addr, words) = self._cbmif_read()
 
@@ -49,17 +49,17 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
 
         
     #----------------------------------------------------------------
-    # register file access
+    # access register file
     #----------------------------------------------------------------
     def write_register(self, address, value):
-        """Write a value into a single register."""
+        """Write a value into a register."""
         addr = ftdi_cbmnet.ADDR_CTRL
         words = [RF_WRITE, address, value]
         self._cbmif_write(addr, words)
 
 
     def read_register(self, address):
-        """Read the value from a single register."""
+        """Read the value from a register."""
         addr = ftdi_cbmnet.ADDR_CTRL
         words = [RF_READ, address, 0]
 
@@ -70,11 +70,29 @@ class Spadic(ftdi_cbmnet.FtdiCbmnet):
         
 
     #----------------------------------------------------------------
-    # DLM control
+    # send DLMs
     #----------------------------------------------------------------
     def send_dlm(self, number):
         """Send a DLM."""
         addr = ftdi_cbmnet.ADDR_DLM
         words = [number]
         self._cbmif_write(addr, words)
+        
+
+    #----------------------------------------------------------------
+    # read messages from groups A and B
+    #----------------------------------------------------------------
+    def read_groupA(self):
+        """Get one message from group A, if available."""
+        if not self._dataA_queue.empty():
+            return Message(self._dataA_queue.get())
+        else:
+            return None
+
+    def read_groupB(self):
+        """Get one message from group B, if available."""
+        if not self._dataB_queue.empty():
+            return Message(self._dataB_queue.get())
+        else:
+            return None
 
