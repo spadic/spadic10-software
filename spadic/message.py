@@ -112,7 +112,7 @@ class MessageSplitter:
                 if not match_word(w, infotype['iNOP']):
                     yield [w]
                     message = []
-                    continue
+                continue
             # start new message at start of message marker
             elif match_word(w, preamble['wSOM']):
                 message = []
