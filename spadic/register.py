@@ -91,44 +91,44 @@ class Register:
 # dictionary of user accessible registers
 #--------------------------------------------------------------------
 RF_MAP = {
-   "overrides"               : Register(  0x8,  7),
-   "CbmNetAddr"              : Register( 0x10, 16),
-   "EpochCounter"            : Register( 0x18, 16),
-   "threshold1"              : Register( 0x20,  9),
-   "threshold2"              : Register( 0x28,  9),
-   "compDiffMode"            : Register( 0x30,  1),
-   "hitWindowLength"         : Register( 0x38,  6),
-   "selectMask_l"            : Register( 0x40, 16),
-   "selectMask_h"            : Register( 0x48, 16),
-   "bypassFilterStage"       : Register( 0x50,  5),
-   "aCoeffFilter_l"          : Register( 0x58, 16),
-   "aCoeffFilter_h"          : Register( 0x60,  2),
-   "bCoeffFilter_l"          : Register( 0x68, 16),
-   "bCoeffFilter_h"          : Register( 0x70,  8),
-   "scalingFilter"           : Register( 0x78,  9),
-   "offsetFilter"            : Register( 0x80,  9),
-   "groupIdA"                : Register( 0x88,  8),
-   "groupIdB"                : Register( 0x90,  8),
-#  "neighborSelectMatrixA_0" : Register( 0x98, 16), # generated below
-#  "neighborSelectMatrixA_1" : Register( 0xA0, 16),
+   "overrides"               : (  0x8,  7),
+   "CbmNetAddr"              : ( 0x10, 16),
+   "EpochCounter"            : ( 0x18, 16),
+   "threshold1"              : ( 0x20,  9),
+   "threshold2"              : ( 0x28,  9),
+   "compDiffMode"            : ( 0x30,  1),
+   "hitWindowLength"         : ( 0x38,  6),
+   "selectMask_l"            : ( 0x40, 16),
+   "selectMask_h"            : ( 0x48, 16),
+   "bypassFilterStage"       : ( 0x50,  5),
+   "aCoeffFilter_l"          : ( 0x58, 16),
+   "aCoeffFilter_h"          : ( 0x60,  2),
+   "bCoeffFilter_l"          : ( 0x68, 16),
+   "bCoeffFilter_h"          : ( 0x70,  8),
+   "scalingFilter"           : ( 0x78,  9),
+   "offsetFilter"            : ( 0x80,  9),
+   "groupIdA"                : ( 0x88,  8),
+   "groupIdB"                : ( 0x90,  8),
+#  "neighborSelectMatrixA_0" : ( 0x98, 16), # generated below
+#  "neighborSelectMatrixA_1" : ( 0xA0, 16),
 #  ...
-#  "neighborSelectMatrixA_30": Register(0x188,  4),
-#  "neighborSelectMatrixB_0" : Register(0x190, 16),
+#  "neighborSelectMatrixA_30": (0x188,  4),
+#  "neighborSelectMatrixB_0" : (0x190, 16),
 #  ...
-#  "neighborSelectMatrixB_30": Register(0x280,  4),
-   "disableChannelA"         : Register(0x288, 16),
-   "disableChannelB"         : Register(0x290, 16),
-   "disableEpochChannelA"    : Register(0x298,  1),
-   "disableEpochChannelB"    : Register(0x2a0,  1),
-   "enableTestOutput"        : Register(0x2a8,  1),
-   "testOutputSelGroup"      : Register(0x2b0,  1),
-   "enableTestInput"         : Register(0x2b8,  1),
-   "enableAdcDec_l"          : Register(0x2c0, 16), # multiplex ADC signals to decoupling
-   "enableAdcDec_h"          : Register(0x2c8,  5),
-   "triggerMaskA"            : Register(0x2d0, 16), # enables DLM11 to trigger the hit logic
-   "triggerMaskB"            : Register(0x2d8, 16),
-   "enableAnalogTrigger"     : Register(0x2e0,  1), # enables DLM12 to inject an analog pulse into ch. 31
-   "enableTriggerOutput"     : Register(0x2e8,  1), # enables DLM10 to generate the "TriggerOut" signal
+#  "neighborSelectMatrixB_30": (0x280,  4),
+   "disableChannelA"         : (0x288, 16),
+   "disableChannelB"         : (0x290, 16),
+   "disableEpochChannelA"    : (0x298,  1),
+   "disableEpochChannelB"    : (0x2a0,  1),
+   "enableTestOutput"        : (0x2a8,  1),
+   "testOutputSelGroup"      : (0x2b0,  1),
+   "enableTestInput"         : (0x2b8,  1),
+   "enableAdcDec_l"          : (0x2c0, 16), # multiplex ADC signals to decoupling
+   "enableAdcDec_h"          : (0x2c8,  5),
+   "triggerMaskA"            : (0x2d0, 16), # enables DLM11 to trigger the hit logic
+   "triggerMaskB"            : (0x2d8, 16),
+   "enableAnalogTrigger"     : (0x2e0,  1), # enables DLM12 to inject an analog pulse into ch. 31
+   "enableTriggerOutput"     : (0x2e8,  1), # enables DLM10 to generate the "TriggerOut" signal
 }
   
 # neighborSelectMatrix registers are generated here
@@ -136,114 +136,68 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
     for i in range(31): # 30*16 + 4 = 484
         name = 'neighborSelectMatrix%s_%i' % (group, i)
         addr = base_addr + 8*i
-        RF_MAP[name] = Register(addr, (4 if i==30 else 16))
+        RF_MAP[name] = (addr, (4 if i==30 else 16))
 
 
 #--------------------------------------------------------------------
 # register file control class
 #--------------------------------------------------------------------
 class RegisterFile:
-    """Representation of the SPADIC register file.
-    
-    Emulates the behaviour of a dictionary, i.e. registers are accessed by
-    their names. Assigning a value to a name writes to an internal
-    dictionary, if "direct mode" is enabled, the register file write
-    operation is performed immediately, otherwise the apply() method must be
-    called.
-    
-    """
-    _registers = {}
-    _changed = {}
-    _directmode = False
-    _debug = False
-    _duration = 0.045 # duration of single register write operation by
-                      # experiment: (41.82 ± 0.17) ms
+    """Representation of the SPADIC register file."""
 
     def __init__(self, spadic):
-        self._spadic = spadic
-        for name in RF_MAP:
-            self._registers[name] = 0
+        """Set up all registers."""
+        self._registers = {}
+        for (name, (addr, size)) in RF_MAP.iteritems():
+            r = Register(addr, size)
+            r._write = spadic.write_register
+            r._read = spadic.read_register
+            self._registers[name] = r
 
-    def __contains__(self, name):
-        return name in self._registers
+        # emulate dictionary behaviour (read-only)
+        self.__contains__ = self._registers.__contains__
+        self.__iter__     = self._registers.__iter__
+        self.__getitem__  = self._registers.__getitem__
 
-    def __iter__(self):
-        return iter(self._registers)
 
-    def __getitem__(self, name):
-        if name not in self:
-            raise KeyError('%s not in register file' % name)
-        return self._registers[name]
-
-    def __setitem__(self, name, value):
-        if self._debug:
-            print 'RF: %s -> %i' % (name, value)
-        if name not in self:
-            raise KeyError('%s not in register file' % name)
-        if value not in range(2**self.size(name)):
-            raise ValueError('value for %s must be in the range 0..%i' %
-                             (name, 2**self.size(name)-1))
-        self._registers[name] = value
-        if self._directmode:
-            self._spadic.write_register(RF_MAP[name].addr, value)
-        else:
-            self._changed[name] = True
-
-    def set_directmode(self, mode=True):
-        """Set direct mode.
-
-        In direct mode, assigning a value directly performs the register
-        file write operation. If direct mode is disabled, apply() must be
-        called after the values have been assigned.
-
-        """
-        self._directmode = mode
-
-    def apply(self):
-        """Write all values to SPADIC register file."""
-        for name in self._changed:
-            self._spadic.write_register(RF_MAP[name].addr, self[name])
-        self._changed = {}
-
-    def size(self, name):
-        """Return the size of a register in bits."""
-        sz = RF_MAP[name].size
-        return sz if sz is not None else 0
-
-    def load(self, config):
-        """Load the register file configuration from a dictionary."""
+    def set(self, config):
+        """Load the staging area of the registers from a dictionary."""
         for name in config:
-            self[name] = config[name]
+            self[name].set(config[name])
 
-    def clear(self):
-        """Reset every register to zero."""
-        for name in self:
-            self[name] = 0
-
-    def dict(self, nonzero_only=True):
-        """Return a dictionary with the current register file configuration.
-        
-        If 'nonzero_only' is True, include only the registers containing a
-        nonzero value, else include all registers."""
+    def get(self):
+        """Store the staging area of the registers in a dictionary."""
         config = {}
         for name in self:
-            if not nonzero_only or self[name] != 0:
-                config[name] = self[name]
+            config[name] = self[name].get()
+
+    def apply(self):
+        """Perform the write operation for all registers."""
+        for name in self:
+            self[name].apply()
+
+    def update(self):
+        """Perform the read operation for all registers."""
+        for name in self:
+            self[name].update()
+
+
+    def write(self, config):
+        """Write the register configuration contained in a dictionary.
+        
+        Has the same effect as calling "set" and then "apply".
+        """
+        self.set(config)
+        self.apply()
+
+    def read(self):
+        """Read the register file configuration into a dictionary."""
+        config = {}
+        for name in self:
+            config[name] = self[name].read()
         return config
 
-    def search(self, name_or_addr):
-        """Search for registers by name or by address."""
-        if isinstance(name_or_addr, str):
-            name_part = name_or_addr
-            result = [name for name in self
-                      if name_part.lower() in name.lower()]
-        elif isinstance(name_or_addr, int):
-            addr = name_or_addr
-            result = [name for name in self
-                      if addr == RF_MAP[name].addr]
-        print '\n'.join(name.ljust(25) + '%3i' % RF_MAP[name].addr
-                        for name in sorted(result))
-        
+
  
 
 #====================================================================
