@@ -91,45 +91,44 @@ class Register:
 # dictionary of user accessible registers
 #--------------------------------------------------------------------
 RF_MAP = {
-   "overrides": Register(addr=0x8, size=7),
-
-   "CbmNetAddr"       : Register(addr=0x10, size=16),
-   "EpochCounter"     : Register(addr=0x18, size=16),
-   "threshold1"       : Register(addr=0x20, size=9 ),
-   "threshold2"       : Register(addr=0x28, size=9 ),
-   "compDiffMode"     : Register(addr=0x30, size=1 ),
-   "hitWindowLength"  : Register(addr=0x38, size=6 ),
-   "selectMask_l"     : Register(addr=0x40, size=16),
-   "selectMask_h"     : Register(addr=0x48, size=16),
-   "bypassFilterStage": Register(addr=0x50, size=5 ),
-   "aCoeffFilter_l"   : Register(addr=0x58, size=16),
-   "aCoeffFilter_h"   : Register(addr=0x60, size=2 ),
-   "bCoeffFilter_l"   : Register(addr=0x68, size=16),
-   "bCoeffFilter_h"   : Register(addr=0x70, size=8 ),
-   "scalingFilter"    : Register(addr=0x78, size=9 ),
-   "offsetFilter"     : Register(addr=0x80, size=9 ),
-   "groupIdA"         : Register(addr=0x88, size=8 ),
-   "groupIdB"         : Register(addr=0x90, size=8 ),
-#  "neighborSelectMatrixA_0":  Register(addr=0x98,  size=16), # generated below
-#  "neighborSelectMatrixA_1":  Register(addr=0xA0,  size=16),
+   "overrides"               : Register(  0x8,  7),
+   "CbmNetAddr"              : Register( 0x10, 16),
+   "EpochCounter"            : Register( 0x18, 16),
+   "threshold1"              : Register( 0x20,  9),
+   "threshold2"              : Register( 0x28,  9),
+   "compDiffMode"            : Register( 0x30,  1),
+   "hitWindowLength"         : Register( 0x38,  6),
+   "selectMask_l"            : Register( 0x40, 16),
+   "selectMask_h"            : Register( 0x48, 16),
+   "bypassFilterStage"       : Register( 0x50,  5),
+   "aCoeffFilter_l"          : Register( 0x58, 16),
+   "aCoeffFilter_h"          : Register( 0x60,  2),
+   "bCoeffFilter_l"          : Register( 0x68, 16),
+   "bCoeffFilter_h"          : Register( 0x70,  8),
+   "scalingFilter"           : Register( 0x78,  9),
+   "offsetFilter"            : Register( 0x80,  9),
+   "groupIdA"                : Register( 0x88,  8),
+   "groupIdB"                : Register( 0x90,  8),
+#  "neighborSelectMatrixA_0" : Register( 0x98, 16), # generated below
+#  "neighborSelectMatrixA_1" : Register( 0xA0, 16),
 #  ...
-#  "neighborSelectMatrixA_30": Register(addr=0x188, size=4),
-#  "neighborSelectMatrixB_0":  Register(addr=0x190, size=16),
+#  "neighborSelectMatrixA_30": Register(0x188,  4),
+#  "neighborSelectMatrixB_0" : Register(0x190, 16),
 #  ...
-#  "neighborSelectMatrixB_30": Register(addr=0x280, size=4),
-   "disableChannelA"     : Register(addr=0x288, size=16),
-   "disableChannelB"     : Register(addr=0x290, size=16),
-   "disableEpochChannelA": Register(addr=0x298, size=1 ),
-   "disableEpochChannelB": Register(addr=0x2a0, size=1 ),
-   "enableTestOutput"    : Register(addr=0x2a8, size=1 ),
-   "testOutputSelGroup"  : Register(addr=0x2b0, size=1 ),
-   "enableTestInput"     : Register(addr=0x2b8, size=1 ),
-   "enableAdcDec_l"      : Register(addr=0x2c0, size=16), # multiplex ADC signals to decoupling
-   "enableAdcDec_h"      : Register(addr=0x2c8, size=5 ),
-   "triggerMaskA"        : Register(addr=0x2d0, size=16), # enables DLM11 to trigger the hit logic
-   "triggerMaskB"        : Register(addr=0x2d8, size=16),
-   "enableAnalogTrigger" : Register(addr=0x2e0, size=1 ), # enables DLM12 to inject an analog pulse into ch. 31
-   "enableTriggerOutput" : Register(addr=0x2e8, size=1 ), # enables DLM10 to generate the "TriggerOut" signal
+#  "neighborSelectMatrixB_30": Register(0x280,  4),
+   "disableChannelA"         : Register(0x288, 16),
+   "disableChannelB"         : Register(0x290, 16),
+   "disableEpochChannelA"    : Register(0x298,  1),
+   "disableEpochChannelB"    : Register(0x2a0,  1),
+   "enableTestOutput"        : Register(0x2a8,  1),
+   "testOutputSelGroup"      : Register(0x2b0,  1),
+   "enableTestInput"         : Register(0x2b8,  1),
+   "enableAdcDec_l"          : Register(0x2c0, 16), # multiplex ADC signals to decoupling
+   "enableAdcDec_h"          : Register(0x2c8,  5),
+   "triggerMaskA"            : Register(0x2d0, 16), # enables DLM11 to trigger the hit logic
+   "triggerMaskB"            : Register(0x2d8, 16),
+   "enableAnalogTrigger"     : Register(0x2e0,  1), # enables DLM12 to inject an analog pulse into ch. 31
+   "enableTriggerOutput"     : Register(0x2e8,  1), # enables DLM10 to generate the "TriggerOut" signal
 }
   
 # neighborSelectMatrix registers are generated here
