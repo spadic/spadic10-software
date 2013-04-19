@@ -8,9 +8,84 @@ import time
 #====================================================================
 
 class Register:
-    def __init__(self, addr, size=None):
-        self.addr = addr
+    """Representation of a single hardware register.
+    
+    Has a "staging area" for preparing the value that is to be written to the
+    register and a "cache" for storing the last known value of the register,
+    so that the number of hardware write and read operations can be minimized.
+    """
+    def __init__(self, address, size):
+        """Set the address and size of the register."""
+        self.addr = address
         self.size = size
+        self._stage = 0 # staging area
+        self._cache = 0 # last known value of the hardware register
+        self._known = False # is the current value of the hardware register known?
+
+
+    def _write(self, addr, value):
+        raise NotImplementedError(
+            "Overwrite this with the hardware write operation.")
+
+    def _read(self, addr):
+        raise NotImplementedError(
+            "Overwrite this with the hardware read operation.")
+
+
+    def set(self, value):
+        """Modify the staging area."""
+        v = value % (2**self.size)
+        if v != self._stage:
+            self._stage = v
+
+    def get(self):
+        """Return the content of the staging area."""
+        return self._stage
+
+    def apply(self):
+        """Perform the hardware write operation, if necessary.
+        
+        The write operation will transfer the value from the staging area to
+        the hardware register. It is considered necessary if
+        - the value of the register is not known, or
+        - the value of the register is known and the prepared value differs
+          from it.
+
+        After the write operation has been performed, the value of the
+        hardware register will be considered "not known". It will become known
+        again if the "update" or "read" methods are called.
+        """
+        if not(self._known and self._stage == self._cache):
+            self._write(self.addr, self._stage)
+            self._known = False
+
+    def update(self):
+        """Perform the hardware read operation, if necessary.
+        
+        The read operation will transfer the value of the hardware register to
+        the cache. It is considered necessary if the value of the register
+        is not known, which is the case
+        - once initially, and
+        - after each time the write operation has been performed by calling
+          the "apply" or "write" methods.
+        """
+        if not self._known:
+            self._cache = self._read(self.addr)
+            self._known = True
+
+    def write(self, value):
+        """Modify the register value, if necessary perform the write operation.
+        
+        Has the same effect as calling "set" and then "apply".
+        """
+        self.set(value)
+        self.apply()
+
+    def read(self):
+        """Return the register value, if necessary perform the read operation."""
+        self.update()
+        return self._cache
+
 
 #--------------------------------------------------------------------
 # dictionary of user accessible registers
