@@ -39,7 +39,15 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
 
     def _cbmif_ftdi_write(self, addr, words):
-        """Perform the actual write operation."""
+        """Access CBMnet send interface through FTDI write port.
+        
+        addr: Address of the CBMnet send port
+        words: List of 16-bit words to be sent
+
+        This method builds a data packet for the CBMnet send interface and
+        transfers the individual bytes in the correct order through the
+        FTDI write port.
+        """
         if addr not in WRITE_LEN:
             raise ValueError("Cannot write to this CBMnet port.")
         if len(words) != WRITE_LEN[addr]:
@@ -64,7 +72,15 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
 
     def _cbmif_ftdi_read(self):
-        """Perform the actual read operation."""
+        """Access CBMnet receive interface through FTDI read port.
+
+        Returns a tuple (addr, words):
+        addr: Address of the CBMnet receive port
+        words: List of received 16-bit words
+
+        This method reconstructs a data packet from the CBMnet receive
+        interface out of the individual bytes from the FTDI read port.
+        """
         header = self._ftdi_read(2, max_iter=10)
         if len(header) < 2:
             return None
