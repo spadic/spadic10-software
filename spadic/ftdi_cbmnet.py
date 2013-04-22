@@ -33,11 +33,9 @@ class FtdiCbmnet(Ftdi.Ftdi):
         self._cbmif_thread.start()
 
 
-    def _cbmif_write(self, addr, words):
-        """Write words to the CBMnet send interface."""
-        self._write_queue.put((addr, words))
-
-
+    #--------------------------------------------------------------------
+    # these are the actual methods to write and read
+    #--------------------------------------------------------------------
     def _cbmif_ftdi_write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
         
@@ -63,21 +61,17 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
         return self._ftdi_write(ftdi_data)//2
 
-
-    def _cbmif_read(self):
-        """Read words from the CBMnet receive interface."""
-        return self._read_queue.get()
-
-
     def _cbmif_ftdi_read(self):
         """Access CBMnet receive interface through FTDI read port.
 
-        Returns a tuple (addr, words):
+        This method tries to read data from the FTDI and reconstruct a
+        packet from the CBMnet receive interface.
+
+        If successful, it returns a tuple (addr, words):
         addr: Address of the CBMnet receive port
         words: List of received 16-bit words
 
-        This method reconstructs a data packet from the CBMnet receive
-        interface out of the individual bytes from the FTDI read port.
+        Otherwise, it does not block, but return None instead.
         """
         header = self._ftdi_read(2, max_iter=10)
         if len(header) < 2:
@@ -94,6 +88,23 @@ class FtdiCbmnet(Ftdi.Ftdi):
         return (addr, words)
 
 
+    #--------------------------------------------------------------------
+    # these methods provide the user interface
+    #--------------------------------------------------------------------
+    def _cbmif_write(self, addr, words):
+        """Write words to the CBMnet send interface."""
+        self._write_queue.put((addr, words))
+
+    def _cbmif_read(self):
+        """Read words from the CBMnet receive interface."""
+        return self._read_queue.get()
+
+
+
+    #--------------------------------------------------------------------
+    # these methods are run in separate threads and connect the user
+    # interface to the lower level write/read operations
+    #--------------------------------------------------------------------
     def _cbmif_task(self):
         """Process write tasks and read all available data."""
         while True:
