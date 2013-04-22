@@ -66,8 +66,6 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
     def _cbmif_read(self):
         """Read words from the CBMnet receive interface."""
-        while self._read_queue.empty():
-            time.sleep(0.1)
         return self._read_queue.get()
 
 
