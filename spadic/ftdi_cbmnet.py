@@ -22,15 +22,26 @@ class FtdiCbmnet(Ftdi.Ftdi):
     def __init__(self):
         Ftdi.Ftdi.__init__(self)
 
-        # set up write and read Queues
+        # set up write/read threads
         self._write_queue = Queue.Queue()
-        self._read_queue = Queue.Queue()
+        self._write_thread = threading.Thread()
+        self._write_thread.run = self._cbmif_write_run
+        self._write_thread.daemon = True
 
-        # set up write/read Thread
-        self._cbmif_thread = threading.Thread()
-        self._cbmif_thread.run = self._cbmif_task
-        self._cbmif_thread.daemon = True
-        self._cbmif_thread.start()
+        self._read_queue = Queue.Queue()
+        self._read_thread = threading.Thread()
+        self._read_thread.run = self._cbmif_read_run
+        self._read_thread.daemon = True
+
+        self._manager_queue = Queue.PriorityQueue()
+        self._manager_thread = threading.Thread()
+        self._manager_thread.run = self._cbmif_manager_run
+        self._manager_thread.daemon = True
+
+        # start threads
+        self._write_thread.start()
+        self._read_thread.start()
+        self._manager_thread.start()
 
 
     #--------------------------------------------------------------------
@@ -100,23 +111,40 @@ class FtdiCbmnet(Ftdi.Ftdi):
         return self._read_queue.get()
 
 
-
     #--------------------------------------------------------------------
     # these methods are run in separate threads and connect the user
     # interface to the lower level write/read operations
+    #
+    # the read operation is triggered by three sources:
+    # - after each write operation
+    # - after each successful read operation
+    # - periodically every 10 seconds
     #--------------------------------------------------------------------
-    def _cbmif_task(self):
-        """Process write tasks and read all available data."""
+    def _cbmif_write_run(self):
+        """Take write tasks and pass them to the manager."""
         while True:
-            while not self._write_queue.empty():
-                (addr, words) = self._write_queue.get()
-                self._cbmif_ftdi_write(addr, words)
+            write_task = self._write_queue.get()
+            self._manager_queue.put((0, write_task))
+            self._manager_queue.put((1, None))
 
-            try:
-                (addr, words) = self._cbmif_ftdi_read()
-                self._read_queue.put((addr, words))
-            except TypeError: # read result is None
-                if self._write_queue.empty():
-                    time.sleep(0.1)
-                continue
+    def _cbmif_read_run(self):
+        """Periodically tell the manager to read."""
+        while True:
+            self._manager_queue.put((1, None))
+            time.sleep(10)
+                
+    def _cbmif_manager_run(self):
+        """Take write/read tasks from the queue and process them."""
+        while True:
+            (prio, task) = self._manager_queue.get()
+            if task is None: # read task
+                try:
+                    (addr, words) = self._cbmif_ftdi_read()
+                    self._read_queue.put((addr, words))
+                    self._manager_queue.put((1, None))
+                except TypeError: # read result is None
+                    pass
+            else: # write task
+                (addr, words) = task
+                self._cbmif_ftdi_write(addr, words)
 
