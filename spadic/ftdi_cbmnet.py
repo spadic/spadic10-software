@@ -84,7 +84,7 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
         Otherwise, it does not block, but return None instead.
         """
-        header = self._ftdi_read(2, max_iter=10)
+        header = self._ftdi_read(2, max_iter=1)
         if len(header) < 2:
             return None
         
