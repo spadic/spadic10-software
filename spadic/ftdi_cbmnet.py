@@ -78,7 +78,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def __init__(self):
         FtdiCbmnet.__init__(self)
 
-        # set up write/read threads
+        # set up threads and queues
         self._write_queue = Queue.Queue()
         self._write_thread = threading.Thread()
         self._write_thread.run = self._cbmif_write_run
@@ -111,7 +111,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
 
 
     #--------------------------------------------------------------------
-    # these methods provide the user interface
+    # overwrite the user interface
     #--------------------------------------------------------------------
     def _cbmif_write(self, addr, words):
         """Write words to the CBMnet send interface."""
@@ -125,10 +125,10 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
 
 
     #--------------------------------------------------------------------
-    # these methods are run in separate threads and connect the user
-    # interface to the lower level write/read operations
+    # The following methods are run in separate threads and connect
+    # overwritten user interface methods to the original methods.
     #
-    # the read operation is triggered by three sources:
+    # The read operation is triggered by three sources:
     # - after each write operation
     # - after each successful read operation
     # - periodically every 10 seconds
@@ -151,14 +151,16 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         """Take write/read tasks from the queue and process them."""
         while True:
             task = self._manager_queue.get()
-            if task is None: # read task
+            if task is None:
+                # read task
                 try:
                     (addr, words) = FtdiCbmnet._cbmif_read(self)
                     self._read_queue.put((addr, words))
                     self._manager_queue.put(None)
                 except TypeError: # read result is None
                     pass
-            else: # write task
+            else:
+                # write task
                 (addr, words) = task
                 FtdiCbmnet._cbmif_write(self, addr, words)
             self._manager_queue.task_done()
