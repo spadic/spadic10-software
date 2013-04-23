@@ -11,11 +11,11 @@ def int2bitstring(x, n):
 
 
 #====================================================================
-# generic shift register representation
+# generic register chain representation
 #====================================================================
 
-class ShiftRegisterEntry:
-    """Representation of a single entry in a shift register."""
+class RegisterChainEntry:
+    """Representation of a single entry in a register chain."""
     def __init__(self, positions):
         """Set the bit positions belonging to the entry."""
         self.positions = positions
@@ -33,8 +33,8 @@ class ShiftRegisterEntry:
         return self._value
 
 
-class ShiftRegister:
-    """Representation of a generic shift register."""
+class RegisterChain:
+    """Representation of a generic register chain."""
 
     def __init__(self, length, register_map):
         """Set up all registers."""
@@ -42,7 +42,7 @@ class ShiftRegister:
 
         self._registers = {}
         for (name, positions) in register_map.iteritems():
-            r = ShiftRegisterEntry(positions)
+            r = RegisterChainEntry(positions)
             self._registers[name] = r
 
         # emulate dictionary behaviour (read-only)
@@ -123,15 +123,15 @@ class ShiftRegister:
 
 
 #====================================================================
-# representation of the SPADIC 1.0 shift register
+# representation of the SPADIC 1.0 register chain
 #====================================================================
 
 #--------------------------------------------------------------------
-# map of the shift register
+# map of the register chain
 #--------------------------------------------------------------------
-SPADIC_SR_LENGTH = 584
+SPADIC_RC_LENGTH = 584
 
-SPADIC_SR = {
+SPADIC_RC = {
 # name              : [LSB, ..., MSB]    # MSB:LSB
 
   'VNDel'           : range(  1,   7+1), #   7:1
@@ -413,21 +413,21 @@ SPADIC_SR = {
 }
 
 #--------------------------------------------------------------------
-# inherit the generic shift register class
+# inherit the generic register chain class
 #--------------------------------------------------------------------
-SR_READ  = 1
-SR_WRITE = 2
+RC_READ  = 1
+RC_WRITE = 2
 
-class SpadicShiftRegister(ShiftRegister):
-    """Representation of the SPADIC shift register."""
+class SpadicRegisterChain(RegisterChain):
+    """Representation of the SPADIC register chain."""
     def __init__(self, spadic):
         self._write_register = spadic.write_register
         self._read_register = spadic.read_register
-        ShiftRegister.__init__(self, SPADIC_SR_LENGTH, SPADIC_SR)
+        RegisterChain.__init__(self, SPADIC_RC_LENGTH, SPADIC_RC)
 
     def _write(self, bits):
-        """Perform the write operation of the whole shift register."""
-        ctrl_data = (self._length << 3) + SR_WRITE
+        """Perform the write operation of the whole register chain."""
+        ctrl_data = (self._length << 3) + RC_WRITE
         self._write_register(0x2F0, ctrl_data)
 
         # divide bit string into 16 bit chunks (LSB first)
@@ -437,8 +437,8 @@ class SpadicShiftRegister(ShiftRegister):
             self._write_register(0x300, int(chunk, 2))
 
     def _read(self):
-        """Perform the write operation of the whole shift register."""
-        ctrl_data = (self._length << 3) + SR_READ
+        """Perform the write operation of the whole register chain."""
+        ctrl_data = (self._length << 3) + RC_READ
         self._write_register(0x2F0, ctrl_data)
 
         # read 16 bit chunks and concatenate (LSB first)
