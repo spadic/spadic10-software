@@ -34,7 +34,7 @@ class Register:
             self._stage = v
 
     def get(self):
-        """Return the content of the staging area."""
+        """Return the last known register value."""
         return self._stage
 
     def apply(self):
@@ -57,15 +57,17 @@ class Register:
     def update(self):
         """Perform the hardware read operation, if necessary.
         
-        The read operation will transfer the value of the hardware register to
-        the cache. It is considered necessary if the value of the register
-        is not known, which is the case
+        The read operation will transfer the value of the hardware
+        register to the cache and the staging area. It is considered
+        necessary if the value of the register is not known, which is the
+        case
         - once initially, and
         - after each time the write operation has been performed by calling
           the "apply" or "write" methods.
         """
         if not self._known:
             self._cache = self._read(self.addr)
+            self._stage = self._cache
             self._known = True
 
     def write(self, value):
@@ -77,9 +79,12 @@ class Register:
         self.apply()
 
     def read(self):
-        """Return the register value, if necessary perform the read operation."""
+        """Return the register value, if necessary perform the read operation.
+        
+        Has the same effect as calling "update" and then "get".
+        """
         self.update()
-        return self._cache
+        return self.get()
 
 
 class RegisterFile:
@@ -106,7 +111,7 @@ class RegisterFile:
             self[name].set(config[name])
 
     def get(self):
-        """Store the staging area of the registers in a dictionary."""
+        """Store the last known register values in a dictionary."""
         config = {}
         for name in self:
             config[name] = self[name].get()
@@ -132,11 +137,12 @@ class RegisterFile:
         self.apply()
 
     def read(self):
-        """Read the register file configuration into a dictionary."""
-        config = {}
-        for name in self:
-            config[name] = self[name].read()
-        return config
+        """Read the register file configuration into a dictionary.
+        
+        Has the same effect as calling "update" and then "get".
+        """
+        self.update()
+        return self.get()
 
 
 #====================================================================
