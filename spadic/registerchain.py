@@ -451,3 +451,9 @@ class SpadicRegisterChain(RegisterChain):
             bits_left -= len_chunk
         return bits
 
+    def clear(self):
+        """Clear the register chain."""
+        for name in self:
+            self[name].set(0)
+        self.apply()
+

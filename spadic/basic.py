@@ -1,6 +1,8 @@
 import threading, Queue
 import ftdi_cbmnet
 from message import MessageSplitter, Message
+from registerfile import SpadicRegisterFile
+from registerchain import SpadicRegisterChain
 
 
 # CBMnet control port <-> register file read/write commands
@@ -13,6 +15,13 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
     def __init__(self):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
+
+        # higher level register file access
+        self._registerfile = SpadicRegisterFile(self)
+
+        # higher level register chain access
+        self._registerchain = SpadicRegisterChain(self)
+        self._registerchain.clear()
 
         # message splitters for groups A and B
         self._dataA_splitter = MessageSplitter()
