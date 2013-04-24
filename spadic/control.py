@@ -27,9 +27,9 @@ class Led:
         self.reset()
 
     def reset(self):
-        self(_LED_USERPIN1, _LED_USERPIN2)
+        self.set(_LED_USERPIN1, _LED_USERPIN2)
 
-    def __call__(self, userpin1=None, userpin2=None):
+    def set(self, userpin1=None, userpin2=None):
         """Turn the userpin1/2 LEDs on or off."""
         if userpin1 is not None:
             self._userpin1 = 1 if userpin1 else 0
@@ -37,7 +37,7 @@ class Led:
             self._userpin2 = 1 if userpin2 else 0
         value = ((0x10 * self._userpin1) +
                  (0x20 * self._userpin2))
-        self._registerfile['overrides'] = value
+        self._registerfile['overrides'].set(value)
 
     def __str__(self):
         return ('userpin1: %s  userpin2: %s' %
@@ -57,9 +57,9 @@ class TestData:
         self.reset()
 
     def reset(self):
-        self(_TESTDATAIN, _TESTDATAOUT, _TESTDATAGROUP)
+        self.set(_TESTDATAIN, _TESTDATAOUT, _TESTDATAGROUP)
 
-    def __call__(self, testdatain=None, testdataout=None, group=None):
+    def set(self, testdatain=None, testdataout=None, group=None):
         """Turn test data input/output on or off and select the group."""
         if testdatain is not None:
             self._testdatain = 1 if testdatain else 0
@@ -69,9 +69,9 @@ class TestData:
             self._group = (0 if str(group) in 'aA' else
                           (1 if str(group) in 'bB' else
                           (1 if group else 0)))
-        self._registerfile['enableTestInput'] = self._testdatain
-        self._registerfile['enableTestOutput'] = self._testdataout
-        self._registerfile['testOutputSelGroup'] = self._group
+        self._registerfile['enableTestInput'].set(self._testdatain)
+        self._registerfile['enableTestOutput'].set(self._testdataout)
+        self._registerfile['testOutputSelGroup'].set(self._group)
 
     def __str__(self):
         return ('test data input: %s  test data output: %s  group: %s' %
@@ -92,9 +92,9 @@ class Comparator:
         self.reset()
 
     def reset(self):
-        self(_CMP_TH1, _CMP_TH2, _CMP_DIFFMODE)
+        self.set(_CMP_TH1, _CMP_TH2, _CMP_DIFFMODE)
 
-    def __call__(self, threshold1=None, threshold2=None, diffmode=None):
+    def set(self, threshold1=None, threshold2=None, diffmode=None):
         """Set the two thresholds and turn the diff mode on or off."""
         if threshold1 is not None:
             checkvalue(threshold1, -256, 255, 'threshold1')
@@ -104,9 +104,9 @@ class Comparator:
             self._threshold2 = threshold2
         if diffmode is not None:
             self._diffmode = 1 if diffmode else 0
-        self._registerfile['threshold1'] = self._threshold1 % 512
-        self._registerfile['threshold2'] = self._threshold2 % 512
-        self._registerfile['compDiffMode'] = self._diffmode
+        self._registerfile['threshold1'].set(self._threshold1 % 512)
+        self._registerfile['threshold2'].set(self._threshold2 % 512)
+        self._registerfile['compDiffMode'].set(self._diffmode)
 
     def __str__(self):
         return ('threshold 1: %i  threshold 2: %i  diff mode: %s' %
@@ -131,9 +131,9 @@ class HitLogic:
         self.reset()
 
     def reset(self):
-        self(_HITLOGIC_MASK, _HITLOGIC_WINDOW)
+        self.set(_HITLOGIC_MASK, _HITLOGIC_WINDOW)
 
-    def __call__(self, mask=None, window=None):
+    def set(self, mask=None, window=None):
         """Set the selection mask and the hit window length."""
         if mask is not None:
             if mask < 0 or mask > 0xFFFFFFFF:
@@ -146,9 +146,9 @@ class HitLogic:
 
         mask_h = self._mask >> 16;
         mask_l = self._mask & 0xFFFF;
-        self._registerfile['selectMask_h'] = mask_h
-        self._registerfile['selectMask_l'] = mask_l
-        self._registerfile['hitWindowLength'] = self._window
+        self._registerfile['selectMask_h'].set(mask_h)
+        self._registerfile['selectMask_l'].set(mask_l)
+        self._registerfile['hitWindowLength'].set(self._window)
 
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
@@ -172,9 +172,9 @@ class DigitalChannel:
         self.reset()
 
     def reset(self):
-        self(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
+        self.set(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
 
-    def __call__(self, enable=None, entrigger=None):
+    def set(self, enable=None, entrigger=None):
         """Turn the channel on/off, enable trigger input."""
         if enable is not None:
             self._enable = 1 if enable else 0
@@ -185,15 +185,15 @@ class DigitalChannel:
 
         reg_disable = {0: 'disableChannelA',
                        1: 'disableChannelB'}[self._id//16]
-        basevalue = self._registerfile[reg_disable] & (0xFFFF-(1<<i))
+        basevalue = self._registerfile[reg_disable].get() & (0xFFFF-(1<<i))
         newvalue = basevalue + (0 if self._enable else (1<<i))
-        self._registerfile[reg_disable] = newvalue
+        self._registerfile[reg_disable].set(newvalue)
 
         reg_trigger = {0: 'triggerMaskA',
                        1: 'triggerMaskB'}[self._id//16]
-        basevalue = self._registerfile[reg_trigger] & (0xFFFF-(1<<i))
+        basevalue = self._registerfile[reg_trigger].get() & (0xFFFF-(1<<i))
         newvalue = basevalue + ((1<<i) if self._entrigger else 0)
-        self._registerfile[reg_trigger] = newvalue
+        self._registerfile[reg_trigger].set(newvalue)
 
     def __str__(self):
         return ('enabled: %s  trigger input: %s' %
@@ -221,9 +221,9 @@ class NeighborMatrix:
         self._targets = ([[0]*3 + [0]*16 + [0]*3 for _ in range(3)] +
                          [[0]*3 + [0]*16 + [0]*3 for _ in range(16)] +
                          [[0]*3 + [0]*16 + [0]*3 for _ in range(3)])
-        self.__call__()
+        self.set()
 
-    def __call__(self, target=None, source=None, enable=None):
+    def set(self, target=None, source=None, enable=None):
         """Turn 'target is triggered by source' on or off."""
         if all(p is not None for p in [target, source, enable]):
             self._set(target, source, enable)
@@ -235,7 +235,7 @@ class NeighborMatrix:
                     ({0: 'A', 1: 'B'}[self._group], i))
             part = bits[16*i:16*(i+1)]
             value = sum((1<<i)*bit for (i, bit) in enumerate(part))
-            self._registerfile[name] = value
+            self._registerfile[name].set(value)
 
     def _set(self, target, source, enable):
         tgt_idx = self._map[str(target).lower()]
@@ -285,9 +285,9 @@ class Digital:
         for nb in self.neighbor.itervalues():
             nb.reset()
 
-    def __call__(self):
+    def set(self): # ?
         for ch in self.channel:
-            ch.__call__()
+            ch.set()
 
     def __str__(self):
         s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
@@ -320,9 +320,9 @@ class Stage:
         self.reset()
 
     def reset(self):
-        self(_FILTER_COEFFA, _FILTER_COEFFB, _FILTER_ENABLE)
+        self.set(_FILTER_COEFFA, _FILTER_COEFFB, _FILTER_ENABLE)
 
-    def __call__(self, coeffa=None, coeffb=None, enable=None, norm=False):
+    def set(self, coeffa=None, coeffb=None, enable=None, norm=False):
         """Set the 'a'/'b' coefficients and turn the stage on or off."""
         coeff_to_check = [c for c in [coeffa, coeffb] if c is not None]
         coeff_max = 0.96875 if norm else 31
@@ -341,12 +341,12 @@ class Stage:
 
         value_a = sum(c%64 << 6*i for (i, c) in enumerate(self._coeffa)) >> 6
         value_b = sum(c%64 << 6*i for (i, c) in enumerate(self._coeffb))
-        self._registerfile['aCoeffFilter_h'] = value_a >> 16
-        self._registerfile['aCoeffFilter_l'] = value_a & 0xFFFF
-        self._registerfile['bCoeffFilter_h'] = value_b >> 16
-        self._registerfile['bCoeffFilter_l'] = value_b & 0xFFFF
+        self._registerfile['aCoeffFilter_h'].set(value_a >> 16)
+        self._registerfile['aCoeffFilter_l'].set(value_a & 0xFFFF)
+        self._registerfile['bCoeffFilter_h'].set(value_b >> 16)
+        self._registerfile['bCoeffFilter_l'].set(value_b & 0xFFFF)
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
-        self._registerfile['bypassFilterStage'] = (~value_enable) % 32
+        self._registerfile['bypassFilterStage'].set((~value_enable) % 32)
 
     def __str__(self):
         p = self._position
@@ -359,9 +359,9 @@ class Stage:
 class StageZero(Stage):
     """Controls a half stage which has no 'a' coefficient."""
 
-    def __call__(self, coeffb=None, enable=None, norm=False):
+    def set(self, coeffb=None, enable=None, norm=False):
         """Set the 'b' coefficient and turn the stage on or off."""
-        Stage.__call__(self, None, coeffb, enable, norm)
+        Stage.set(self, None, coeffb, enable, norm)
 
     def __str__(self):
         p = self._position
@@ -380,9 +380,9 @@ class ScalingOffset:
         self.reset()
 
     def reset(self):
-        self(_FILTER_SCALING, _FILTER_OFFSET, _FILTER_ENABLE)
+        self.set(_FILTER_SCALING, _FILTER_OFFSET, _FILTER_ENABLE)
 
-    def __call__(self, scaling=None, offset=None, enable=None, norm=False):
+    def set(self, scaling=None, offset=None, enable=None, norm=False):
         """Set the scaling and offset and turn the stage on or off."""
         if scaling is not None:
             scaling_min = -8 if norm else -256
@@ -399,10 +399,10 @@ class ScalingOffset:
         if enable is not None:
             self._enable[self._position] = 1 if enable else 0
 
-        self._registerfile['offsetFilter'] = self._offset % 512
-        self._registerfile['scalingFilter'] = self._scaling % 512
+        self._registerfile['offsetFilter'].set(self._offset % 512)
+        self._registerfile['scalingFilter'].set(self._scaling % 512)
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
-        self._registerfile['bypassFilterStage'] = (~value_enable) % 32
+        self._registerfile['bypassFilterStage'].set((~value_enable) % 32)
 
     def __str__(self):
         p = self._position
@@ -445,9 +445,9 @@ class Filter:
         for s in self.stage:
             s.reset()
 
-    def __call__(self):
+    def set(self): # ?
         for s in self.stage:
-            s.__call__()
+            s.set()
 
     def __str__(self):
         return '\n'.join(('Stage %i: ' % i) + str(s)
@@ -474,9 +474,9 @@ class FrontendChannel:
 
     def reset(self):
         self._frontend = _FRONTEND_SELECT
-        self(_FECHANNEL_BASELINE, _FECHANNEL_ENCSA, _FECHANNEL_ENADC)
+        self.set(_FECHANNEL_BASELINE, _FECHANNEL_ENCSA, _FECHANNEL_ENADC)
 
-    def __call__(self, baseline=None, enablecsa=None, enableadc=None):
+    def set(self, baseline=None, enablecsa=None, enableadc=None):
         """Trim the baseline, turn the CSA on/off, turn the ADC on/off."""
         if baseline is not None:
             if baseline < 0 or baseline > 127:
@@ -491,20 +491,22 @@ class FrontendChannel:
         self._registerchain._directmode = False
 
         i = str(self._id)
-        self._registerchain['baselineTrimP_'+i] = self._baseline
-        self._registerchain['frontEndSelNP_'+i] = self._frontend
-        self._registerchain['enSignalAdc_'+i] = self._enableadc
-        self._registerchain['enAmpN_'+i] = (1 if (self._enablecsa and
-                                              self._frontend == 0) else 0)
-        self._registerchain['enAmpP_'+i] = (1 if (self._enablecsa and
-                                              self._frontend == 1) else 0)
+        self._registerchain['baselineTrimP_'+i].set(self._baseline)
+        self._registerchain['frontEndSelNP_'+i].set(self._frontend)
+        self._registerchain['enSignalAdc_'+i].set(self._enableadc)
+        self._registerchain['enAmpN_'+i].set(1 if (self._enablecsa and
+                                                   self._frontend == 0)
+                                               else 0)
+        self._registerchain['enAmpP_'+i].set(1 if (self._enablecsa and
+                                                   self._frontend == 1)
+                                               else 0)
         if directmode:
             self._registerchain.apply()
         self._registerchain._directmode = directmode
 
     def _select_frontend(self, frontend):
         self._frontend = frontend
-        self.__call__()
+        self.set()
 
     def __str__(self):
         return ('baseline trim: %3i  CSA enabled: %s  ADC connected: %s' %
@@ -553,12 +555,13 @@ class Frontend:
     def reset(self):
         for ch in self.channel:
             ch.reset()
-        self(_FRONTEND_SELECT, _FRONTEND_BASELINE,
-             _FRONTEND_PCASC, _FRONTEND_NCASC,
-             _FRONTEND_PSOURCEBIAS, _FRONTEND_NSOURCEBIAS, _FRONTEND_XFB)
+        self.set(_FRONTEND_SELECT, _FRONTEND_BASELINE,
+                 _FRONTEND_PCASC, _FRONTEND_NCASC,
+                 _FRONTEND_PSOURCEBIAS, _FRONTEND_NSOURCEBIAS,
+                 _FRONTEND_XFB)
 
-    def __call__(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
-                 psourcebias=None, nsourcebias=None, xfb=None):
+    def set(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
+                  psourcebias=None, nsourcebias=None, xfb=None):
         """Select N/P frontend, set global baseline trim, set CSA bias."""
 
         if frontend is not None:
@@ -590,8 +593,8 @@ class Frontend:
         directmode = self._registerchain._directmode
         self._registerchain._directmode = False
 
-        self._registerchain['baselineTrimN'] = self._baseline
-        self._registerchain['DecSelectNP'] = self._frontend
+        self._registerchain['baselineTrimN'].set(self._baseline)
+        self._registerchain['DecSelectNP'].set(self._frontend)
 
         r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
              1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
@@ -599,9 +602,9 @@ class Frontend:
                         self._psourcebias, self._nsourcebias, self._xfb]
 
         for name in r[1-self._frontend]:
-            self._registerchain[name] = 0
+            self._registerchain[name].set(0)
         for (name, value) in zip(r[self._frontend], v):
-            self._registerchain[name] = value
+            self._registerchain[name].set(value)
 
         if directmode:
             self._registerchain.apply()
@@ -633,11 +636,11 @@ class AdcBias:
         self.reset()
 
     def reset(self):
-        self(_ADC_VNDEL, _ADC_VPDEL, _ADC_VPLOADFB, _ADC_VPLOADFB2,
-             _ADC_VPFB, _ADC_VPAMP)
+        self.set(_ADC_VNDEL, _ADC_VPDEL, _ADC_VPLOADFB, _ADC_VPLOADFB2,
+                 _ADC_VPFB, _ADC_VPAMP)
 
-    def __call__(self, vndel=None, vpdel=None, vploadfb=None,
-                 vploadfb2=None, vpfb=None, vpamp=None):
+    def set(self, vndel=None, vpdel=None, vploadfb=None,
+                  vploadfb2=None, vpfb=None, vpamp=None):
         """Set VNDel, VPDel, VPLoadFB, VPLoadFB2, VPFB, VPAmp values."""
         if vndel is not None:
             checkvalue(vndel, 0, 127, 'VNDel')
@@ -661,12 +664,12 @@ class AdcBias:
         directmode = self._registerchain._directmode
         self._registerchain._directmode = False
 
-        self._registerchain['VNDel'] = self._vndel
-        self._registerchain['VPDel'] = self._vpdel
-        self._registerchain['VPLoadFB'] = self._vploadfb
-        self._registerchain['VPLoadFB2'] = self._vploadfb2
-        self._registerchain['VPFB'] = self._vpfb
-        self._registerchain['VPAmp'] = self._vpamp
+        self._registerchain['VNDel'].set(self._vndel)
+        self._registerchain['VPDel'].set(self._vpdel)
+        self._registerchain['VPLoadFB'].set(self._vploadfb)
+        self._registerchain['VPLoadFB2'].set(self._vploadfb2)
+        self._registerchain['VPFB'].set(self._vpfb)
+        self._registerchain['VPAmp'].set(self._vpamp)
 
         if directmode:
             self._registerchain.apply()
@@ -699,9 +702,9 @@ class Monitor:
         self.reset()
 
     def reset(self):
-        self(_MON_SOURCE, _MON_CHANNEL, _MON_ENABLE)
+        self.set(_MON_SOURCE, _MON_CHANNEL, _MON_ENABLE)
         
-    def __call__(self, source=None, channel=None, enable=None):
+    def set(self, source=None, channel=None, enable=None):
         """Select the monitor source, channel, and turn it on or off."""
         if source is not None:
             self._source = (1 if str(source).lower() == 'csa' else
@@ -717,14 +720,14 @@ class Monitor:
         directmode = self._registerchain._directmode
         self._registerchain._directmode = False
 
-        self._registerchain['SelMonitor'] = self._source
+        self._registerchain['SelMonitor'].set(self._source)
         enMonitorAdc = [0]*32
         ampToBus = [0]*32
         if self._enable:
             {0: enMonitorAdc, 1: ampToBus}[self._source][self._channel] = 1
         for ch in range(32):
-            self._registerchain['enMonitorAdc_'+str(ch)] = enMonitorAdc[ch]
-            self._registerchain['ampToBus_'+str(ch)] = ampToBus[ch]
+            self._registerchain['enMonitorAdc_'+str(ch)].set(enMonitorAdc[ch])
+            self._registerchain['ampToBus_'+str(ch)].set(ampToBus[ch])
 
         if directmode:
             self._registerchain.apply()
@@ -801,7 +804,7 @@ class Controller:
     def apply(self):
         """Update register values from control units and write RF/SR."""
         for unit in self._units.itervalues():
-            unit.__call__()
+            unit.set()
         self.registerfile.apply()
         self.registerchain.apply()
 
