@@ -1,5 +1,3 @@
-from register import RegisterFile, ShiftRegister
-
 #================================================================
 # helper functions
 #================================================================
@@ -469,8 +467,8 @@ _FECHANNEL_ENADC = 0
 class FrontendChannel:
     """Analog frontend channel specific controller."""
 
-    def __init__(self, shiftregister, channel_id):
-        self._shiftregister = shiftregister
+    def __init__(self, registerchain, channel_id):
+        self._registerchain = registerchain
         self._id = channel_id
         self.reset()
 
@@ -489,20 +487,20 @@ class FrontendChannel:
         if enableadc is not None:
             self._enableadc = 1 if enableadc else 0
 
-        directmode = self._shiftregister._directmode
-        self._shiftregister._directmode = False
+        directmode = self._registerchain._directmode
+        self._registerchain._directmode = False
 
         i = str(self._id)
-        self._shiftregister['baselineTrimP_'+i] = self._baseline
-        self._shiftregister['frontEndSelNP_'+i] = self._frontend
-        self._shiftregister['enSignalAdc_'+i] = self._enableadc
-        self._shiftregister['enAmpN_'+i] = (1 if (self._enablecsa and
+        self._registerchain['baselineTrimP_'+i] = self._baseline
+        self._registerchain['frontEndSelNP_'+i] = self._frontend
+        self._registerchain['enSignalAdc_'+i] = self._enableadc
+        self._registerchain['enAmpN_'+i] = (1 if (self._enablecsa and
                                               self._frontend == 0) else 0)
-        self._shiftregister['enAmpP_'+i] = (1 if (self._enablecsa and
+        self._registerchain['enAmpP_'+i] = (1 if (self._enablecsa and
                                               self._frontend == 1) else 0)
         if directmode:
-            self._shiftregister.apply()
-        self._shiftregister._directmode = directmode
+            self._registerchain.apply()
+        self._registerchain._directmode = directmode
 
     def _select_frontend(self, frontend):
         self._frontend = frontend
@@ -546,9 +544,9 @@ class Frontend:
       c.frontend.channel[3]
 
     """
-    def __init__(self, shiftregister):
-        self._shiftregister = shiftregister
-        self.channel = [FrontendChannel(self._shiftregister, i)
+    def __init__(self, registerchain):
+        self._registerchain = registerchain
+        self.channel = [FrontendChannel(self._registerchain, i)
                         for i in range(32)]
         self.reset()
 
@@ -589,11 +587,11 @@ class Frontend:
             checkvalue(xfb, 0, 127, 'xfb')
             self._xfb = xfb
 
-        directmode = self._shiftregister._directmode
-        self._shiftregister._directmode = False
+        directmode = self._registerchain._directmode
+        self._registerchain._directmode = False
 
-        self._shiftregister['baselineTrimN'] = self._baseline
-        self._shiftregister['DecSelectNP'] = self._frontend
+        self._registerchain['baselineTrimN'] = self._baseline
+        self._registerchain['DecSelectNP'] = self._frontend
 
         r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
              1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
@@ -601,13 +599,13 @@ class Frontend:
                         self._psourcebias, self._nsourcebias, self._xfb]
 
         for name in r[1-self._frontend]:
-            self._shiftregister[name] = 0
+            self._registerchain[name] = 0
         for (name, value) in zip(r[self._frontend], v):
-            self._shiftregister[name] = value
+            self._registerchain[name] = value
 
         if directmode:
-            self._shiftregister.apply()
-        self._shiftregister._directmode = directmode
+            self._registerchain.apply()
+        self._registerchain._directmode = directmode
 
     def __str__(self):
         s = [('frontend: %s  baseline: %3i  pCasc: %3i  nCasc: %3i\n'
@@ -630,8 +628,8 @@ _ADC_VPFB = 0
 _ADC_VPAMP = 0
 class AdcBias:
     """Controls the ADC bias settings."""
-    def __init__(self, shiftregister):
-        self._shiftregister = shiftregister
+    def __init__(self, registerchain):
+        self._registerchain = registerchain
         self.reset()
 
     def reset(self):
@@ -660,19 +658,19 @@ class AdcBias:
             checkvalue(vpamp, 0, 127, 'VPAmp')
             self._vpamp = vpamp
 
-        directmode = self._shiftregister._directmode
-        self._shiftregister._directmode = False
+        directmode = self._registerchain._directmode
+        self._registerchain._directmode = False
 
-        self._shiftregister['VNDel'] = self._vndel
-        self._shiftregister['VPDel'] = self._vpdel
-        self._shiftregister['VPLoadFB'] = self._vploadfb
-        self._shiftregister['VPLoadFB2'] = self._vploadfb2
-        self._shiftregister['VPFB'] = self._vpfb
-        self._shiftregister['VPAmp'] = self._vpamp
+        self._registerchain['VNDel'] = self._vndel
+        self._registerchain['VPDel'] = self._vpdel
+        self._registerchain['VPLoadFB'] = self._vploadfb
+        self._registerchain['VPLoadFB2'] = self._vploadfb2
+        self._registerchain['VPFB'] = self._vpfb
+        self._registerchain['VPAmp'] = self._vpamp
 
         if directmode:
-            self._shiftregister.apply()
-        self._shiftregister._directmode = directmode
+            self._registerchain.apply()
+        self._registerchain._directmode = directmode
 
     def __str__(self):
         return ('VNDel: %3i  VPDel: %3i  VPLoadFB: %3i\n'
@@ -696,8 +694,8 @@ class Monitor:
     - channel selection
 
     """
-    def __init__(self, shiftregister):
-        self._shiftregister = shiftregister
+    def __init__(self, registerchain):
+        self._registerchain = registerchain
         self.reset()
 
     def reset(self):
@@ -716,21 +714,21 @@ class Monitor:
         if enable is not None:
             self._enable = 1 if enable else 0
 
-        directmode = self._shiftregister._directmode
-        self._shiftregister._directmode = False
+        directmode = self._registerchain._directmode
+        self._registerchain._directmode = False
 
-        self._shiftregister['SelMonitor'] = self._source
+        self._registerchain['SelMonitor'] = self._source
         enMonitorAdc = [0]*32
         ampToBus = [0]*32
         if self._enable:
             {0: enMonitorAdc, 1: ampToBus}[self._source][self._channel] = 1
         for ch in range(32):
-            self._shiftregister['enMonitorAdc_'+str(ch)] = enMonitorAdc[ch]
-            self._shiftregister['ampToBus_'+str(ch)] = ampToBus[ch]
+            self._registerchain['enMonitorAdc_'+str(ch)] = enMonitorAdc[ch]
+            self._registerchain['ampToBus_'+str(ch)] = ampToBus[ch]
 
         if directmode:
-            self._shiftregister.apply()
-        self._shiftregister._directmode = directmode
+            self._registerchain.apply()
+        self._registerchain._directmode = directmode
 
     def __str__(self):
         return ('monitor source: %s  channel: %2i  enabled: %s' %
@@ -768,8 +766,8 @@ class Controller:
     def __init__(self, spadic):
         self._spadic = spadic
         self._directmode = False
-        self.registerfile = RegisterFile(spadic)
-        self.shiftregister = ShiftRegister(spadic)
+        self.registerfile = spadic._registerfile
+        self.registerchain = spadic._registerchain
 
         # add control units
         self._units = {}
@@ -783,11 +781,11 @@ class Controller:
         self._units['Hit logic'] = self.hitlogic
         self.filter = Filter(self.registerfile)
         self._units['Filter'] = self.filter
-        self.monitor = Monitor(self.shiftregister)
+        self.monitor = Monitor(self.registerchain)
         self._units['Monitor'] = self.monitor
-        self.frontend = Frontend(self.shiftregister)
+        self.frontend = Frontend(self.registerchain)
         self._units['Frontend'] = self.frontend
-        self.adcbias = AdcBias(self.shiftregister)
+        self.adcbias = AdcBias(self.registerchain)
         self._units['ADC bias'] = self.adcbias
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
@@ -805,24 +803,24 @@ class Controller:
         for unit in self._units.itervalues():
             unit.__call__()
         self.registerfile.apply()
-        self.shiftregister.apply()
+        self.registerchain.apply()
 
     def set_directmode(self, mode):
         """Set direct mode of register file and shift register."""
         self._directmode = mode
         self.registerfile.set_directmode(mode)
-        self.shiftregister.set_directmode(mode)
+        self.registerchain.set_directmode(mode)
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
-    #def _write_shiftregister(self, config=None):
+    #def _write_registerchain(self, config=None):
     #    """Perform the shift register write operation."""
     #    if config is not None:
-    #        self.shiftregister.load(config)
+    #        self.registerchain.load(config)
     #    self.led(1)
-    #    self.shiftregister.write()
+    #    self.registerchain.write()
     #    self.led(0)
 
     #def _write_registerfile(self, config):
@@ -851,10 +849,10 @@ class Controller:
         lines.append('')
         lines.append(frame('Shift register'))
         srlines = []
-        for name in self.shiftregister.dict(nonzero):
+        for name in self.registerchain.dict(nonzero):
             ln = name.ljust(25) + ' '
-            sz = self.shiftregister.size(name)
-            ln += fmtnumber(self.shiftregister[name], sz)
+            sz = self.registerchain.size(name)
+            ln += fmtnumber(self.registerchain[name], sz)
             srlines.append(ln)
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
