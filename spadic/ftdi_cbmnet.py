@@ -134,7 +134,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     # The read operation is triggered by three sources:
     # - after each write operation
     # - after each successful read operation
-    # - periodically every 10 seconds
+    # - periodically every 0.1 seconds
     #--------------------------------------------------------------------
     def _cbmif_write_run(self):
         """Take write tasks and pass them to the manager."""
@@ -149,7 +149,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         """Periodically tell the manager to read."""
         while True:
             self._manager_queue.put(RD_TASK)
-            time.sleep(10)
+            time.sleep(0.1)
                 
     def _cbmif_manager_run(self):
         """Take write/read tasks from the queue and process them."""
