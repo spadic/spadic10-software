@@ -18,6 +18,9 @@ WRITE_LEN = {
 
 class FtdiCbmnet(Ftdi.Ftdi):
     """Wrapper for FTDI <-> CBMnet interface communication."""
+    def __init__(self):
+        Ftdi.Ftdi.__init__(self)
+        self._debug_cbmif = False
 
     def _cbmif_write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
@@ -33,6 +36,10 @@ class FtdiCbmnet(Ftdi.Ftdi):
             raise ValueError("Cannot write to this CBMnet port.")
         if len(words) != WRITE_LEN[addr]:
             raise ValueError("Wrong number of words for this CBMnet port.")
+
+        if self._debug_cbmif:
+            print >> self._debug_out, ("CBMnet write " +
+                "%i"%addr + ", ["+" ".join("%X"%w for w in words)+"]")
 
         header = [addr, len(words)]
         data = []
@@ -67,6 +74,10 @@ class FtdiCbmnet(Ftdi.Ftdi):
             high, low = data[2*i], data[2*i+1]
             w = (high<<8) + low
             words.append(w)
+
+        if self._debug_cbmif:
+            print >> self._debug_out, ("CBMnet read " +
+                "%i"%addr + ", ["+" ".join("%X"%w for w in words)+"]")
 
         return (addr, words)
 

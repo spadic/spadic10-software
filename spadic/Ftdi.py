@@ -1,3 +1,4 @@
+import sys
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
@@ -30,6 +31,8 @@ class Ftdi:
             raise IOError('could not open USB connection!')
         ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
+        self._debug_ftdi = False
+        self._debug_out = sys.stderr
 
     def __enter__(self):
         return self
@@ -61,6 +64,9 @@ class Ftdi:
     #----------------------------------------------------------------
     def _ftdi_write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
+        if self._debug_ftdi:
+            print >> self._debug_out, ("FTDI write [" +
+                " ".join("%02X" % b for b in byte_list) + "]")
         bytes_left = byte_list
         iter_left = max_iter
         while bytes_left:
@@ -95,5 +101,8 @@ class Ftdi:
             buf = buf[n:]
             if iter_left is not None:
                 iter_left -= 1
+        if self._debug_ftdi and bytes_read:
+            print >> self._debug_out, ("FTDI read [" +
+                " ".join("%02X" % b for b in bytes_read) + "]")
         return bytes_read
 
