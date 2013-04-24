@@ -71,6 +71,8 @@ class FtdiCbmnet(Ftdi.Ftdi):
         return (addr, words)
 
 
+WR_TASK = 0 # higher priority
+RD_TASK = 1 # lower priority
 
 class FtdiCbmnetThreaded(FtdiCbmnet):
     """FTDI <-> CBMnet interface communication with threads."""
@@ -79,17 +81,19 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         FtdiCbmnet.__init__(self)
 
         # set up threads and queues
-        self._write_queue = Queue.Queue()
+        self._send_queue = Queue.Queue()
         self._write_thread = threading.Thread()
         self._write_thread.run = self._cbmif_write_run
         self._write_thread.daemon = True
 
-        self._read_queue = Queue.Queue()
+        self._recv_queue = Queue.Queue()
         self._read_thread = threading.Thread()
         self._read_thread.run = self._cbmif_read_run
         self._read_thread.daemon = True
 
-        self._manager_queue = Queue.Queue()
+        self._manager_queue = Queue.PriorityQueue()
+        self._write_tasks = Queue.Queue()
+
         self._manager_thread = threading.Thread()
         self._manager_thread.run = self._cbmif_manager_run
         self._manager_thread.daemon = True
@@ -104,9 +108,8 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     # support "with" statement -> __exit__ is guaranteed to be called
     #--------------------------------------------------------------------
     def __exit__(self, *args):
-        self._write_queue.join()
-        self._manager_queue.join()
-        self._read_queue.join()
+        self._send_queue.join()
+        self._write_tasks.join()
         FtdiCbmnet.__exit__(self, args)
 
 
@@ -115,12 +118,12 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     #--------------------------------------------------------------------
     def _cbmif_write(self, addr, words):
         """Write words to the CBMnet send interface."""
-        self._write_queue.put((addr, words))
+        self._send_queue.put((addr, words))
 
     def _cbmif_read(self):
         """Read words from the CBMnet receive interface."""
-        result = self._read_queue.get()
-        self._read_queue.task_done()
+        result = self._recv_queue.get()
+        self._recv_queue.task_done()
         return result
 
 
@@ -136,32 +139,32 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def _cbmif_write_run(self):
         """Take write tasks and pass them to the manager."""
         while True:
-            write_task = self._write_queue.get()
-            self._manager_queue.put(write_task)
-            self._manager_queue.put(None)
-            self._write_queue.task_done()
+            (addr, words) = self._send_queue.get()
+            self._write_tasks.put((addr, words))
+            self._manager_queue.put(WR_TASK)
+            self._manager_queue.put(RD_TASK)
+            self._send_queue.task_done()
 
     def _cbmif_read_run(self):
         """Periodically tell the manager to read."""
         while True:
-            self._manager_queue.put(None)
+            self._manager_queue.put(RD_TASK)
             time.sleep(10)
                 
     def _cbmif_manager_run(self):
         """Take write/read tasks from the queue and process them."""
         while True:
             task = self._manager_queue.get()
-            if task is None:
-                # read task
+            if task == RD_TASK:
                 try:
                     (addr, words) = FtdiCbmnet._cbmif_read(self)
-                    self._read_queue.put((addr, words))
-                    self._manager_queue.put(None)
+                    self._recv_queue.put((addr, words))
+                    self._manager_queue.put(RD_TASK)
                 except TypeError: # read result is None
                     pass
-            else:
-                # write task
-                (addr, words) = task
+            elif task == WR_TASK:
+                (addr, words) = self._write_tasks.get()
                 FtdiCbmnet._cbmif_write(self, addr, words)
+                self._write_tasks.task_done()
             self._manager_queue.task_done()
 
