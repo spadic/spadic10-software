@@ -110,7 +110,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def __exit__(self, *args):
         self._send_queue.join()
         self._write_tasks.join()
-        FtdiCbmnet.__exit__(self, args)
+        FtdiCbmnet.__exit__(self, *args)
 
 
     #--------------------------------------------------------------------
