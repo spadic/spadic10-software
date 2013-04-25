@@ -45,6 +45,8 @@ class RegisterChain:
             r = RegisterChainEntry(positions)
             self._registers[name] = r
 
+        self._last_bits = None
+
         # emulate dictionary behaviour (read-only)
         self.__contains__ = self._registers.__contains__
         self.__iter__     = self._registers.__iter__
@@ -98,12 +100,15 @@ class RegisterChain:
     def apply(self):
         """Perform the write operation."""
         bits = self._to_bits()
-        self._write(bits)
+        if self._last_bits is None or bits != self._last_bits:
+            self._write(bits)
+            self._last_bits = bits
 
     def update(self):
         """Perform the read operation."""
         bits = self._read()
         self._from_bits(bits)
+        self._last_bits = bits
 
     def write(self, config):
         """Write the configuration contained in a dictionary.

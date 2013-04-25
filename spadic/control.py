@@ -39,6 +39,13 @@ class Led:
                  (0x20 * self._userpin2))
         self._registerfile['overrides'].set(value)
 
+    def apply(self):
+        self._registerfile['overrides'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
+
     def __str__(self):
         return ('userpin1: %s  userpin2: %s' %
                 (onoff(self._userpin1), onoff(self._userpin2)))
@@ -72,6 +79,15 @@ class TestData:
         self._registerfile['enableTestInput'].set(self._testdatain)
         self._registerfile['enableTestOutput'].set(self._testdataout)
         self._registerfile['testOutputSelGroup'].set(self._group)
+
+    def apply(self):
+        self._registerfile['enableTestInput'].apply()
+        self._registerfile['enableTestOutput'].apply()
+        self._registerfile['testOutputSelGroup'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('test data input: %s  test data output: %s  group: %s' %
@@ -107,6 +123,15 @@ class Comparator:
         self._registerfile['threshold1'].set(self._threshold1 % 512)
         self._registerfile['threshold2'].set(self._threshold2 % 512)
         self._registerfile['compDiffMode'].set(self._diffmode)
+
+    def apply(self):
+        self._registerfile['threshold1'].apply()
+        self._registerfile['threshold2'].apply()
+        self._registerfile['compDiffMode'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('threshold 1: %i  threshold 2: %i  diff mode: %s' %
@@ -149,6 +174,15 @@ class HitLogic:
         self._registerfile['selectMask_h'].set(mask_h)
         self._registerfile['selectMask_l'].set(mask_l)
         self._registerfile['hitWindowLength'].set(self._window)
+
+    def apply(self):
+        self._registerfile['selectMask_h'].apply()
+        self._registerfile['selectMask_l'].apply()
+        self._registerfile['hitWindowLength'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
@@ -194,6 +228,16 @@ class DigitalChannel:
         basevalue = self._registerfile[reg_trigger].get() & (0xFFFF-(1<<i))
         newvalue = basevalue + ((1<<i) if self._entrigger else 0)
         self._registerfile[reg_trigger].set(newvalue)
+
+    def apply(self):
+        self._registerfile['disableChannelA'].apply()
+        self._registerfile['disableChannelB'].apply()
+        self._registerfile['triggerMaskA'].apply()
+        self._registerfile['triggerMaskB'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('enabled: %s  trigger input: %s' %
@@ -247,6 +291,16 @@ class NeighborMatrix:
         value = 1 if enable else 0
         self._targets[tgt_idx][src_idx] = value
 
+    def apply(self):
+        for i in range(31):
+            name = ('neighborSelectMatrix%s_%i' % 
+                    ({0: 'A', 1: 'B'}[self._group], i))
+            self._registerfile[name].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
+
     def __str__(self):
         return '\n'.join(' '.join('x' if enable else '.'
                                   for enable in target)
@@ -288,6 +342,10 @@ class Digital:
     def set(self): # ?
         for ch in self.channel:
             ch.set()
+
+    def apply(self):
+        for ch in self.channel:
+            ch.apply()
 
     def __str__(self):
         s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
@@ -348,6 +406,17 @@ class Stage:
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
         self._registerfile['bypassFilterStage'].set((~value_enable) % 32)
 
+    def apply(self):
+        self._registerfile['aCoeffFilter_h'].apply()
+        self._registerfile['aCoeffFilter_l'].apply()
+        self._registerfile['bCoeffFilter_h'].apply()
+        self._registerfile['bCoeffFilter_l'].apply()
+        self._registerfile['bypassFilterStage'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
+
     def __str__(self):
         p = self._position
         return ('coeff. a: %4i  coeff. b: %4i  enabled: %s' %
@@ -404,6 +473,15 @@ class ScalingOffset:
         value_enable = sum(en << i for (i, en) in enumerate(self._enable))
         self._registerfile['bypassFilterStage'].set((~value_enable) % 32)
 
+    def apply(self):
+        self._registerfile['offsetFilter'].apply()
+        self._registerfile['scalingFilter'].apply()
+        self._registerfile['bypassFilterStage'].apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
+
     def __str__(self):
         p = self._position
         return ('scaling: %5i  offset: %6i  enabled: %s' %
@@ -449,6 +527,10 @@ class Filter:
         for s in self.stage:
             s.set()
 
+    def apply(self):
+        for s in self.stage:
+            s.apply()
+
     def __str__(self):
         return '\n'.join(('Stage %i: ' % i) + str(s)
                          for (i, s) in enumerate(self.stage))
@@ -472,6 +554,10 @@ class FrontendChannel:
         self._id = channel_id
         self.reset()
 
+    def _select_frontend(self, frontend):
+        self._frontend = frontend
+        self.set()
+
     def reset(self):
         self._frontend = _FRONTEND_SELECT
         self.set(_FECHANNEL_BASELINE, _FECHANNEL_ENCSA, _FECHANNEL_ENADC)
@@ -487,9 +573,6 @@ class FrontendChannel:
         if enableadc is not None:
             self._enableadc = 1 if enableadc else 0
 
-        directmode = self._registerchain._directmode
-        self._registerchain._directmode = False
-
         i = str(self._id)
         self._registerchain['baselineTrimP_'+i].set(self._baseline)
         self._registerchain['frontEndSelNP_'+i].set(self._frontend)
@@ -500,13 +583,13 @@ class FrontendChannel:
         self._registerchain['enAmpP_'+i].set(1 if (self._enablecsa and
                                                    self._frontend == 1)
                                                else 0)
-        if directmode:
-            self._registerchain.apply()
-        self._registerchain._directmode = directmode
 
-    def _select_frontend(self, frontend):
-        self._frontend = frontend
-        self.set()
+    def apply(self):
+        self._registerchain.apply()
+        
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('baseline trim: %3i  CSA enabled: %s  ADC connected: %s' %
@@ -590,9 +673,6 @@ class Frontend:
             checkvalue(xfb, 0, 127, 'xfb')
             self._xfb = xfb
 
-        directmode = self._registerchain._directmode
-        self._registerchain._directmode = False
-
         self._registerchain['baselineTrimN'].set(self._baseline)
         self._registerchain['DecSelectNP'].set(self._frontend)
 
@@ -606,9 +686,12 @@ class Frontend:
         for (name, value) in zip(r[self._frontend], v):
             self._registerchain[name].set(value)
 
-        if directmode:
-            self._registerchain.apply()
-        self._registerchain._directmode = directmode
+    def apply(self):
+        self._registerchain.apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         s = [('frontend: %s  baseline: %3i  pCasc: %3i  nCasc: %3i\n'
@@ -661,9 +744,6 @@ class AdcBias:
             checkvalue(vpamp, 0, 127, 'VPAmp')
             self._vpamp = vpamp
 
-        directmode = self._registerchain._directmode
-        self._registerchain._directmode = False
-
         self._registerchain['VNDel'].set(self._vndel)
         self._registerchain['VPDel'].set(self._vpdel)
         self._registerchain['VPLoadFB'].set(self._vploadfb)
@@ -671,9 +751,12 @@ class AdcBias:
         self._registerchain['VPFB'].set(self._vpfb)
         self._registerchain['VPAmp'].set(self._vpamp)
 
-        if directmode:
-            self._registerchain.apply()
-        self._registerchain._directmode = directmode
+    def apply(self):
+        self._registerchain.apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('VNDel: %3i  VPDel: %3i  VPLoadFB: %3i\n'
@@ -717,9 +800,6 @@ class Monitor:
         if enable is not None:
             self._enable = 1 if enable else 0
 
-        directmode = self._registerchain._directmode
-        self._registerchain._directmode = False
-
         self._registerchain['SelMonitor'].set(self._source)
         enMonitorAdc = [0]*32
         ampToBus = [0]*32
@@ -729,9 +809,12 @@ class Monitor:
             self._registerchain['enMonitorAdc_'+str(ch)].set(enMonitorAdc[ch])
             self._registerchain['ampToBus_'+str(ch)].set(ampToBus[ch])
 
-        if directmode:
-            self._registerchain.apply()
-        self._registerchain._directmode = directmode
+    def apply(self):
+        self._registerchain.apply()
+
+    def write(self, *args, **kwargs):
+        self.set(args, kwargs)
+        self.apply()
 
     def __str__(self):
         return ('monitor source: %s  channel: %2i  enabled: %s' %
@@ -768,7 +851,6 @@ class Controller:
     """
     def __init__(self, spadic):
         self._spadic = spadic
-        self._directmode = False
         self.registerfile = spadic._registerfile
         self.registerchain = spadic._registerchain
 
@@ -804,33 +886,11 @@ class Controller:
     def apply(self):
         """Update register values from control units and write RF/SR."""
         for unit in self._units.itervalues():
-            unit.set()
-        self.registerfile.apply()
-        self.registerchain.apply()
-
-    def set_directmode(self, mode):
-        """Set direct mode of register file and shift register."""
-        self._directmode = mode
-        self.registerfile.set_directmode(mode)
-        self.registerchain.set_directmode(mode)
+            unit.apply()
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
-
-    #def _write_registerchain(self, config=None):
-    #    """Perform the shift register write operation."""
-    #    if config is not None:
-    #        self.registerchain.load(config)
-    #    self.led(1)
-    #    self.registerchain.write()
-    #    self.led(0)
-
-    #def _write_registerfile(self, config):
-    #    """Write a configuration into the register file."""
-    #    self.led(1)
-    #    self.registerfile.load(config)
-    #    self.led(0)
 
     def save(self, f=None, nonzero=True):
         """Save the current configuration to a text file."""
