@@ -43,7 +43,7 @@ class Led:
         self._registerfile['overrides'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -86,7 +86,7 @@ class TestData:
         self._registerfile['testOutputSelGroup'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -130,7 +130,7 @@ class Comparator:
         self._registerfile['compDiffMode'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -181,7 +181,7 @@ class HitLogic:
         self._registerfile['hitWindowLength'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -236,7 +236,7 @@ class DigitalChannel:
         self._registerfile['triggerMaskB'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -298,7 +298,7 @@ class NeighborMatrix:
             self._registerfile[name].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -414,7 +414,7 @@ class Stage:
         self._registerfile['bypassFilterStage'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -479,7 +479,7 @@ class ScalingOffset:
         self._registerfile['bypassFilterStage'].apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -588,7 +588,7 @@ class FrontendChannel:
         self._registerchain.apply()
         
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -690,7 +690,7 @@ class Frontend:
         self._registerchain.apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -755,7 +755,7 @@ class AdcBias:
         self._registerchain.apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -813,7 +813,7 @@ class Monitor:
         self._registerchain.apply()
 
     def write(self, *args, **kwargs):
-        self.set(args, kwargs)
+        self.set(*args, **kwargs)
         self.apply()
 
     def __str__(self):
@@ -825,7 +825,7 @@ class Monitor:
 #================================================================
 # Main control
 #================================================================
-class Controller:
+class SpadicController:
     """SPADIC 1.0 configuration controller.
     
     Contains the following control units:
@@ -850,7 +850,6 @@ class Controller:
 
     """
     def __init__(self, spadic):
-        self._spadic = spadic
         self.registerfile = spadic._registerfile
         self.registerchain = spadic._registerchain
 

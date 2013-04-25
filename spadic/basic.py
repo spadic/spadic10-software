@@ -3,6 +3,7 @@ import ftdi_cbmnet
 from message import MessageSplitter, Message
 from registerfile import SpadicRegisterFile
 from registerchain import SpadicRegisterChain
+from control import SpadicController
 
 
 # CBMnet control port <-> register file read/write commands
@@ -22,6 +23,9 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         # higher level register chain access
         self._registerchain = SpadicRegisterChain(self)
         self._registerchain.clear()
+
+        # highest level configuration controller
+        self.control = SpadicController(self)
 
         # message splitters for groups A and B
         self._dataA_splitter = MessageSplitter()
