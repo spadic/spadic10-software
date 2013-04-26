@@ -43,6 +43,8 @@ class Ftdi:
             #ftdi.ftdi_set_bitmode(self.ftdic, 0, ftdi.BITMODE_RESET)
             ftdi.ftdi_free(self.ftdic)
                     # free -> deinit -> usb_close_internal -> usb_close
+        if self._debug_ftdi:
+            print >> self._debug_out, "FTDI exit"
 
     def purge(self):
         """Purge all FTDI buffers."""
