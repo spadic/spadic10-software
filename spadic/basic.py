@@ -37,16 +37,19 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._ctrl_queue = Queue.Queue()
 
         # data reader thread
-        self._cbmif_read_thread = threading.Thread()
-        self._cbmif_read_thread.run = self._cbmif_read_task
-        self._cbmif_read_thread.daemon = True
-        self._cbmif_read_thread.start()
+        self._recv_worker = threading.Thread(name="recv worker")
+        self._recv_worker.run = self._recv_job
+        self._recv_worker.daemon = True
+        self._recv_worker.start()
 
 
-    def _cbmif_read_task(self):
-        """Read and process data from the CBMnet interface."""
-        while True:
-            (addr, words) = self._cbmif_read()
+    def _recv_job(self):
+        """Process data received from the CBMnet interface."""
+        while not self._stop.is_set():
+            try:
+                (addr, words) = self._cbmif_read()
+            except TypeError: # read result is None
+                continue
 
             if addr == ftdi_cbmnet.ADDR_DATA_A:
                 for m in self._dataA_splitter(words):
@@ -59,6 +62,16 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             elif addr == ftdi_cbmnet.ADDR_CTRL:
                 [reg_addr, reg_val] = words
                 self._ctrl_queue.put((reg_addr, reg_val))
+
+
+    def __exit__(self, *args):
+        """Bring all threads to halt."""
+        if not self._stop.is_set():
+            self._stop.set()
+        ftdi_cbmnet.FtdiCbmnetThreaded.__exit__(self)
+        self._recv_worker.join()
+        if self._debug_cbmif:
+            print >> self._debug_out, self._recv_worker.name, "finished"
 
         
     #----------------------------------------------------------------
