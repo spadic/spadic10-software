@@ -16,11 +16,24 @@ def checkvalue(v, vmin, vmax, name):
 
 
 #================================================================
+# control unit base class
+#================================================================
+class ControlUnitBase:
+    def write(self, *args, **kwargs):
+        self.set(*args, **kwargs)
+        self.apply()
+
+    def read(self):
+        self.update()
+        return self.get()
+
+
+#================================================================
 # LEDs
 #================================================================
 _LED_USERPIN1 = 0
 _LED_USERPIN2 = 0
-class Led:
+class Led(ControlUnitBase):
     """Controls the userpin1/2 LEDs."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
@@ -42,9 +55,14 @@ class Led:
     def apply(self):
         self._registerfile['overrides'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        value = self._registerfile['overrides'].read()
+        self._userpin1 = (value & 0x10) >> 4
+        self._userpin2 = (value & 0x20) >> 5
+
+    def get(self):
+        return {'userpin1': self._userpin1,
+                'userpin2': self._userpin2}
 
     def __str__(self):
         return ('userpin1: %s  userpin2: %s' %
@@ -57,7 +75,7 @@ class Led:
 _TESTDATAIN = 0
 _TESTDATAOUT = 0
 _TESTDATAGROUP = 0
-class TestData:
+class TestData(ControlUnitBase):
     """Controls the test data input and output."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
@@ -85,9 +103,15 @@ class TestData:
         self._registerfile['enableTestOutput'].apply()
         self._registerfile['testOutputSelGroup'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        self._testdatain = self._registerfile['enableTestInput'].read()
+        self._testdataout = self._registerfile['enableTestOutput'].read()
+        self._group = self._registerfile['testOutputSelGroup'].read()
+
+    def get(self):
+        return {'testdatain': self._testdatain,
+                'testdataout': self._testdataout,
+                'group': {0: 'A', 1: 'B'}[self._group]}
 
     def __str__(self):
         return ('test data input: %s  test data output: %s  group: %s' %
@@ -101,7 +125,7 @@ class TestData:
 _CMP_TH1 = 0
 _CMP_TH2 = 0
 _CMP_DIFFMODE = 0
-class Comparator:
+class Comparator(ControlUnitBase):
     """Controls the digital comparators."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
@@ -129,9 +153,17 @@ class Comparator:
         self._registerfile['threshold2'].apply()
         self._registerfile['compDiffMode'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        th1 = self._registerfile['threshold1'].read()
+        th2 = self._registerfile['threshold2'].read()
+        self._threshold1 = th1 if th1 < 256 else th1-512
+        self._threshold2 = th2 if th2 < 256 else th2-512
+        self._diffmode = self._registerfile['compDiffMode'].read()
+
+    def get(self):
+        return {'threshold1': self._threshold1,
+                'threshold2': self._threshold2,
+                'diffmode': self._diffmode}
 
     def __str__(self):
         return ('threshold 1: %i  threshold 2: %i  diff mode: %s' %
@@ -143,13 +175,12 @@ class Comparator:
 #================================================================
 _HITLOGIC_MASK = 0xFFFF0000
 _HITLOGIC_WINDOW = 16
-class HitLogic:
+class HitLogic(ControlUnitBase):
     """Controls the hit logic.
     
     The following settings are controlled globally for all channels:
     - selection mask
     - hit window length
-    
     """
     def __init__(self, registerfile):
         self._registerfile = registerfile
@@ -180,9 +211,15 @@ class HitLogic:
         self._registerfile['selectMask_l'].apply()
         self._registerfile['hitWindowLength'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        mask_h = self._registerfile['selectMask_h'].read()
+        mask_l = self._registerfile['selectMask_l'].read()
+        self._mask = (mask_h << 16) + mask_l
+        self._window = self._registerfile['hitWindowLength'].read()
+
+    def get(self):
+        return {'mask': self._mask,
+                'window': self._window}
 
     def __str__(self):
         return ('selection mask: 0x%08X  hit window length: %i' %
