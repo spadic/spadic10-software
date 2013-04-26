@@ -549,8 +549,8 @@ _FECHANNEL_ENADC = 0
 class FrontendChannel:
     """Analog frontend channel specific controller."""
 
-    def __init__(self, registerchain, channel_id):
-        self._registerchain = registerchain
+    def __init__(self, shiftregister, channel_id):
+        self._shiftregister = shiftregister
         self._id = channel_id
         self.reset()
 
@@ -574,18 +574,18 @@ class FrontendChannel:
             self._enableadc = 1 if enableadc else 0
 
         i = str(self._id)
-        self._registerchain['baselineTrimP_'+i].set(self._baseline)
-        self._registerchain['frontEndSelNP_'+i].set(self._frontend)
-        self._registerchain['enSignalAdc_'+i].set(self._enableadc)
-        self._registerchain['enAmpN_'+i].set(1 if (self._enablecsa and
+        self._shiftregister['baselineTrimP_'+i].set(self._baseline)
+        self._shiftregister['frontEndSelNP_'+i].set(self._frontend)
+        self._shiftregister['enSignalAdc_'+i].set(self._enableadc)
+        self._shiftregister['enAmpN_'+i].set(1 if (self._enablecsa and
                                                    self._frontend == 0)
                                                else 0)
-        self._registerchain['enAmpP_'+i].set(1 if (self._enablecsa and
+        self._shiftregister['enAmpP_'+i].set(1 if (self._enablecsa and
                                                    self._frontend == 1)
                                                else 0)
 
     def apply(self):
-        self._registerchain.apply()
+        self._shiftregister.apply()
         
     def write(self, *args, **kwargs):
         self.set(*args, **kwargs)
@@ -629,9 +629,9 @@ class Frontend:
       c.frontend.channel[3]
 
     """
-    def __init__(self, registerchain):
-        self._registerchain = registerchain
-        self.channel = [FrontendChannel(self._registerchain, i)
+    def __init__(self, shiftregister):
+        self._shiftregister = shiftregister
+        self.channel = [FrontendChannel(self._shiftregister, i)
                         for i in range(32)]
         self.reset()
 
@@ -673,8 +673,8 @@ class Frontend:
             checkvalue(xfb, 0, 127, 'xfb')
             self._xfb = xfb
 
-        self._registerchain['baselineTrimN'].set(self._baseline)
-        self._registerchain['DecSelectNP'].set(self._frontend)
+        self._shiftregister['baselineTrimN'].set(self._baseline)
+        self._shiftregister['DecSelectNP'].set(self._frontend)
 
         r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
              1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
@@ -682,12 +682,12 @@ class Frontend:
                         self._psourcebias, self._nsourcebias, self._xfb]
 
         for name in r[1-self._frontend]:
-            self._registerchain[name].set(0)
+            self._shiftregister[name].set(0)
         for (name, value) in zip(r[self._frontend], v):
-            self._registerchain[name].set(value)
+            self._shiftregister[name].set(value)
 
     def apply(self):
-        self._registerchain.apply()
+        self._shiftregister.apply()
 
     def write(self, *args, **kwargs):
         self.set(*args, **kwargs)
@@ -714,8 +714,8 @@ _ADC_VPFB = 0
 _ADC_VPAMP = 0
 class AdcBias:
     """Controls the ADC bias settings."""
-    def __init__(self, registerchain):
-        self._registerchain = registerchain
+    def __init__(self, shiftregister):
+        self._shiftregister = shiftregister
         self.reset()
 
     def reset(self):
@@ -744,15 +744,15 @@ class AdcBias:
             checkvalue(vpamp, 0, 127, 'VPAmp')
             self._vpamp = vpamp
 
-        self._registerchain['VNDel'].set(self._vndel)
-        self._registerchain['VPDel'].set(self._vpdel)
-        self._registerchain['VPLoadFB'].set(self._vploadfb)
-        self._registerchain['VPLoadFB2'].set(self._vploadfb2)
-        self._registerchain['VPFB'].set(self._vpfb)
-        self._registerchain['VPAmp'].set(self._vpamp)
+        self._shiftregister['VNDel'].set(self._vndel)
+        self._shiftregister['VPDel'].set(self._vpdel)
+        self._shiftregister['VPLoadFB'].set(self._vploadfb)
+        self._shiftregister['VPLoadFB2'].set(self._vploadfb2)
+        self._shiftregister['VPFB'].set(self._vpfb)
+        self._shiftregister['VPAmp'].set(self._vpamp)
 
     def apply(self):
-        self._registerchain.apply()
+        self._shiftregister.apply()
 
     def write(self, *args, **kwargs):
         self.set(*args, **kwargs)
@@ -780,8 +780,8 @@ class Monitor:
     - channel selection
 
     """
-    def __init__(self, registerchain):
-        self._registerchain = registerchain
+    def __init__(self, shiftregister):
+        self._shiftregister = shiftregister
         self.reset()
 
     def reset(self):
@@ -800,17 +800,17 @@ class Monitor:
         if enable is not None:
             self._enable = 1 if enable else 0
 
-        self._registerchain['SelMonitor'].set(self._source)
+        self._shiftregister['SelMonitor'].set(self._source)
         enMonitorAdc = [0]*32
         ampToBus = [0]*32
         if self._enable:
             {0: enMonitorAdc, 1: ampToBus}[self._source][self._channel] = 1
         for ch in range(32):
-            self._registerchain['enMonitorAdc_'+str(ch)].set(enMonitorAdc[ch])
-            self._registerchain['ampToBus_'+str(ch)].set(ampToBus[ch])
+            self._shiftregister['enMonitorAdc_'+str(ch)].set(enMonitorAdc[ch])
+            self._shiftregister['ampToBus_'+str(ch)].set(ampToBus[ch])
 
     def apply(self):
-        self._registerchain.apply()
+        self._shiftregister.apply()
 
     def write(self, *args, **kwargs):
         self.set(*args, **kwargs)
@@ -851,7 +851,7 @@ class SpadicController:
     """
     def __init__(self, spadic):
         self.registerfile = spadic._registerfile
-        self.registerchain = spadic._registerchain
+        self.shiftregister = spadic._shiftregister
 
         # add control units
         self._units = {}
@@ -865,11 +865,11 @@ class SpadicController:
         self._units['Hit logic'] = self.hitlogic
         self.filter = Filter(self.registerfile)
         self._units['Filter'] = self.filter
-        self.monitor = Monitor(self.registerchain)
+        self.monitor = Monitor(self.shiftregister)
         self._units['Monitor'] = self.monitor
-        self.frontend = Frontend(self.registerchain)
+        self.frontend = Frontend(self.shiftregister)
         self._units['Frontend'] = self.frontend
-        self.adcbias = AdcBias(self.registerchain)
+        self.adcbias = AdcBias(self.shiftregister)
         self._units['ADC bias'] = self.adcbias
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
@@ -911,10 +911,10 @@ class SpadicController:
         lines.append('')
         lines.append(frame('Shift register'))
         srlines = []
-        for name in self.registerchain.dict(nonzero):
+        for name in self.shiftregister.dict(nonzero):
             ln = name.ljust(25) + ' '
-            sz = self.registerchain.size(name)
-            ln += fmtnumber(self.registerchain[name], sz)
+            sz = self.shiftregister.size(name)
+            ln += fmtnumber(self.shiftregister[name], sz)
             srlines.append(ln)
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)

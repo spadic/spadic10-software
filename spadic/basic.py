@@ -2,7 +2,7 @@ import threading, Queue
 import ftdi_cbmnet
 from message import MessageSplitter, Message
 from registerfile import SpadicRegisterFile
-from registerchain import SpadicRegisterChain
+from shiftregister import SpadicShiftRegister
 from control import SpadicController
 
 
@@ -20,9 +20,9 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         # higher level register file access
         self._registerfile = SpadicRegisterFile(self)
 
-        # higher level register chain access
-        self._registerchain = SpadicRegisterChain(self)
-        self._registerchain.clear()
+        # higher level shift register access
+        self._shiftregister = SpadicShiftRegister(self)
+        self._shiftregister.clear()
 
         # highest level configuration controller
         self.control = SpadicController(self)
