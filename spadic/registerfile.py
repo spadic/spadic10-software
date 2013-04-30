@@ -50,7 +50,7 @@ class Register:
         hardware register will be considered "not known". It will become known
         again if the "update" or "read" methods are called.
         """
-        if not(self._known and self._stage == self._cache):
+        if not self._known or self._stage != self._cache:
             self._write(self.addr, self._stage)
             self._known = False
 
