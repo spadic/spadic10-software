@@ -17,16 +17,6 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     def __init__(self):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
 
-        # higher level register file access
-        self._registerfile = SpadicRegisterFile(self)
-
-        # higher level shift register access
-        self._shiftregister = SpadicShiftRegister(self)
-        self._shiftregister.clear()
-
-        # highest level configuration controller
-        self.control = SpadicController(self)
-
         # message splitters for groups A and B
         self._dataA_splitter = MessageSplitter()
         self._dataB_splitter = MessageSplitter()
@@ -41,6 +31,16 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._recv_worker.run = self._recv_job
         self._recv_worker.daemon = True
         self._recv_worker.start()
+
+        # higher level register file access
+        self._registerfile = SpadicRegisterFile(self)
+
+        # higher level shift register access
+        self._shiftregister = SpadicShiftRegister(self)
+        self._shiftregister.clear()
+
+        # highest level configuration controller
+        self.control = SpadicController(self)
 
 
     def _recv_job(self):

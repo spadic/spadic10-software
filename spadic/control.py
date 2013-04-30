@@ -37,7 +37,7 @@ class Led(ControlUnitBase):
     """Controls the userpin1/2 LEDs."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.reset()
+        self.update()
 
     def reset(self):
         self.set(_LED_USERPIN1, _LED_USERPIN2)
@@ -79,7 +79,7 @@ class TestData(ControlUnitBase):
     """Controls the test data input and output."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.reset()
+        self.update()
 
     def reset(self):
         self.set(_TESTDATAIN, _TESTDATAOUT, _TESTDATAGROUP)
@@ -129,7 +129,7 @@ class Comparator(ControlUnitBase):
     """Controls the digital comparators."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.reset()
+        self.update()
 
     def reset(self):
         self.set(_CMP_TH1, _CMP_TH2, _CMP_DIFFMODE)
@@ -184,7 +184,7 @@ class HitLogic(ControlUnitBase):
     """
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.reset()
+        self.update()
 
     def reset(self):
         self.set(_HITLOGIC_MASK, _HITLOGIC_WINDOW)
@@ -235,12 +235,12 @@ class HitLogic(ControlUnitBase):
 #----------------------------------------------------------------
 _DIGCHANNEL_ENABLE = 0
 _DIGCHANNEL_ENTRIGGER = 0
-class DigitalChannel:
+class DigitalChannel(ControlUnitBase):
     """Controls the digital channel settings."""
     def __init__(self, registerfile, channel_id):
         self._registerfile = registerfile
         self._id = channel_id
-        self.reset()
+        self.update()
 
     def reset(self):
         self.set(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
@@ -272,9 +272,22 @@ class DigitalChannel:
         self._registerfile['triggerMaskA'].apply()
         self._registerfile['triggerMaskB'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        i = self._id % 16
+
+        reg_disable = {0: 'disableChannelA',
+                       1: 'disableChannelB'}[self._id//16]
+        dis = self._registerfile[reg_disable].read()
+        self._enable = (~dis >> i) & 1
+
+        reg_trigger = {0: 'triggerMaskA',
+                       1: 'triggerMaskB'}[self._id//16]
+        trig = self._registerfile[reg_trigger].read()
+        self._entrigger = (trig >> i) & 1
+
+    def get(self):
+        return {'enable': self._enable,
+                'entrigger': self._entrigger}
 
     def __str__(self):
         return ('enabled: %s  trigger input: %s' %
@@ -285,18 +298,25 @@ class DigitalChannel:
 #----------------------------------------------------------------
 # Neighbor select matrix
 #----------------------------------------------------------------
-class NeighborMatrix:
+NB_MAP = {'U0':  0, 'U1':  1, 'U2':  2,
+          'L0': 19, 'L1': 20, 'L2': 21}
+for i in range(16):
+    NB_MAP[str(i)] = i+3
+
+NB_MAP_INV = { 0: 'U0',  1: 'U1',  2: 'U2',
+              19: 'L0', 20: 'L1', 21: 'L2'}
+for i in range(16):
+    NB_MAP_INV[i+3] = i
+
+class NeighborMatrix(ControlUnitBase):
     """Controls the neighbor select matrix of one channel group."""
     def __init__(self, registerfile, group):
         self._registerfile = registerfile
         self._group = (0 if str(group) in 'aA' else
                       (1 if str(group) in 'bB' else
                       (1 if group else 0)))
-        self._map = {'u0': 0, 'u1': 1, 'u2': 2,
-                     'l0': 19, 'l1': 20, 'l2': 21}
-        for i in range(16):
-            self._map[str(i)] = i+3
         self.reset()
+        self.update()
 
     def reset(self):
         self._targets = ([[0]*3 + [0]*16 + [0]*3 for _ in range(3)] +
@@ -319,12 +339,12 @@ class NeighborMatrix:
             self._registerfile[name].set(value)
 
     def _set(self, target, source, enable):
-        tgt_idx = self._map[str(target).lower()]
-        src_idx = self._map[str(source).lower()]
-        if ((tgt_idx in [0, 1, 2]    and src_idx in [0, 1, 2]   ) or
+        tgt_idx = NB_MAP[str(target).upper()]
+        src_idx = NB_MAP[str(source).upper()]
+        if ((tgt_idx in [ 0,  1,  2] and src_idx in [ 0,  1,  2]) or
             (tgt_idx in [19, 20, 21] and src_idx in [19, 20, 21]) or
             (tgt_idx == src_idx)):
-            raise ValueError('loops are not allowed!')
+            raise ValueError('invalid source/target combination!')
         value = 1 if enable else 0
         self._targets[tgt_idx][src_idx] = value
 
@@ -334,9 +354,25 @@ class NeighborMatrix:
                     ({0: 'A', 1: 'B'}[self._group], i))
             self._registerfile[name].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        bits = []
+        for i in range(31):
+            name = ('neighborSelectMatrix%s_%i' % 
+                    ({0: 'A', 1: 'B'}[self._group], i))
+            x = self._registerfile[name].read()
+            bits += [(x >> i) & 1 for i in range(16)]
+        for tgt in range(22):
+            for src in range(22):
+                self._targets[tgt][src] = bits[22*tgt+src]
+
+    def get(self):
+        result = {}
+        for (tgt_idx, src_list) in enumerate(self._targets):
+            src = [NB_MAP_INV[src_idx]
+                   for (src_idx, en) in enumerate(src_list) if en]
+            if src:
+                result[NB_MAP_INV[tgt_idx]] = src
+        return result
 
     def __str__(self):
         return '\n'.join(' '.join('x' if enable else '.'
@@ -368,7 +404,7 @@ class Digital:
                         for i in range(32)]
         self.neighbor = {'A': NeighborMatrix(self._registerfile, 'A'),
                          'B': NeighborMatrix(self._registerfile, 'B')}
-        self.reset()
+        self.update()
             
     def reset(self):
         for ch in self.channel:
@@ -376,13 +412,13 @@ class Digital:
         for nb in self.neighbor.itervalues():
             nb.reset()
 
-    def set(self): # ?
-        for ch in self.channel:
-            ch.set()
-
     def apply(self):
         for ch in self.channel:
             ch.apply()
+
+    def update(self):
+        for ch in self.channel:
+            ch.update()
 
     def __str__(self):
         s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
@@ -403,7 +439,7 @@ _FILTER_OFFSET = 0
 #----------------------------------------------------------------
 # Single stage
 #----------------------------------------------------------------
-class Stage:
+class Stage(ControlUnitBase):
     """Controls a filter stage."""
     def __init__(self, registerfile, coeffa_list, coeffb_list,
                                                   enable_list, position):
@@ -413,6 +449,7 @@ class Stage:
         self._enable = enable_list
         self._position = position
         self.reset()
+        self.update()
 
     def reset(self):
         self.set(_FILTER_COEFFA, _FILTER_COEFFB, _FILTER_ENABLE)
@@ -450,9 +487,26 @@ class Stage:
         self._registerfile['bCoeffFilter_l'].apply()
         self._registerfile['bypassFilterStage'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        p = self._position
+        ra_h = self._registerfile['aCoeffFilter_h'].read() 
+        ra_l = self._registerfile['aCoeffFilter_l'].read()
+        rb_h = self._registerfile['bCoeffFilter_h'].read()
+        rb_l = self._registerfile['bCoeffFilter_l'].read()
+        ra = (ra_h << 16) + ra_l
+        rb = (rb_h << 16) + rb_l
+        a = (ra >> (6*(p-1))) & 0x3F if p > 0 else 0
+        b = (rb >> (6*p))     & 0x3F
+        self._coeffa[p] = (a if a < 32 else a-64)
+        self._coeffb[p] = (b if b < 32 else b-64)
+        byp = self._registerfile['bypassFilterStage'].read()
+        self._enable[p] = (~byp >> p) & 1
+
+    def get(self):
+        p = self._position
+        return {'coeffa': self._coeffa[p],
+                'coeffb': self._coeffb[p],
+                'enable': self._enable[p]}
 
     def __str__(self):
         p = self._position
@@ -469,6 +523,11 @@ class StageZero(Stage):
         """Set the 'b' coefficient and turn the stage on or off."""
         Stage.set(self, None, coeffb, enable, norm)
 
+    def get(self):
+        result = Stage.get(self)
+        del result['coeffa']
+        return result
+
     def __str__(self):
         p = self._position
         return ('                coeff. b: %4i  enabled: %s' %
@@ -477,13 +536,14 @@ class StageZero(Stage):
 #----------------------------------------------------------------
 # Scaling/offset
 #----------------------------------------------------------------
-class ScalingOffset:
+class ScalingOffset(ControlUnitBase):
     """Controls a scaling/offset stage."""
     def __init__(self, registerfile, enable_list, position):
         self._registerfile = registerfile
         self._enable = enable_list
         self._position = position
         self.reset()
+        self.update()
 
     def reset(self):
         self.set(_FILTER_SCALING, _FILTER_OFFSET, _FILTER_ENABLE)
@@ -515,9 +575,18 @@ class ScalingOffset:
         self._registerfile['scalingFilter'].apply()
         self._registerfile['bypassFilterStage'].apply()
 
-    def write(self, *args, **kwargs):
-        self.set(*args, **kwargs)
-        self.apply()
+    def update(self):
+        scaling = self._registerfile['scalingFilter'].read()
+        offset = self._registerfile['offsetFilter'].read()
+        byp = self._registerfile['bypassFilterStage'].read()
+        self._scaling = scaling if scaling < 256 else scaling-512
+        self._offset = offset if offset < 256 else offset-512
+        self._enable[self._position] = (~byp >> self._position) & 1
+    
+    def get(self):
+        return {'scaling': self._scaling,
+                'offset': self._offset,
+                'enable': self._enable[self._position]}
 
     def __str__(self):
         p = self._position
@@ -554,19 +623,19 @@ class Filter:
                       Stage(self._registerfile, self._coeffa,
                                 self._coeffb, self._enable, 3),
                       ScalingOffset(self._registerfile, self._enable, 4)]
-        self.reset()
+        self.update()
 
     def reset(self):
         for s in self.stage:
             s.reset()
 
-    def set(self): # ?
-        for s in self.stage:
-            s.set()
-
     def apply(self):
         for s in self.stage:
             s.apply()
+
+    def update(self):
+        for s in self.stage:
+            s.update()
 
     def __str__(self):
         return '\n'.join(('Stage %i: ' % i) + str(s)
@@ -911,7 +980,7 @@ class SpadicController:
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
 
-        self.reset()
+        #self.reset()
         self.apply()
 
     def reset(self):
