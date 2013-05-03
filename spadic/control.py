@@ -1,4 +1,4 @@
-from control_units import (Led, Comparator, HitLogic, Filter,
+from control_units import (Led, HitLogic, Filter,
                            Monitor, Frontend, AdcBias, Digital)
 
 def frame(title, symbol='=', width=60):
@@ -12,7 +12,6 @@ class SpadicController:
     Contains the following control units:
 
     adcbias
-    comparator
     digital
     filter
     frontend
@@ -37,8 +36,6 @@ class SpadicController:
         self._units = {}
         self.led = Led(self.registerfile)
         self._units['LEDs'] = self.led
-        self.comparator = Comparator(self.registerfile)
-        self._units['Comparator'] = self.comparator
         self.hitlogic = HitLogic(self.registerfile)
         self._units['Hit logic'] = self.hitlogic
         self.filter = Filter(self.registerfile)
