@@ -6,7 +6,7 @@ class Led(ControlUnitBase):
     """Controls the userpin1/2 LEDs."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.update()
+        self.reset()
 
     def reset(self):
         self.set(_LED_USERPIN1, _LED_USERPIN2)

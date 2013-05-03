@@ -7,7 +7,7 @@ class TestData(ControlUnitBase):
     """Controls the test data input and output."""
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.update()
+        self.reset()
 
     def reset(self):
         self.set(_TESTDATAIN, _TESTDATAOUT, _TESTDATAGROUP)

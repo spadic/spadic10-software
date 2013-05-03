@@ -14,7 +14,7 @@ class DigitalChannel(ControlUnitBase):
     def __init__(self, registerfile, channel_id):
         self._registerfile = registerfile
         self._id = channel_id
-        self.update()
+        self.reset()
 
     def reset(self):
         self.set(_DIGCHANNEL_ENABLE, _DIGCHANNEL_ENTRIGGER)
@@ -90,7 +90,6 @@ class NeighborMatrix(ControlUnitBase):
                       (1 if str(group) in 'bB' else
                       (1 if group else 0)))
         self.reset()
-        self.update()
 
     def reset(self):
         self._targets = ([[0]*3 + [0]*16 + [0]*3 for _ in range(3)] +
@@ -178,7 +177,7 @@ class Digital:
                         for i in range(32)]
         self.neighbor = {'A': NeighborMatrix(self._registerfile, 'A'),
                          'B': NeighborMatrix(self._registerfile, 'B')}
-        self.update()
+        self.reset()
             
     def reset(self):
         for ch in self.channel:

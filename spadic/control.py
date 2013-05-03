@@ -52,7 +52,7 @@ class SpadicController:
         self._units['Digital'] = self.digital
 
         #self.reset()
-        self.apply()
+        #self.apply()
 
     def reset(self):
         """Reset all control units."""

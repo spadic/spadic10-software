@@ -16,7 +16,7 @@ class HitLogic(ControlUnitBase):
     """
     def __init__(self, registerfile):
         self._registerfile = registerfile
-        self.update()
+        self.reset()
 
     def reset(self):
         self.set(_HITLOGIC_MASK, _HITLOGIC_WINDOW,
