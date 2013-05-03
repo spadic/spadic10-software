@@ -108,7 +108,7 @@ class ShiftRegister:
 
     def update(self):
         """Perform the read operation."""
-        if not self._known:
+        if not self._known or self._last_bits != self._to_bits():
             bits = self._read()
             self._from_bits(bits)
             self._last_bits = bits

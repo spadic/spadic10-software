@@ -64,7 +64,7 @@ class Register:
         - after each time the write operation has been performed by calling
           the "apply" or "write" methods.
         """
-        if not self._known:
+        if not self._known or self._stage != self._cache:
             self._cache = self._read(self.addr)
             self._stage = self._cache
             self._known = True
