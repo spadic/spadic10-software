@@ -1,6 +1,7 @@
 from control_led import Led
 from control_hitlogic import HitLogic
-from control_units import (Filter, Monitor, Frontend, AdcBias, Digital)
+from control_filter import Filter
+from control_units import Monitor, Frontend, AdcBias, Digital
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
