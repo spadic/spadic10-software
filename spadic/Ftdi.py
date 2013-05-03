@@ -104,7 +104,7 @@ class Ftdi:
             if iter_left is not None:
                 iter_left -= 1
         if self._debug_ftdi and bytes_read:
-            print >> self._debug_out, ("FTDI read [" +
+            print >> self._debug_out, ("FTDI  read [" +
                 " ".join("%02X" % b for b in bytes_read) + "]")
         return bytes_read
 

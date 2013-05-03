@@ -78,7 +78,7 @@ class FtdiCbmnet(Ftdi.Ftdi):
             words.append(w)
 
         if self._debug_cbmif:
-            print >> self._debug_out, ("CBMnet read " +
+            print >> self._debug_out, ("CBMnet  read " +
                 "%i"%addr + ", ["+" ".join("%X"%w for w in words)+"]")
 
         return (addr, words)
