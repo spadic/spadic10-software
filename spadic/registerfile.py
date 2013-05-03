@@ -13,8 +13,8 @@ class Register:
         """Set the address and size of the register."""
         self.addr = address
         self.size = size
-        self._stage = 0 # staging area
-        self._cache = 0 # last known value of the hardware register
+        self._stage = 0     # staging area
+        self._cache = None  # last known value of the hardware register
         self._known = False # is the current value of the hardware register known?
 
 
@@ -40,18 +40,17 @@ class Register:
     def apply(self):
         """Perform the hardware write operation, if necessary.
         
-        The write operation will transfer the value from the staging area to
-        the hardware register. It is considered necessary if
-        - the value of the register is not known, or
-        - the value of the register is known and the prepared value differs
-          from it.
+        The write operation will transfer the value from the staging area
+        to the hardware register. It is considered necessary if the last
+        known value of the register differs from the staging area.
 
         After the write operation has been performed, the value of the
         hardware register will be considered "not known". It will become known
         again if the "update" or "read" methods are called.
         """
-        if not self._known or self._stage != self._cache:
+        if self._stage != self._cache:
             self._write(self.addr, self._stage)
+            self._cache = self._stage
             self._known = False
 
     def update(self):
