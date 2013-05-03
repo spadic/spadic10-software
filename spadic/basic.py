@@ -20,6 +20,8 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
+        self.readout_enable(0)
+
         # message splitters for groups A and B
         self._dataA_splitter = MessageSplitter()
         self._dataB_splitter = MessageSplitter()
@@ -45,6 +47,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         # highest level configuration controller
         self.control = SpadicController(self)
 
+        self.readout_enable(1)
 
     def _recv_job(self):
         """Process data received from the CBMnet interface."""
@@ -106,6 +109,11 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         addr = ftdi_cbmnet.ADDR_DLM
         words = [number]
         self._cbmif_write(addr, words)
+
+    def readout_enable(self, enable):
+        """Start or stop data taking in the chip."""
+        dlm = 8 if enable else 9
+        self.send_dlm(dlm)
         
 
     #----------------------------------------------------------------
