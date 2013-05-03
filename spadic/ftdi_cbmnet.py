@@ -117,6 +117,9 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         self._read_worker.start()
         self._comm_worker.start()
 
+    def __del__(self):
+        self.__exit__()
+
 
     #--------------------------------------------------------------------
     # support "with" statement -> __exit__ is guaranteed to be called
