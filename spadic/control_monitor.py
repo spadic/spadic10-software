@@ -47,10 +47,11 @@ class Monitor(ControlUnitBase):
         self._shiftregister.apply()
 
     def update(self):
-        self._source = self._shiftregister['SelMonitor'].read()
+        self._shiftregister.update()
+        self._source = self._shiftregister['SelMonitor'].get()
         reg = {0: 'enMonitorAdc_', 1: 'ampToBus_'}[self._source]
         for ch in range(32):
-            en = self._shiftregister[reg+str(ch)].read()
+            en = self._shiftregister[reg+str(ch)].get()
             if en:
                 self._channel = ch
                 break
