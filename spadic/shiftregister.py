@@ -46,6 +46,7 @@ class ShiftRegister:
             self._registers[name] = r
 
         self._last_bits = None
+        self._known = False
 
         # emulate dictionary behaviour (read-only)
         self.__contains__ = self._registers.__contains__
@@ -100,15 +101,18 @@ class ShiftRegister:
     def apply(self):
         """Perform the write operation."""
         bits = self._to_bits()
-        if self._last_bits is None or bits != self._last_bits:
+        if bits != self._last_bits:
             self._write(bits)
             self._last_bits = bits
+            self._known = False
 
     def update(self):
         """Perform the read operation."""
-        bits = self._read()
-        self._from_bits(bits)
-        self._last_bits = bits
+        if not self._known:
+            bits = self._read()
+            self._from_bits(bits)
+            self._last_bits = bits
+            self._known = True
 
     def write(self, config):
         """Write the configuration contained in a dictionary.
