@@ -49,6 +49,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
         self.readout_enable(1)
 
+
     def _recv_job(self):
         """Process data received from the CBMnet interface."""
         while not self._stop.is_set():
