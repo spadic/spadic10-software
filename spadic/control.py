@@ -1,6 +1,11 @@
 from control_units import (Led, Comparator, HitLogic, Filter,
                            Monitor, Frontend, AdcBias, Digital)
 
+def frame(title, symbol='=', width=60):
+    return '\n'.join(['#' + symbol*(width-1),
+                      '# '+title,
+                      '#' + symbol*(width-1)])
+
 class SpadicController:
     """SPADIC 1.0 configuration controller.
     

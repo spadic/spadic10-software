@@ -4,11 +4,6 @@
 def onoff(value):
     return 'ON' if value else 'OFF'
 
-def frame(title, symbol='=', width=60):
-    return '\n'.join(['#' + symbol*(width-1),
-                      '# '+title,
-                      '#' + symbol*(width-1)])
-
 def checkvalue(v, vmin, vmax, name):
     if v < vmin or v > vmax:
         raise ValueError('valid %s range: %i..%i' %
