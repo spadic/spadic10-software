@@ -114,6 +114,12 @@ class ShiftRegister:
             self._last_bits = bits
             self._known = True
 
+    def clear(self):
+        """Set all shift register entries to zero."""
+        for name in self:
+            self[name].set(0)
+        self.apply()
+
     def write(self, config):
         """Write the configuration contained in a dictionary.
 
@@ -459,10 +465,4 @@ class SpadicShiftRegister(ShiftRegister):
             bits = chunk + bits
             bits_left -= len_chunk
         return bits
-
-    def clear(self):
-        """Clear the shift register."""
-        for name in self:
-            self[name].set(0)
-        self.apply()
 

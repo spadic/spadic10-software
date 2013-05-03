@@ -126,7 +126,6 @@ class RegisterFile:
         for name in self:
             self[name].update()
 
-
     def write(self, config):
         """Write the register configuration contained in a dictionary.
         
