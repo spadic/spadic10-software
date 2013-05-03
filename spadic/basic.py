@@ -14,8 +14,11 @@ RF_READ  = 2
 class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     """Wrapper for CBMnet interface <-> SPADIC communication."""
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
+
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
 
         # message splitters for groups A and B
         self._dataA_splitter = MessageSplitter()
