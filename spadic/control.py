@@ -3,7 +3,8 @@ from control_hitlogic import HitLogic
 from control_filter import Filter
 from control_monitor import Monitor
 from control_frontend import Frontend
-from control_units import AdcBias, Digital
+from control_adcbias import AdcBias
+from control_units import Digital
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
