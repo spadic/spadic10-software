@@ -1,14 +1,11 @@
 from control_base import *
 
-#================================================================
-# Digital channel settings
-#================================================================
-
 #----------------------------------------------------------------
 # Channel-specific settings
 #----------------------------------------------------------------
 _DIGCHANNEL_ENABLE = 0
 _DIGCHANNEL_ENTRIGGER = 0
+
 class DigitalChannel(ControlUnitBase):
     """Controls the digital channel settings."""
     def __init__(self, registerfile, channel_id):

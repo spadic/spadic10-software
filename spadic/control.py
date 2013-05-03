@@ -4,7 +4,7 @@ from control_filter import Filter
 from control_monitor import Monitor
 from control_frontend import Frontend
 from control_adcbias import AdcBias
-from control_units import Digital
+from control_digital import Digital
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
@@ -66,6 +66,11 @@ class SpadicController:
         """Update register values from control units and write RF/SR."""
         for unit in self._units.itervalues():
             unit.apply()
+
+    def update(self):
+        """Read RF/SR and update control units from register values."""
+        for unit in self._units.itervalues():
+            unit.update()
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
