@@ -1,4 +1,4 @@
-from control_units import (Led, TestData, Comparator, HitLogic, Filter,
+from control_units import (Led, Comparator, HitLogic, Filter,
                            Monitor, Frontend, AdcBias, Digital)
 
 class SpadicController:
@@ -14,7 +14,6 @@ class SpadicController:
     hitlogic
     led
     monitor
-    testdata
     
     To get help on one of the units, type
       help(<name of controller variable>.<name of unit>)
@@ -33,8 +32,6 @@ class SpadicController:
         self._units = {}
         self.led = Led(self.registerfile)
         self._units['LEDs'] = self.led
-        self.testdata = TestData(self.registerfile)
-        self._units['Test data'] = self.testdata
         self.comparator = Comparator(self.registerfile)
         self._units['Comparator'] = self.comparator
         self.hitlogic = HitLogic(self.registerfile)
