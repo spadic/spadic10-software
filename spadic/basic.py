@@ -14,7 +14,7 @@ RF_READ  = 2
 class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     """Wrapper for CBMnet interface <-> SPADIC communication."""
 
-    def __init__(self, clear_sr=0, **kwargs):
+    def __init__(self, reset=0, **kwargs):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
 
         for key in kwargs:
@@ -42,11 +42,12 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
         # higher level shift register access
         self._shiftregister = SpadicShiftRegister(self)
-        if clear_sr:
-            self._shiftregister.clear()
 
         # highest level configuration controller
         self.control = SpadicController(self)
+        if reset:
+            self.control.reset()
+            self.control.apply()
 
         self.readout_enable(1)
 
