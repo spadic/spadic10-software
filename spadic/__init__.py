@@ -1,12 +1,10 @@
-from basic import Spadic
-from message import Message
-#from control import Controller
+from main import Spadic
 
-#del basic, message, control
+del main
 
-__version__ = '0.9.6'
+__version__ = '1.0.0'
 
 __all__ = [
-    'Spadic', 'Message'#, 'Controller'
+    'Spadic'
 ]
 
