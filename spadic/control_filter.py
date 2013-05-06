@@ -57,7 +57,7 @@ class Filter(ControlUnitBase):
             if isinstance(enable, list) and len(enable) != 5:
                 raise ValueError('enable list must contain 5 values')
             for i in self._enable:
-                self._enable[i] = 1 if enable[i] else 0
+                self._enable[i] = 1 if i in enable and enable[i] else 0
 
         if scaling is not None:
             checkvalue(scaling, -256, 255, 'scaling')
