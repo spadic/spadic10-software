@@ -7,7 +7,7 @@ def int2bitstring(x, n):
     x += 2**n                # support two's complement
     s = bin(x)[2:]           # remove '0b' at the beginning
     s = s.rjust(n, '0')[-n:] # make string of length n
-    return ''.join(reversed(s))
+    return ''.join(s)
 
 
 #====================================================================
@@ -82,7 +82,7 @@ class ShiftRegister:
             value_bits = ['0']*n
             for i in range(n):
                 value_bits[i] = bits[pos[i]]
-            value = int(''.join(reversed(value_bits)), 2)
+            value = int(''.join(value_bits), 2)
             self[name].set(value)
 
 
@@ -461,7 +461,8 @@ class SpadicShiftRegister(ShiftRegister):
         bits_left = self._length
         while bits_left:
             len_chunk = min(bits_left, 16)
-            chunk = int2bitstring(self._read_register(0x300), len_chunk)
+            chunk = ''.join(reversed(
+                    int2bitstring(self._read_register(0x300), len_chunk)))
             bits = chunk + bits
             bits_left -= len_chunk
         return bits
