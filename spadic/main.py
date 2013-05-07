@@ -1,4 +1,6 @@
 import threading, Queue
+from IndexQueue import IndexQueue
+
 import ftdi_cbmnet
 from message import MessageSplitter, Message
 from registerfile import SpadicRegisterFile
@@ -22,14 +24,14 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
         self.readout_enable(0)
 
-        # message splitters for groups A and B
+        # message splitters and output queues for groups A and B
         self._dataA_splitter = MessageSplitter()
         self._dataB_splitter = MessageSplitter()
-
-        # message output Queues and register read Queue
         self._dataA_queue = Queue.Queue()
         self._dataB_queue = Queue.Queue()
-        self._ctrl_queue = Queue.Queue()
+
+        # register read result Queue (indexable)
+        self._ctrl_queue = IndexQueue()
 
         # data reader thread
         self._recv_worker = threading.Thread(name="recv worker")
@@ -70,7 +72,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
             elif addr == ftdi_cbmnet.ADDR_CTRL:
                 [reg_addr, reg_val] = words
-                self._ctrl_queue.put((reg_addr, reg_val))
+                self._ctrl_queue.put(reg_addr, reg_val)
 
 
     def __exit__(self, *args):
@@ -97,11 +99,9 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         """Read the value from a register."""
         addr = ftdi_cbmnet.ADDR_CTRL
         words = [RF_READ, address, 0]
-
         self._cbmif_write(addr, words)
-        (reg_addr, reg_val) = self._ctrl_queue.get()
-        if reg_addr == address:
-            return reg_val
+
+        return self._ctrl_queue.get(address)
         
 
     #----------------------------------------------------------------

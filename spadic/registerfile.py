@@ -1,3 +1,5 @@
+import threading
+
 #====================================================================
 # generic representation of a single register and a register file
 #====================================================================
@@ -37,6 +39,7 @@ class Register:
         """Return the last known register value."""
         return self._stage
 
+
     def apply(self):
         """Perform the hardware write operation, if necessary.
         
@@ -53,7 +56,8 @@ class Register:
             self._cache = self._stage
             self._known = False
 
-    def update(self):
+
+    def update(self, blocking=True):
         """Perform the hardware read operation, if necessary.
         
         The read operation will transfer the value of the hardware
@@ -65,9 +69,21 @@ class Register:
           the "apply" or "write" methods.
         """
         if not self._known or self._stage != self._cache:
-            self._cache = self._read(self.addr)
-            self._stage = self._cache
-            self._known = True
+            t = threading.Thread()
+            t.run = self._update_task
+            t.name = "reg_%03X_reader" % self.addr
+            t.start()
+            if blocking:
+                t.join()
+            else:
+                return t
+
+    def _update_task(self):
+        """Perform the hardware read operation."""
+        self._cache = self._read(self.addr)
+        self._stage = self._cache
+        self._known = True
+
 
     def write(self, value):
         """Modify the register value, if necessary perform the write operation.
@@ -123,8 +139,13 @@ class RegisterFile:
 
     def update(self):
         """Perform the read operation for all registers."""
+        threads = []
         for name in self:
-            self[name].update()
+            t = self[name].update(blocking=False)
+            if t is not None:
+                threads.append(t)
+        for t in threads:
+            t.join()
 
     def write(self, config):
         """Write the register configuration contained in a dictionary.
