@@ -19,8 +19,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     def __init__(self, reset=0, **kwargs):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
 
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
+        self.__dict__.update(kwargs)
 
         self.readout_enable(0)
 
