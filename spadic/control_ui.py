@@ -57,9 +57,26 @@ class SpadicControlUI(mutti.Screen):
         mutti.Screen.__init__(self)
 
         c = spadic_controller
-        d = SpadicControlDial(c.hitlogic, "threshold1",
-                              "Threshold 1", (-256, 255), 4, 15)
-        d._status = self.statusbar
 
-        self.adopt(d)
+        tabs = mutti.Tabs()
+
+        # Hit Logic
+        hitlogic_frame = mutti.Frame("Hit Logic")
+        hitlogic_list = mutti.VList()
+
+        for d in [SpadicControlDial(c.hitlogic, "window",
+                    "Hit window", (0, 63), 4, min_width=20),
+                  SpadicControlDial(c.hitlogic, "threshold1",
+                    "Threshold 1", (-256, 255), 4, min_width=20),
+                  SpadicControlDial(c.hitlogic, "threshold2",
+                    "Threshold 2", (-256, 255), 4, min_width=20),
+                 ]:
+            d._status = self.statusbar
+            hitlogic_list.adopt(d)
+
+        hitlogic_frame.adopt(hitlogic_list)
+        # END Hit Logic
+
+        tabs.adopt(hitlogic_frame, "Global digital")
+        self.adopt(tabs)
 
