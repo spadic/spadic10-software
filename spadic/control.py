@@ -55,7 +55,7 @@ class SpadicController:
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
 
-        self.ui = SpadicControlUI(self)
+        self.ui = SpadicControlUI(self, _log=spadic._debug_out)
 
         #self.reset()
         #self.apply()

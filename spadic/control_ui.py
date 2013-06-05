@@ -53,12 +53,13 @@ class SpadicControlDial(mutti.Dial):
         
 
 class SpadicControlUI(mutti.Screen):
-    def __init__(self, spadic_controller):
+    def __init__(self, spadic_controller, _log=None):
         mutti.Screen.__init__(self)
-
         c = spadic_controller
+        self._log = _log
 
         tabs = mutti.Tabs()
+        tabs._log = _log
 
         # Hit Logic
         hitlogic_frame = mutti.Frame("Hit Logic")
