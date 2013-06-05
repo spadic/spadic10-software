@@ -2,21 +2,14 @@ import curses
 import sys
 import time
 
-from mutti.screen import Screen, QuitScreen
-from mutti.dial import Dial
-from mutti.lists import VList, HList
-from mutti.status import Status
-from mutti.align import VAlign, HAlign
-from mutti.toggle import Toggle
-from mutti.grid import Grid
-from mutti.tabs import Tabs
-from mutti.label import Label
+from mutti import (Screen, Dial, VList, HList, VAlign,
+                   HAlign, Toggle, Grid, Tabs, Label)
 
 #--------------------------------------------------------------------
 
-def build_panels(stdscr):
+def build_panels():
     f = open('loglog.log', 'w')
-    mainscreen = Screen(stdscr)
+    mainscreen = Screen()
     mainscreen._log = f
 
     statusbar = mainscreen.statusbar
@@ -135,29 +128,10 @@ def build_panels(stdscr):
 
 #--------------------------------------------------------------------
 
-def main_loop(top_panel):
-    """
-    Run the application.
-
-    top_panel must be a Panel instance with top_panel.win == stdscr.
-    """
-    while 1:
-        top_panel.redraw()
-        curses.doupdate()
-        key = top_panel.win.getch()
-        try:
-            top_panel.handle_key(key)
-        except QuitScreen:
-            break
-
-def main(stdscr, *main_args):
-    curses.use_default_colors()
-    top_panel = build_panels(stdscr)
-    main_loop(top_panel)
-
 if __name__=='__main__':
     try:
-        curses.wrapper(main, *sys.argv)
+        top_panel = build_panels()
+        top_panel.run()
     except KeyboardInterrupt:
         pass
 
