@@ -20,6 +20,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
 
         self.__dict__.update(kwargs)
+        self._debug_out = open('spadic.log', 'w')
 
         self.readout_enable(0)
 
@@ -81,7 +82,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         ftdi_cbmnet.FtdiCbmnetThreaded.__exit__(self)
         self._recv_worker.join()
         if self._debug_cbmif:
-            print >> self._debug_out, self._recv_worker.name, "finished"
+            self._debug(self._recv_worker.name, "finished")
 
         
     #----------------------------------------------------------------

@@ -1,4 +1,3 @@
-import sys
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
@@ -32,7 +31,14 @@ class Ftdi:
         ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
         self._debug_ftdi = False
-        self._debug_out = sys.stderr
+        self._debug_out = None
+
+    def _debug(self, *text):
+        try:
+            print >> self._debug_out, " ".join(map(str, text))
+            self._debug_out.flush()
+        except:
+            pass
 
     def __enter__(self):
         return self
@@ -44,7 +50,7 @@ class Ftdi:
             ftdi.ftdi_free(self.ftdic)
                     # free -> deinit -> usb_close_internal -> usb_close
         if self._debug_ftdi:
-            print >> self._debug_out, "FTDI exit"
+            self._debug("FTDI exit")
 
     def purge(self):
         """Purge all FTDI buffers."""
@@ -67,7 +73,7 @@ class Ftdi:
     def _ftdi_write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
         if self._debug_ftdi:
-            print >> self._debug_out, ("FTDI write [" +
+            self._debug_("FTDI write [" +
                 " ".join("%02X" % b for b in byte_list) + "]")
         bytes_left = byte_list
         iter_left = max_iter
@@ -104,7 +110,7 @@ class Ftdi:
             if iter_left is not None:
                 iter_left -= 1
         if self._debug_ftdi and bytes_read:
-            print >> self._debug_out, ("FTDI  read [" +
+            self._debug("FTDI  read [" +
                 " ".join("%02X" % b for b in bytes_read) + "]")
         return bytes_read
 
