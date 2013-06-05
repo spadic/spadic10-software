@@ -2,19 +2,19 @@ import curses
 import mutti
 
 class SpadicControlDial(mutti.Dial):
-    def __init__(self, control_unit, control_param, *args):
+    def __init__(self, control_unit, control_param, *args, **kwargs):
         """
         Connect the graphical with the functional control.
 
         E.g. SpadicControlDial(c.hitlogic, "threshold1", ...)
         """
-        mutti.Dial.__init__(self, *args)
+        mutti.Dial.__init__(self, *args, **kwargs)
         self.control_unit = control_unit
         self.control_param = control_param
 
     #--------------------------------------------------------------------
 
-    def _set(self):
+    def _set(self): # Dial already has a "set" method...
         self.control_unit.set(**{self.control_param: self.value})
 
     def apply(self):
@@ -41,8 +41,8 @@ class SpadicControlDial(mutti.Dial):
 
     #--------------------------------------------------------------------
         
-    def handle_key(self, key):
-        key = mutti.Dial.handle_key(self, key)
+    def _handle_key(self, key):
+        key = mutti.Dial._handle_key(self, key)
         if key is not None:
             if key == ord('p'):
                 self.write()
