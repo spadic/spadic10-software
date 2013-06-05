@@ -5,6 +5,7 @@ from control_monitor import Monitor
 from control_frontend import Frontend
 from control_adcbias import AdcBias
 from control_digital import Digital
+from control_ui import SpadicControlUI
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
@@ -53,6 +54,8 @@ class SpadicController:
         self._units['ADC bias'] = self.adcbias
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
+
+        self.ui = SpadicControlUI(self)
 
         #self.reset()
         #self.apply()
