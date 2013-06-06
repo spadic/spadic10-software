@@ -2,6 +2,7 @@ import mutti
 from base import SpadicToggle
 from hitlogic import HitLogicFrame
 from dlmtrigger import DlmTriggerFrame
+from led import LedFrame
 
 
 class SpadicControlUI(mutti.Screen):
@@ -13,16 +14,28 @@ class SpadicControlUI(mutti.Screen):
         tabs = mutti.Tabs()
         tabs._log = _log
 
-        # Hit Logic + DLM trigger settings
-        hitlogic_dlm_list = mutti.VList()
-        u = c.hitlogic
+        #--------------------------------------------------------------------
+        # Hit Logic + Filter settings
+        #--------------------------------------------------------------------
+        hitlogic_filter_list = mutti.VList()
 
         hitlogic_frame = HitLogicFrame(c, self.statusbar, _log)
-        hitlogic_dlm_list.adopt(hitlogic_frame)
+        hitlogic_filter_list.adopt(hitlogic_frame)
+
+        tabs.adopt(hitlogic_filter_list, "Global digital settings")
+
+        #--------------------------------------------------------------------
+        # miscellaneous settings
+        #--------------------------------------------------------------------
+        misc_list = mutti.VList()
 
         dlmtrigger_frame = DlmTriggerFrame(c, self.statusbar, _log)
-        hitlogic_dlm_list.adopt(dlmtrigger_frame)
+        misc_list.adopt(dlmtrigger_frame)
 
-        tabs.adopt(hitlogic_dlm_list, "Global digital settings")
+        led_frame = LedFrame(c, self.statusbar, _log)
+        misc_list.adopt(led_frame)
+
+        tabs.adopt(misc_list, "Misc. settings")
+
         self.adopt(tabs)
 
