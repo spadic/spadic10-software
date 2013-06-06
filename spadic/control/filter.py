@@ -41,23 +41,33 @@ class Filter(ControlUnitBase):
             if isinstance(coeffa, list) and len(coeffa) != 4:
                 raise ValueError('coefficient list must contain 4 values')
             for i in self._coeffa:
-                c = coeffa[i]
-                checkvalue(c, -32, 31, 'coefficient')
-                self._coeffa[i] = c
+                try:
+                    c = coeffa[i]
+                    checkvalue(c, -32, 31, 'coefficient')
+                    self._coeffa[i] = c
+                except KeyError:
+                    pass
 
         if coeffb is not None:
             if isinstance(coeffb, list) and len(coeffb) != 4:
                 raise ValueError('coefficient list must contain 4 values')
             for i in self._coeffb:
-                c = coeffb[i]
-                checkvalue(c, -32, 31, 'coefficient')
-                self._coeffb[i] = c
+                try:
+                    c = coeffb[i]
+                    checkvalue(c, -32, 31, 'coefficient')
+                    self._coeffb[i] = c
+                except KeyError:
+                    pass
 
         if enable is not None:
             if isinstance(enable, list) and len(enable) != 5:
                 raise ValueError('enable list must contain 5 values')
             for i in self._enable:
-                self._enable[i] = 1 if i in enable and enable[i] else 0
+                try:
+                    en = enable[i]
+                    self._enable[i] = 1 if en else 0
+                except KeyError:
+                    pass
 
         if scaling is not None:
             checkvalue(scaling, -256, 255, 'scaling')
