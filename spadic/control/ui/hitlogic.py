@@ -73,11 +73,11 @@ class HitLogicFrame(mutti.Frame):
 
         u = spadic_controller.hitlogic
         for (i, d) in enumerate([
-          SpadicDial(u, "threshold1", "Threshold 1", (-256, 255), 4,
+          SpadicDial(u, "threshold1", (-256, 255), 4, "Threshold 1",
+                     min_width=17),                                
+          SpadicDial(u, "threshold2", (-256, 255), 4, "Threshold 2",
                      min_width=17),
-          SpadicDial(u, "threshold2", "Threshold 2", (-256, 255), 4,
-                     min_width=17),
-          SpadicDial(u, "window", " "*5+"Hit window length", (0, 63), 2,
+          SpadicDial(u, "window", (0, 63), 2, " "*5+"Hit window length",
                      min_width=27),
           SpadicToggle(u, "diffmode", " "*5+"Differential mode",
                        min_width=26),
