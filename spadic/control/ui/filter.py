@@ -1,6 +1,6 @@
 import curses
 import mutti
-from base import _SpadicPanel, SpadicDial, SpadicToggle
+from base import SpadicDial, SpadicToggle
 
 #--------------------------------------------------------------------
 
