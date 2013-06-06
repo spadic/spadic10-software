@@ -5,10 +5,6 @@ from base import _SpadicPanel, SpadicDial, SpadicToggle
 #--------------------------------------------------------------------
 
 class SelectMaskLabel(mutti.Label):
-    def __init__(self, *args, **kwargs):
-        mutti.Label.__init__(self, *args, **kwargs)
-        self.attr_ovr = 0
-
     def _draw(self, *args):
         self.attr_ovr = curses.A_BOLD if self.parent.has_focus else 0
         mutti.Label._draw(self, *args)
