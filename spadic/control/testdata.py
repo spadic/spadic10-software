@@ -1,4 +1,4 @@
-from control_base import *
+from base import *
 
 _TESTDATAIN = 0
 _TESTDATAOUT = 0

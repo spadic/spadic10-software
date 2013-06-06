@@ -1,4 +1,4 @@
-from control_base import *
+from base import *
 
 _HITLOGIC_MASK = 0xFFFF0000
 _HITLOGIC_WINDOW = 16

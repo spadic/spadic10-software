@@ -1,4 +1,4 @@
-from control_base import *
+from base import *
 
 #----------------------------------------------------------------
 # Channel-specific settings

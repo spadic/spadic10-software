@@ -1,4 +1,4 @@
-from control_base import *
+from base import *
 
 _ADC_VNDEL = 0
 _ADC_VPDEL = 0

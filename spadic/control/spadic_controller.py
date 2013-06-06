@@ -1,10 +1,10 @@
-from control_led import Led
-from control_hitlogic import HitLogic
-from control_filter import Filter
-from control_monitor import Monitor
-from control_frontend import Frontend
-from control_adcbias import AdcBias
-from control_digital import Digital
+from led import Led
+from hitlogic import HitLogic
+from filter import Filter
+from monitor import Monitor
+from frontend import Frontend
+from adcbias import AdcBias
+from digital import Digital
 from ui import SpadicControlUI
 
 def frame(title, symbol='=', width=60):
