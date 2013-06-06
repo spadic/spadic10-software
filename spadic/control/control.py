@@ -5,7 +5,7 @@ from control_monitor import Monitor
 from control_frontend import Frontend
 from control_adcbias import AdcBias
 from control_digital import Digital
-from control_ui import SpadicControlUI
+from ui import SpadicControlUI
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
