@@ -15,6 +15,11 @@ class HitLogic(ControlUnitBase):
     - hit window length
     - dual threshold
     - differential trigger mode
+
+    Additionally, the following settings (which actually are not related
+    to the hit logic...) are controlled here:
+    - analog trigger enable (DLM12 -> channel B.15)
+    - trigger output enable (DLM10)
     """
     def __init__(self, registerfile):
         self._registerfile = registerfile
