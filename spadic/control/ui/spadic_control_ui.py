@@ -1,6 +1,7 @@
 import mutti
 from base import SpadicToggle
 from hitlogic import HitLogicFrame
+from filter import FilterFrame
 from dlmtrigger import DlmTriggerFrame
 from led import LedFrame
 
@@ -20,7 +21,9 @@ class SpadicControlUI(mutti.Screen):
         hitlogic_filter_list = mutti.VList()
 
         hitlogic_frame = HitLogicFrame(c, self.statusbar, _log)
+        filter_frame = FilterFrame(c, self.statusbar, _log)
         hitlogic_filter_list.adopt(hitlogic_frame)
+        hitlogic_filter_list.adopt(filter_frame)
 
         tabs.adopt(hitlogic_filter_list, "Global digital settings")
 
