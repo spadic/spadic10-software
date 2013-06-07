@@ -94,14 +94,15 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         words = [RF_WRITE, address, value]
         self._cbmif_write(addr, words)
 
-
-    def read_register(self, address):
+    def read_register(self, address,
+                      request_skip=False, request_only=False):
         """Read the value from a register."""
-        addr = ftdi_cbmnet.ADDR_CTRL
-        words = [RF_READ, address, 0]
-        self._cbmif_write(addr, words)
-
-        return self._ctrl_queue.get(address)
+        if not request_skip:
+            addr = ftdi_cbmnet.ADDR_CTRL
+            words = [RF_READ, address, 0]
+            self._cbmif_write(addr, words)
+        if not request_only:
+            return self._ctrl_queue.get(address)
         
 
     #----------------------------------------------------------------

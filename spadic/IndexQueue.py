@@ -10,22 +10,22 @@ class IndexQueue:
 
     def put(self, key, value):
         with self.data_lock:
-            self.data[key] = value
+            if not key in self.data:
+                self.data[key] = []
+            self.data[key].append(value)
         with self.requests_lock:
             if key not in self.requests:
-                self.requests[key] = threading.Event()
-            self.requests[key].set()
+                self.requests[key] = threading.Semaphore(0)
+            r = self.requests[key]
+        r.release()
 
     def get(self, key):
         with self.requests_lock:
             if key not in self.requests:
-                self.requests[key] = threading.Event()
+                self.requests[key] = threading.Semaphore(0)
             r = self.requests[key]
-        r.wait()
-        with self.requests_lock:
-            self.requests[key].clear()
+        r.acquire()
         with self.data_lock:
-            value = self.data[key]
-            del self.data[key]
-            return value
+            value = self.data[key].pop(0)
+        return value
 

@@ -472,17 +472,23 @@ class SpadicShiftRegister(ShiftRegister):
         ctrl_data = (self._length << 3) + SR_READ
         self._write_register(0x2F0, ctrl_data)
 
-        # read 16 bit chunks and concatenate, right first
-        bits = ''
+        # send read requests for 16 bit chunks
         bits_left = self._length
+        chunks = []
         while bits_left:
             len_chunk = min(bits_left, 16)
+            self._read_register(0x300, request_only=True)
+            chunks.append(len_chunk)
+            bits_left -= len_chunk
+
+        # read chunks and concatenate, right first
+        bits = ''
+        for len_chunk in chunks:
             # one chunk is read MSB first (from "shift.v"):
             #   read_buf <= {read_buf[14:0],sr_read_bitout};
             # so we have to reverse the bit order again
-            chunk = ''.join(reversed(
-                    int2bitstring(self._read_register(0x300), len_chunk)))
-            bits = chunk + bits
-            bits_left -= len_chunk
+            chunk = self._read_register(0x300, request_skip=True)
+            chunk_bits = ''.join(reversed(int2bitstring(chunk, len_chunk)))
+            bits = chunk_bits + bits
         return bits
 
