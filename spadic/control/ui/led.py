@@ -14,6 +14,7 @@ class LedFrame(mutti.Frame):
                                min_width=20),
                  ]:
             d._status = statusbar
+            d._log = _log
             led_list.adopt(d)
         self.adopt(led_list)
 

@@ -24,6 +24,7 @@ class AdcBiasFrame(mutti.Frame):
                      min_width=15),                                
           ]):
             d._status = statusbar
+            d._log = _log
             grid.adopt(d, row=(i%2), col=(i//2))
 
         self.adopt(grid)
