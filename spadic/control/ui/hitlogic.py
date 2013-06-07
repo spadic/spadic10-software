@@ -31,7 +31,12 @@ class SelectMaskToggle(mutti.HList, _SpadicPanel):
         self._decode()
 
     def set(self):
+        self._encode()
         self.control_unit.set(**{self.control_param: self.value})
+
+    def _get(self):
+        self.value = self.get()
+        self._decode()
 
     def _changed(self, i):
         def _changed():
@@ -53,7 +58,6 @@ class SelectMaskToggle(mutti.HList, _SpadicPanel):
         key = mutti.HList._handle_key(self, key)
         if key is not None:
             if key in self._write_keys:
-                self._encode()
                 self.write()
             elif key in self._read_keys:
                 self.value = self.read()
@@ -67,6 +71,7 @@ class HitLogicFrame(mutti.Frame):
     def __init__(self, spadic_controller, statusbar, _log=None):
         mutti.Frame.__init__(self, "Hit Logic")
         self._log = _log
+        self.control_panels = []
 
         hitlogic_list = mutti.VList()
         hitlogic_grid = mutti.Grid(2, 2)
@@ -84,6 +89,8 @@ class HitLogicFrame(mutti.Frame):
           ]):
             d._status = statusbar
             hitlogic_grid.adopt(d, row=(i%2), col=(i//2))
+            self.control_panels.append(d)
+            d._log = _log
 
         hitlogic_list.adopt(hitlogic_grid)
 
@@ -91,6 +98,15 @@ class HitLogicFrame(mutti.Frame):
                                       min_width=44)
         hitlogic_list.adopt(selectmask)
         selectmask._log = _log
+        self.control_panels.append(selectmask)
 
         self.adopt(hitlogic_list)
+
+    def _set_all(self):
+        for panel in self.control_panels:
+            panel.set()
+
+    def _get_all(self):
+        for panel in self.control_panels:
+            panel._get()
 

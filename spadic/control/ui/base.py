@@ -44,6 +44,9 @@ class SpadicDial(_SpadicPanel, mutti.Dial):
 
     def set(self):
         self.control_unit.set(**{self.control_param: self.value})
+
+    def _get(self):
+        self.set_value(self.get())
         
     def _handle_key(self, key):
         key = mutti.Dial._handle_key(self, key)
@@ -73,6 +76,9 @@ class SpadicToggle(_SpadicPanel, mutti.Toggle):
 
     def set(self):
         self.control_unit.set(**{self.control_param: self.state})
+
+    def _get(self):
+        self.set_state(self.get())
         
     def _handle_key(self, key):
         key = mutti.Toggle._handle_key(self, key)

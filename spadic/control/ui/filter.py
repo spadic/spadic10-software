@@ -53,8 +53,9 @@ class FilterFrame(mutti.Frame):
     def __init__(self, spadic_controller, statusbar, _log=None):
         mutti.Frame.__init__(self, "Filter")
         self._log = _log
-        u = spadic_controller.filter
+        self.control_panels = []
 
+        u = spadic_controller.filter
         grid = mutti.Grid(3, 6)
 
         for col in range(2, 2+3):
@@ -64,6 +65,7 @@ class FilterFrame(mutti.Frame):
                           draw_label=False, min_width=5)
             d._log = _log
             d._status = statusbar
+            self.control_panels.append(d)
             grid.adopt(d, 0, col)
 
         for col in range(1, 1+4):
@@ -73,18 +75,21 @@ class FilterFrame(mutti.Frame):
                           draw_label=False, min_width=5)
             d._log = _log
             d._status = statusbar
+            self.control_panels.append(d)
             grid.adopt(d, 1, col)
 
         d = SpadicDial(u, "scaling", (-256, 255), 4, " Scaling",
                        min_width=14)
         d._log = _log
         d._status = statusbar
+        self.control_panels.append(d)
         grid.adopt(d, 0, 5)
 
         d = SpadicDial(u, "offset", (-256, 255), 4, " Offset",
                        min_width=14)
         d._log = _log
         d._status = statusbar
+        self.control_panels.append(d)
         grid.adopt(d, 1, 5)
 
         for (col, w) in zip(range(1, 1+5), [4, 4, 4, 4, 13]):
@@ -94,6 +99,7 @@ class FilterFrame(mutti.Frame):
                             draw_label=False, min_width=w)
             d._log = _log
             d._status = statusbar
+            self.control_panels.append(d)
             grid.adopt(d, 2, col)
         
         ca = [grid._panel[(0, col)] for col in range(2, 2+3)]
@@ -109,4 +115,12 @@ class FilterFrame(mutti.Frame):
         grid.adopt(L, 2, 0)
 
         self.adopt(grid)
+
+    def _set_all(self):
+        for panel in self.control_panels:
+            panel.set()
+
+    def _get_all(self):
+        for panel in self.control_panels:
+            panel._get()
 

@@ -4,6 +4,7 @@ from base import SpadicDial
 class AdcBiasFrame(mutti.Frame):
     def __init__(self, spadic_controller, statusbar, _log=None):
         mutti.Frame.__init__(self, "ADC Bias")
+        self.control_panels = []
         self._log = _log
 
         grid = mutti.Grid(2, 3)
@@ -25,7 +26,16 @@ class AdcBiasFrame(mutti.Frame):
           ]):
             d._status = statusbar
             d._log = _log
+            self.control_panels.append(d)
             grid.adopt(d, row=(i%2), col=(i//2))
 
         self.adopt(grid)
+
+    def _set_all(self):
+        for panel in self.control_panels:
+            panel.set()
+
+    def _get_all(self):
+        for panel in self.control_panels:
+            panel._get()
 
