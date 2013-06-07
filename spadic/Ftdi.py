@@ -33,6 +33,13 @@ class Ftdi:
         self._debug_ftdi = False
         self._debug_out = None
 
+        # how to get and set the write buffer chunk size:
+
+        #chunksize_p = ftdi.new_uintp()
+        #ftdi.ftdi_write_data_get_chunksize(context, chunksize_p)
+        #chunksize = ftdi.uintp_value(chunksize_p))
+        #ftdi.ftdi_write_data_set_chunksize(context, chunksize)
+
     def _debug(self, *text):
         try:
             print >> self._debug_out, " ".join(map(str, text))
