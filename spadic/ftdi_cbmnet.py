@@ -173,7 +173,6 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
                 continue
             self._send_data.put((addr, words))
             self._comm_tasks.put(WR_TASK)
-            self._comm_tasks.put(RD_TASK)
             self._send_queue.task_done()
 
     def _read_job(self):
@@ -195,11 +194,11 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
                 except TypeError: # read result is None
                     continue
                 self._recv_queue.put((addr, words))
-                if not self._stop.is_set():
-                    self._comm_tasks.put(RD_TASK)
             elif task == WR_TASK:
                 (addr, words) = self._send_data.get()
                 FtdiCbmnet._cbmif_write(self, addr, words)
                 self._send_data.task_done()
+            if not self._stop.is_set():
+                self._comm_tasks.put(RD_TASK)
             self._comm_tasks.task_done()
 
