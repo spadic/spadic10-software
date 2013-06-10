@@ -34,7 +34,7 @@ class SpadicController:
       help(c.hitlogic)
 
     """
-    def __init__(self, spadic):
+    def __init__(self, spadic, reset=0):
         self.registerfile = spadic._registerfile
         self.shiftregister = spadic._shiftregister
 
@@ -55,10 +55,11 @@ class SpadicController:
         self.digital = Digital(self.registerfile)
         self._units['Digital'] = self.digital
 
-        self.ui = SpadicControlUI(self, _log=spadic._debug_out)
+        if reset:
+            self.reset()
+            self.apply()
 
-        #self.reset()
-        #self.apply()
+        self.ui = SpadicControlUI(self, _log=spadic._debug_out)
 
     def reset(self):
         """Reset all control units."""

@@ -46,10 +46,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._shiftregister = SpadicShiftRegister(self)
 
         # highest level configuration controller
-        self.control = SpadicController(self)
-        if reset:
-            self.control.reset()
-            self.control.apply()
+        self.control = SpadicController(self, reset)
 
         self.readout_enable(1)
 
