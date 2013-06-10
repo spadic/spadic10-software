@@ -80,7 +80,7 @@ class Ftdi:
     def _ftdi_write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
         if self._debug_ftdi:
-            self._debug_("FTDI write [" +
+            self._debug("FTDI write [" +
                 " ".join("%02X" % b for b in byte_list) + "]")
         bytes_left = byte_list
         iter_left = max_iter
