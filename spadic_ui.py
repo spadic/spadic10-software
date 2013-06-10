@@ -1,4 +1,7 @@
+import sys
 import spadic
-s = spadic.Spadic(_debug_cbmif=1)
+
+reset = "--reset" in sys.argv
+s = spadic.Spadic(reset, _debug_cbmif=1)
 s.control.ui.run()
 
