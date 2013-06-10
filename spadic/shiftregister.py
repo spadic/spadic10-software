@@ -78,6 +78,18 @@ class ShiftRegister:
 
     def _to_bits(self):
         """Generate bit string from configuration."""
+        # Not all bit positions are necessarily used and the unused bits
+        # are not necessarily 0. Therefore, before we have written
+        # something, comparing self._to_bits() with self._last_bits like in
+        # self.update(), may result in False, even though the bits used
+        # for the configuration are equal. A possible solution is to use
+        # _last_bits instead of all 0's as initial bit string. A possible
+        # disadvantage of this is that the unused bits will never be
+        # cleared.
+        #if self._last_bits:
+        #    bits = [b for b in self._last_bits]
+        #else:
+        #    bits = ['0']*self._length
         bits = ['0']*self._length
         for name in self:
             pos = self[name].positions
