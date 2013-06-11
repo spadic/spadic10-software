@@ -16,7 +16,7 @@ RF_READ  = 2
 class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     """Wrapper for CBMnet interface <-> SPADIC communication."""
 
-    def __init__(self, reset=0, **kwargs):
+    def __init__(self, reset=0, ui=0, **kwargs):
         ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
 
         self.__dict__.update(kwargs)
@@ -46,7 +46,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._shiftregister = SpadicShiftRegister(self)
 
         # highest level configuration controller
-        self.control = SpadicController(self, reset)
+        self.control = SpadicController(self, reset, ui)
 
         self.readout_enable(1)
 

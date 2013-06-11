@@ -34,7 +34,7 @@ class SpadicController:
       help(c.hitlogic)
 
     """
-    def __init__(self, spadic, reset=0):
+    def __init__(self, spadic, reset=0, ui=0):
         self.registerfile = spadic._registerfile
         self.shiftregister = spadic._shiftregister
 
@@ -59,10 +59,11 @@ class SpadicController:
             self.reset()
             self.apply()
 
-        # bulk update faster than updates from controller
-        self.registerfile.update()
-        self.shiftregister.update()
-        self.ui = SpadicControlUI(self, _log=spadic._debug_out)
+        if ui:
+            # bulk update of RF/SR is faster than updates from controller
+            self.registerfile.update()
+            self.shiftregister.update()
+            self.ui = SpadicControlUI(self, _log=spadic._debug_out)
 
     def reset(self):
         """Reset all control units."""
