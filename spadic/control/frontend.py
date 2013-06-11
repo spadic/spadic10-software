@@ -171,7 +171,8 @@ class Frontend(ControlUnitBase):
                 'pcasc': self._pcasc, 'ncasc': self._ncasc,
                 'psourcebias': self._psourcebias,
                 'nsourcebias': self._nsourcebias,
-                'xfb': self._xfb}
+                'xfb': self._xfb, 
+                'baseline': self._baseline}
 
     def __str__(self):
         s = [('frontend: %s  baseline: %3i  pCasc: %3i  nCasc: %3i\n'
