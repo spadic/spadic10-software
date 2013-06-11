@@ -40,7 +40,7 @@ class SpadicDial(_SpadicPanel, mutti.Dial):
         """
         mutti.Dial.__init__(self, *args, **kwargs)
         _SpadicPanel.__init__(self, control_unit, control_param)
-        mutti.Dial.set_value(self, self.read())
+        self.set_value(self.read())
 
     def set(self):
         self.control_unit.set(**{self.control_param: self.value})
@@ -72,7 +72,7 @@ class SpadicToggle(_SpadicPanel, mutti.Toggle):
         """
         mutti.Toggle.__init__(self, *args, **kwargs)
         _SpadicPanel.__init__(self, control_unit, control_param)
-        mutti.Toggle.set_state(self, self.read())
+        self.set_state(self.read())
 
     def set(self):
         self.control_unit.set(**{self.control_param: self.state})
