@@ -59,6 +59,9 @@ class SpadicController:
             self.reset()
             self.apply()
 
+        # bulk update faster than updates from controller
+        self.registerfile.update()
+        self.shiftregister.update()
         self.ui = SpadicControlUI(self, _log=spadic._debug_out)
 
     def reset(self):
