@@ -27,8 +27,7 @@ class SelectMaskToggle(mutti.HList, _SpadicPanel):
             self.toggles.append(t)
             self.adopt(t)
 
-        self.value = self.read()
-        self._decode()
+        self._get()
 
     def set(self):
         self._encode()

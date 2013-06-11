@@ -89,6 +89,7 @@ class SpadicControlUI(mutti.Screen):
         tabs.adopt(misc_list, "Misc. settings")
 
         self.adopt(tabs)
+        self._update_all()
 
 
     def _set_all(self):
@@ -104,7 +105,7 @@ class SpadicControlUI(mutti.Screen):
         self.controller.apply()
 
     def _update_all(self):
-        #self.controller.update()
+        self.controller.update()
         self._get_all()
 
     def _reset(self):

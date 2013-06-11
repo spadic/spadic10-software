@@ -86,11 +86,11 @@ class ShiftRegister:
         # _last_bits instead of all 0's as initial bit string. A possible
         # disadvantage of this is that the unused bits will never be
         # cleared.
-        #if self._last_bits:
-        #    bits = [b for b in self._last_bits]
-        #else:
-        #    bits = ['0']*self._length
-        bits = ['0']*self._length
+        if self._last_bits:
+            bits = [b for b in self._last_bits]
+        else:
+            bits = ['0']*self._length
+        #bits = ['0']*self._length
         for name in self:
             pos = self[name].positions
             n = self[name].size
