@@ -88,6 +88,10 @@ class SpadicControlUI(mutti.Screen):
         #self.controller.update()
         self._get_all()
 
+    def _reset(self):
+        self.controller.reset()
+        self.controller.apply()
+
     def _handle_key(self, key):
         key = mutti.Screen._handle_key(self, key)
         if key is not None:
@@ -97,6 +101,8 @@ class SpadicControlUI(mutti.Screen):
                 self._apply_all()
             elif key == curses.KEY_F5:
                 self._update_all()
+            elif key == curses.KEY_F6:
+                self._reset()
             else:
                 return key
         else:
