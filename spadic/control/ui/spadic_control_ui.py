@@ -85,8 +85,8 @@ class SpadicControlUI(mutti.Screen):
         self.controller.apply()
 
     def _update_all(self):
+        #self.controller.update()
         self._get_all()
-        self.controller.update()
 
     def _handle_key(self, key):
         key = mutti.Screen._handle_key(self, key)
