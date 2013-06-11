@@ -12,6 +12,11 @@ class FrontendChannel(ControlUnitBase):
     def __init__(self, shiftregister, channel_id):
         self._shiftregister = shiftregister
         self._id = channel_id
+        self._reg_baseline = 'baselineTrimP_'+str(channel_id)
+        self._reg_frontend = 'frontEndSelNP_'+str(channel_id)
+        self._reg_enableadc = 'enSignalAdc_'+str(channel_id)
+        self._reg_enablecsaN = 'enAmpN_'+str(channel_id)
+        self._reg_enablecsaP = 'enAmpP_'+str(channel_id)
         self.reset()
 
     def _select_frontend(self, frontend):
@@ -33,16 +38,13 @@ class FrontendChannel(ControlUnitBase):
         if enableadc is not None:
             self._enableadc = 1 if enableadc else 0
 
-        i = str(self._id)
-        self._shiftregister['baselineTrimP_'+i].set(self._baseline)
-        self._shiftregister['frontEndSelNP_'+i].set(self._frontend)
-        self._shiftregister['enSignalAdc_'+i].set(self._enableadc)
-        self._shiftregister['enAmpN_'+i].set(1 if (self._enablecsa and
-                                                   self._frontend == 0)
-                                               else 0)
-        self._shiftregister['enAmpP_'+i].set(1 if (self._enablecsa and
-                                                   self._frontend == 1)
-                                               else 0)
+        self._shiftregister[self._reg_baseline].set(self._baseline)
+        self._shiftregister[self._reg_frontend].set(self._frontend)
+        self._shiftregister[self._reg_enableadc].set(self._enableadc)
+        self._shiftregister[self._reg_enablecsaN].set(1
+            if (self._enablecsa and self._frontend == 0) else 0)
+        self._shiftregister[self._reg_enablecsaP].set(1
+            if (self._enablecsa and self._frontend == 1) else 0)
 
     def apply(self):
         self._shiftregister.apply()
@@ -50,11 +52,12 @@ class FrontendChannel(ControlUnitBase):
     def update(self):
         self._shiftregister.update()
         i = str(self._id)
-        self._baseline = self._shiftregister['baselineTrimP_'+i].get()
-        self._frontend = self._shiftregister['frontEndSelNP_'+i].get()
-        self._enableadc = self._shiftregister['enSignalAdc_'+i].get()
-        enamp = {0: 'enAmpN_', 1: 'enAmpP_'}[self._frontend]
-        self._enablecsa = self._shiftregister[enamp+i].get()
+        self._baseline = self._shiftregister[self._reg_baseline].get()
+        self._frontend = self._shiftregister[self._reg_frontend].get()
+        self._enableadc = self._shiftregister[self._reg_enableadc].get()
+        enamp = {0: self._reg_enablecsaN,
+                 1: self._reg_enablecsaP}[self._frontend]
+        self._enablecsa = self._shiftregister[enamp].get()
 
     def get(self):
         return {'baseline': self._baseline,
