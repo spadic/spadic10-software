@@ -4,12 +4,17 @@ import mutti
 from base import SpadicDial, SpadicToggle
 
 class FrontendToggle(SpadicToggle):
+    def __init__(self, xfbpanel, *args, **kwargs):
+        self._xfbpanel = xfbpanel
+        SpadicToggle.__init__(self, *args, **kwargs)
+
     def set_state(self, state):
         try:
             if state in 'nNpP':
                 self.state = state
         except TypeError:
             self.state = 'P'
+        self._xfbpanel.label = {'P': 'nFB', 'N': 'pFB'}[self.state]
 
     def _handle_key(self, key):
         if key == ord('+'):
@@ -45,12 +50,14 @@ class FrontendFrame(mutti.Frame):
         vlist = mutti.VList()
         u = spadic_controller.frontend
 
+        xfbdial = SpadicDial(u, "xfb", (0, 127), 3,
+                             "xFB", min_width=14)
+
         grid = mutti.Grid(2, 3)
         for (i, d) in enumerate([
           SpadicDial(u, "baseline",    (0, 127), 3,
                      "Baseline",     min_width=14),
-          SpadicDial(u, "xfb",         (0, 127), 3,
-                     "xFB",          min_width=14),
+          xfbdial,
           SpadicDial(u, "pcasc",       (0, 127), 3,
                      " pCasc",       min_width=12),
           SpadicDial(u, "ncasc",       (0, 127), 3,
@@ -66,7 +73,7 @@ class FrontendFrame(mutti.Frame):
             grid.adopt(d, row=(i%2), col=(i//2))
         vlist.adopt(grid)
 
-        d = FrontendToggle(u, "frontend",
+        d = FrontendToggle(xfbdial, u, "frontend",
                            "Frontend polarity", min_width=20)
         d._status = statusbar
         d._log = _log
