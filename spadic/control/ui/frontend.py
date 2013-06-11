@@ -14,7 +14,11 @@ class FrontendToggle(SpadicToggle):
                 self.state = state
         except TypeError:
             self.state = 'P'
-        self._xfbpanel.label = {'P': 'nFB', 'N': 'pFB'}[self.state]
+
+    def get(self):
+        result = SpadicToggle.get(self)
+        self._xfbpanel.label = {'P': 'nFB', 'N': 'pFB'}[result]
+        return result
 
     def _handle_key(self, key):
         if key == ord('+'):
