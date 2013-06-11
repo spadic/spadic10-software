@@ -7,6 +7,7 @@ from dlmtrigger import DlmTriggerFrame
 from led import LedFrame
 from adcbias import AdcBiasFrame
 from frontend import FrontendFrame
+from channelgroup import ChannelSettingsFrame
 
 
 class SpadicControlUI(mutti.Screen):
@@ -51,6 +52,24 @@ class SpadicControlUI(mutti.Screen):
         self.control_panels.append(frontend_frame)
 
         tabs.adopt(global_analog_list, "Global analog settings")
+
+        #--------------------------------------------------------------------
+        # Channel settings (group A)
+        #--------------------------------------------------------------------
+        groupA_settings = ChannelSettingsFrame("A",
+                            c, self.statusbar, _log)
+        self.control_panels.append(groupA_settings)
+
+        tabs.adopt(groupA_settings, "Channel group A")
+
+        #--------------------------------------------------------------------
+        # Channel settings (group B)
+        #--------------------------------------------------------------------
+        groupB_settings = ChannelSettingsFrame("B",
+                            c, self.statusbar, _log)
+        self.control_panels.append(groupB_settings)
+
+        tabs.adopt(groupB_settings, "Channel group B")
 
         #--------------------------------------------------------------------
         # miscellaneous settings
