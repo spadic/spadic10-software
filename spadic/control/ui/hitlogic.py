@@ -40,7 +40,7 @@ class SelectMaskToggle(mutti.HList, _SpadicPanel):
 
     def _changed(self, i):
         def _changed():
-            v = self.read()
+            v = self.get()
             return (v>>(31-i))&1 != self.toggles[i].state
         return _changed
 

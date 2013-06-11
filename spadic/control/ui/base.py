@@ -59,7 +59,7 @@ class SpadicDial(_SpadicPanel, mutti.Dial):
                 return key
 
     def _changed(self):
-        return self.read() != self.value
+        return self.get() != self.value
         
 #--------------------------------------------------------------------
 
@@ -91,5 +91,5 @@ class SpadicToggle(_SpadicPanel, mutti.Toggle):
                 return key
 
     def _changed(self):
-        return self.read() != self.state
+        return self.get() != self.state
 
