@@ -6,6 +6,7 @@ from filter import FilterFrame
 from dlmtrigger import DlmTriggerFrame
 from led import LedFrame
 from adcbias import AdcBiasFrame
+from frontend import FrontendFrame
 
 
 class SpadicControlUI(mutti.Screen):
@@ -39,10 +40,17 @@ class SpadicControlUI(mutti.Screen):
         #--------------------------------------------------------------------
         # Global analog settings
         #--------------------------------------------------------------------
+        global_analog_list = mutti.VList()
+
         adcbias_frame = AdcBiasFrame(c, self.statusbar, _log)
+        global_analog_list.adopt(adcbias_frame)
         self.control_panels.append(adcbias_frame)
 
-        tabs.adopt(adcbias_frame, "Global analog settings")
+        frontend_frame = FrontendFrame(c, self.statusbar, _log)
+        global_analog_list.adopt(frontend_frame)
+        self.control_panels.append(frontend_frame)
+
+        tabs.adopt(global_analog_list, "Global analog settings")
 
         #--------------------------------------------------------------------
         # miscellaneous settings
