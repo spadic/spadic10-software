@@ -19,8 +19,8 @@ WRITE_LEN = {
 class FtdiCbmnet(Ftdi.Ftdi):
     """Wrapper for FTDI <-> CBMnet interface communication."""
 
-    def __init__(self, _debug_out=None):
-        Ftdi.Ftdi.__init__(self, _debug_out=_debug_out)
+    def __init__(self):
+        Ftdi.Ftdi.__init__(self)
         self._debug_cbmif = False
 
 
@@ -90,8 +90,8 @@ RD_TASK = 1 # lower priority
 class FtdiCbmnetThreaded(FtdiCbmnet):
     """FTDI <-> CBMnet interface communication with threads."""
 
-    def __init__(self, _debug_out=None):
-        FtdiCbmnet.__init__(self, _debug_out)
+    def __init__(self):
+        FtdiCbmnet.__init__(self)
 
         # set up threads and queues
         self._stop = threading.Event()
