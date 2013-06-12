@@ -1,3 +1,4 @@
+import threading
 import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
@@ -32,6 +33,7 @@ class Ftdi:
         self.ftdic = context
         self._debug_ftdi = False
         self._debug_out = None
+        self._debug_lock = threading.Lock()
 
         # how to get and set the write buffer chunk size:
 
@@ -41,11 +43,12 @@ class Ftdi:
         #ftdi.ftdi_write_data_set_chunksize(context, chunksize)
 
     def _debug(self, *text):
-        try:
-            print >> self._debug_out, " ".join(map(str, text))
-            self._debug_out.flush()
-        except:
-            pass
+        with self._debug_lock:
+            try:
+                print >> self._debug_out, " ".join(map(str, text))
+                self._debug_out.flush()
+            except:
+                pass
 
     def __enter__(self):
         return self
