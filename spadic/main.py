@@ -16,11 +16,9 @@ RF_READ  = 2
 class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     """Wrapper for CBMnet interface <-> SPADIC communication."""
 
-    def __init__(self, reset=0, ui=0, **kwargs):
-        ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
-
+    def __init__(self, reset=0, ui=0, _debug_out=None, **kwargs):
+        ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self, _debug_out)
         self.__dict__.update(kwargs)
-        self._debug_out = open('spadic.log', 'w')
 
         self.readout_enable(0)
 
