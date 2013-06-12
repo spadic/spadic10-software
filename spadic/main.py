@@ -98,7 +98,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             self._cbmif_write(addr, words)
         if not request_only:
             try:
-                return self._ctrl_queue.get(address, timeout=1)
+                return self._ctrl_queue.get(address, timeout=10)
             except IOError:
                 raise
 
