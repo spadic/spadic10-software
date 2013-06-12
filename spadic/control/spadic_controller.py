@@ -61,8 +61,14 @@ class SpadicController:
 
         if ui:
             # bulk update of RF/SR is faster than updates from controller
-            self.registerfile.update()
-            self.shiftregister.update()
+            try:
+                self.registerfile.update()
+                self.shiftregister.update()
+            except IOError:
+                self.reset()
+                self.apply()
+                if not spadic._test_read_register():
+                    raise IOError("cannot read registers")
             self.ui = SpadicControlUI(self, _log=spadic._debug_out)
 
     def reset(self):

@@ -134,7 +134,10 @@ class ShiftRegister:
     def update(self):
         """Perform the read operation."""
         if not self._known or self._last_bits != self._to_bits():
-            bits = self._read()
+            try:
+                bits = self._read()
+            except IOError:
+                raise
             self._from_bits(bits)
             self._last_bits = bits
             self._known = True
@@ -499,7 +502,10 @@ class SpadicShiftRegister(ShiftRegister):
             # one chunk is read MSB first (from "shift.v"):
             #   read_buf <= {read_buf[14:0],sr_read_bitout};
             # so we have to reverse the bit order again
-            chunk = self._read_register(0x300, request_skip=True)
+            try:
+                chunk = self._read_register(0x300, request_skip=True)
+            except IOError:
+                raise
             chunk_bits = ''.join(reversed(int2bitstring(chunk, len_chunk)))
             bits = chunk_bits + bits
         return bits

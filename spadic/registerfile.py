@@ -80,7 +80,11 @@ class Register:
 
     def _update_task(self):
         """Perform the hardware read operation."""
-        self._cache = self._read(self.addr)
+        try:
+            result = self._read(self.addr)
+        except IOError:
+            return
+        self._cache = result
         self._stage = self._cache
         self._known = True
 
@@ -146,6 +150,8 @@ class RegisterFile:
                 threads.append(t)
         for t in threads:
             t.join()
+        if not all(self[name]._known for name in self):
+            raise IOError("could not read all registers")
 
     def write(self, config):
         """Write the register configuration contained in a dictionary.

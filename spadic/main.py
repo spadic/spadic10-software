@@ -99,7 +99,18 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             words = [RF_READ, address, 0]
             self._cbmif_write(addr, words)
         if not request_only:
-            return self._ctrl_queue.get(address)
+            try:
+                return self._ctrl_queue.get(address, timeout=1)
+            except IOError:
+                raise
+
+    def _test_read_register(self):
+        try:
+            self.read_register(8)
+            success = True
+        except IOError:
+            success = False
+        return success
         
 
     #----------------------------------------------------------------
