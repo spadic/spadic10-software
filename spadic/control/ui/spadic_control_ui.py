@@ -9,17 +9,32 @@ from adcbias import AdcBiasFrame
 from frontend import FrontendFrame
 from channelgroup import ChannelSettingsFrame
 
+#--------------------------------------------------------------------
 
-class SpadicControlUI(mutti.Screen):
+class SpadicTabs(mutti.Tabs):
+    def _erase(self, height, width):
+        mutti.Tabs._erase(self, height, width)
+        self.fill(height, width,
+                  '/~', mutti.colors.color_attr("green"), top=2)
+
+class SpadicScreen(mutti.Screen):
+    def _erase(self, height, width):
+        self.win.erase()
+        self.fill(height, width,
+                  ' ', mutti.colors.color_attr(bg="black"))
+
+#--------------------------------------------------------------------
+
+class SpadicControlUI(SpadicScreen):
     def __init__(self, spadic_controller, _log=None):
-        mutti.Screen.__init__(self)
+        SpadicScreen.__init__(self)
         c = spadic_controller
         self.controller = c
         self.control_panels = []
         self._log = _log
         self._directmode = False
 
-        tabs = mutti.Tabs()
+        tabs = SpadicTabs()
         tabs._log = _log
 
         #--------------------------------------------------------------------
