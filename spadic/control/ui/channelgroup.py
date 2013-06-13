@@ -9,16 +9,32 @@ class ChannelSettingsFrame(mutti.Frame):
         self.control_panels = []
         self._log = _log
 
-        row_off = 1
-        col_off = 1
-        num_rows = row_off+16
-        num_cols = col_off+5
-        channel_rows = range(row_off, row_off+16)
-        setting_cols = range(col_off, col_off+5)
+        upper = 3 # three rows for "upper" neighbor matrix
+        lower = 3 # three rows for "lower" neighbor matrix
+        col_label = 1 # one column with labels
+        num_rows = upper+16+lower
+        num_cols = col_label+5+upper+16+lower
         grid = mutti.Grid(num_rows, num_cols)
 
+        t, b = 0, upper
+        upper_rows = range(t, b)
+        t, b = b, b+16
+        channel_rows = range(t, b)
+        t, b = b, b+lower 
+        lower_rows = range(t, b)
+
+        l, r = col_label, col_label+5
+        setting_cols = range(l, r)
+        l, r = r, r+upper
+        neighbor_lower_cols = range(l, r)
+        l, r = r, r+16
+        neighbor_channel_cols = range(l, r)
+        l, r = r, r+lower
+        neighbor_lower_cols = range(l, r)
+
+        # channel settings
         for row in channel_rows:
-            i = row-row_off+(16 if self.group == 'B' else 0)
+            i = row-upper+(16 if self.group == 'B' else 0)
             u_ana = spadic_controller.frontend.channel[i]
             u_dig = spadic_controller.digital.channel[i]
             for (c, d) in enumerate([
@@ -38,24 +54,24 @@ class ChannelSettingsFrame(mutti.Frame):
                            "Trigger input [%s.%i]" % (self.group, i%16),
                            draw_label=False, min_width=8),
               ]):
-                col = c+col_off
+                col = c+col_label
                 d._log = _log
                 d._status = statusbar
                 self.control_panels.append(d)
-                grid.adopt(d, row, col)
+                grid.adopt(d, row, col, update_size=False)
             
         for (col, setting) in zip(setting_cols,
          ["CSA", "  Baseline", "  ADC", "  Logic", "  Trigger"]):
             p = [grid._panel[(row, col)] for row in channel_rows]
             L = FilterLabel(p, setting)
-            grid.adopt(L, 0, col)
+            grid.adopt(L, 0, col, update_size=False)
             
         for row in channel_rows:
             p = [grid._panel[(row, col)] for col in range(1, 6)]
-            i = row-row_off
+            i = row-upper
             L = FilterLabel(p, "%s.%i" % (self.group, i))
-            grid.adopt(L, row, 0)
 
+        grid.update_size()
         self.adopt(grid)
 
     def _set_all(self):
