@@ -45,7 +45,10 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._shiftregister = SpadicShiftRegister(self)
 
         # highest level configuration controller
-        self.control = SpadicController(self, reset, ui)
+        self.control = SpadicController(self, reset)
+        if (not self.control._update_test() and
+            not self._read_register_test()):
+            raise IOError("cannot read registers")
 
         self.readout_enable(1)
 
@@ -108,13 +111,12 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             except IOError:
                 raise
 
-    def _test_read_register(self):
+    def _read_register_test(self):
         try:
             self.read_register(8)
-            success = True
+            return True
         except IOError:
-            success = False
-        return success
+            return False
         
 
     #----------------------------------------------------------------

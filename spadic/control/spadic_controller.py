@@ -70,8 +70,21 @@ class SpadicController:
 
     def update(self):
         """Read RF/SR and update control units from register values."""
+        # do this first, it is faster
+        self.registerfile.update()
+        self.shiftregister.update()
         for unit in self._units.itervalues():
             unit.update()
+
+    def _update_test(self):
+        try:
+            self.registerfile.update()
+            self.shiftregister.update()
+            return True
+        except IOError:
+            self.reset()
+            self.apply()
+            return False
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
