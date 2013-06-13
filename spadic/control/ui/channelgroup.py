@@ -9,12 +9,16 @@ class ChannelSettingsFrame(mutti.Frame):
         self.control_panels = []
         self._log = _log
 
-        rows = 17 # 16+1
-        cols = 6  # 5+1
-        grid = mutti.Grid(rows, cols)
+        row_off = 1
+        col_off = 1
+        num_rows = row_off+16
+        num_cols = col_off+5
+        channel_rows = range(row_off, row_off+16)
+        setting_cols = range(col_off, col_off+5)
+        grid = mutti.Grid(num_rows, num_cols)
 
-        for row in range(1, 17):
-            i = row-1+(16 if self.group == 'B' else 0)
+        for row in channel_rows:
+            i = row-row_off+(16 if self.group == 'B' else 0)
             u_ana = spadic_controller.frontend.channel[i]
             u_dig = spadic_controller.digital.channel[i]
             for (c, d) in enumerate([
@@ -34,35 +38,21 @@ class ChannelSettingsFrame(mutti.Frame):
                            "Trigger input [%s.%i]" % (self.group, i%16),
                            draw_label=False, min_width=8),
               ]):
-                col = c+1
+                col = c+col_off
                 d._log = _log
                 d._status = statusbar
                 self.control_panels.append(d)
                 grid.adopt(d, row, col)
             
-        p = [grid._panel[(row, 1)] for row in range(1, 17)]
-        L = FilterLabel(p, "CSA")
-        grid.adopt(L, 0, 1)
+        for (col, setting) in zip(setting_cols,
+         ["CSA", "  Baseline", "  ADC", "  Logic", "  Trigger"]):
+            p = [grid._panel[(row, col)] for row in channel_rows]
+            L = FilterLabel(p, setting)
+            grid.adopt(L, 0, col)
             
-        p = [grid._panel[(row, 2)] for row in range(1, 17)]
-        L = FilterLabel(p, "  Baseline")
-        grid.adopt(L, 0, 2)
-            
-        p = [grid._panel[(row, 3)] for row in range(1, 17)]
-        L = FilterLabel(p, "  ADC")
-        grid.adopt(L, 0, 3)
-            
-        p = [grid._panel[(row, 4)] for row in range(1, 17)]
-        L = FilterLabel(p, "  Logic")
-        grid.adopt(L, 0, 4)
-            
-        p = [grid._panel[(row, 5)] for row in range(1, 17)]
-        L = FilterLabel(p, "  Trigger")
-        grid.adopt(L, 0, 5)
-
-        for row in range(1, 17):
+        for row in channel_rows:
             p = [grid._panel[(row, col)] for col in range(1, 6)]
-            i = row-1
+            i = row-row_off
             L = FilterLabel(p, "%s.%i" % (self.group, i))
             grid.adopt(L, row, 0)
 
