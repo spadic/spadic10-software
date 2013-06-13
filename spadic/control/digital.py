@@ -185,10 +185,14 @@ class Digital:
     def apply(self):
         for ch in self.channel:
             ch.apply()
+        for nb in self.neighbor.itervalues():
+            nb.apply()
 
     def update(self):
         for ch in self.channel:
             ch.update()
+        for nb in self.neighbor.itervalues():
+            nb.update()
 
     def __str__(self):
         s = [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
