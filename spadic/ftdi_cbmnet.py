@@ -20,7 +20,10 @@ class FtdiCbmnet(Ftdi.Ftdi):
     """Wrapper for FTDI <-> CBMnet interface communication."""
 
     def __init__(self):
-        Ftdi.Ftdi.__init__(self)
+        try:
+            Ftdi.Ftdi.__init__(self)
+        except IOError:
+            raise
         self._debug_cbmif = False
 
 
@@ -91,7 +94,10 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     """FTDI <-> CBMnet interface communication with threads."""
 
     def __init__(self):
-        FtdiCbmnet.__init__(self)
+        try:
+            FtdiCbmnet.__init__(self)
+        except IOError:
+            raise
 
         # set up threads and queues
         self._stop = threading.Event()

@@ -18,7 +18,10 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     """Wrapper for CBMnet interface <-> SPADIC communication."""
 
     def __init__(self, reset=0, ui=0, **kwargs):
-        ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
+        try:
+            ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
+        except IOError:
+            raise # TODO enter offline mode
         self.__dict__.update(kwargs)
 
         self.readout_enable(0)
@@ -81,6 +84,8 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
     def __exit__(self, *args):
         """Bring all threads to halt."""
+        if not hasattr(self, '_stop'):
+            return
         if not self._stop.is_set():
             self._stop.set()
         ftdi_cbmnet.FtdiCbmnetThreaded.__exit__(self)
