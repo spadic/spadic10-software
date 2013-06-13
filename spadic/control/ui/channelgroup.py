@@ -2,6 +2,23 @@ import mutti
 from filter import FilterLabel # TODO more generic name...
 from base import SpadicDial, SpadicToggle
 
+class NeighborMatrixToggle(SpadicToggle):
+    def __init__(self, source_ch, target_ch, control_unit, *args, **kwargs):
+        self._source_ch = source_ch
+        self._target_ch = target_ch
+        SpadicToggle.__init__(self, control_unit, '', *args, **kwargs)
+
+    def set(self):
+        args = {'source': self._source_ch, 'target': self._target_ch,
+                'enable': self.state}
+        self.control_unit.set(**args)
+
+    def get(self):
+        result = self.control_unit.get()
+        tgt = self._target_ch
+        return (tgt in result and
+                self._source_ch in result[tgt])
+
 class ChannelSettingsFrame(mutti.Frame):
     def __init__(self, group, spadic_controller, statusbar, _log=None):
         mutti.Frame.__init__(self, "Channel settings")
@@ -70,6 +87,61 @@ class ChannelSettingsFrame(mutti.Frame):
             p = [grid._panel[(row, col)] for col in range(1, 6)]
             i = row-upper
             L = FilterLabel(p, "%s.%i" % (self.group, i))
+            grid.adopt(L, row, 0, update_size=False)
+
+        # neighbor matrix
+        u = spadic_controller.digital.neighbor[self.group]
+        for row in upper_rows:
+            for col in neighbor_channel_cols:
+                src = col-col_label-5-lower
+                tgt = "U%i"%row
+                g = self.group
+                t = NeighborMatrixToggle(src, tgt, u, 
+                     "%s.%i -> %s.%s" % (g, src, g, tgt), draw_label=False)
+                t._status = statusbar
+                t._log = _log
+                self.control_panels.append(t)
+                grid.adopt(t, row, col, update_size=False)
+        for row in channel_rows:
+            for col in neighbor_channel_cols:
+                src = col-col_label-5-lower
+                tgt = row-lower
+                g = self.group
+                if not src == tgt:
+                    s = "%s.%i -> %s.%i" % (g, src, g, tgt)
+                    t = NeighborMatrixToggle(src, tgt, u,
+                         "Neighbor trigger [%s]"%s, draw_label=False)
+                    t._status = statusbar
+                    t._log = _log
+                    self.control_panels.append(t)
+                    grid.adopt(t, row, col, update_size=False)
+        #for row in range(16+3, 16+3+3):
+        #    for col in range(1+3, 1+3+16):
+        #        t = Toggle("Ch. %i triggers Lower %i" % (col-3-1, row-16-3),
+        #                   draw_label=False)
+        #        t._status = statusbar
+        #        nbm.adopt(t, row, col, update_size=False)
+        #for row in range(3, 3+16):
+        #    for col in range(1, 1+3):
+        #        t = Toggle("Lower %i triggers Ch. %i" % (col-1, row-3),
+        #                   draw_label=False)
+        #        t._status = statusbar
+        #        nbm.adopt(t, row, col, update_size=False)
+        #for row in range(3, 3+16):
+        #    for col in range(1+16+3, 1+16+3+3):
+        #        t = Toggle("Upper %i triggers Ch. %i" % (col-16-3-1, row-3),
+        #                   draw_label=False)
+        #        t._status = statusbar
+        #        nbm.adopt(t, row, col, update_size=False)
+        #for row in range(3):
+        #    l = Label("Upper %i " % row)
+        #    nbm.adopt(l, row, 0, align_hor="right", update_size=False)
+        #for row in range(3, 3+16):
+        #    l = Label("Channel %2i " % (row-3))
+        #    nbm.adopt(l, row, 0, align_hor="right", update_size=False)
+        #for row in range(3+16, 3+16+3):
+        #    l = Label("Lower %i " % (row-3-16))
+        #    nbm.adopt(l, row, 0, align_hor="right", update_size=False)
 
         grid.update_size()
         self.adopt(grid)
