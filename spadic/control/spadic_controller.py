@@ -5,7 +5,6 @@ from monitor import Monitor
 from frontend import Frontend
 from adcbias import AdcBias
 from digital import Digital
-from ui import SpadicControlUI
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
@@ -34,7 +33,7 @@ class SpadicController:
       help(c.hitlogic)
 
     """
-    def __init__(self, spadic, reset=0, ui=0):
+    def __init__(self, spadic, reset=0):
         self.registerfile = spadic._registerfile
         self.shiftregister = spadic._shiftregister
 
@@ -58,18 +57,6 @@ class SpadicController:
         if reset:
             self.reset()
             self.apply()
-
-        if ui:
-            # bulk update of RF/SR is faster than updates from controller
-            try:
-                self.registerfile.update()
-                self.shiftregister.update()
-            except IOError:
-                self.reset()
-                self.apply()
-                if not spadic._test_read_register():
-                    raise IOError("cannot read registers")
-            self.ui = SpadicControlUI(self, _log=spadic._debug_out)
 
     def reset(self):
         """Reset all control units."""
