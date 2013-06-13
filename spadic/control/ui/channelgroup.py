@@ -30,7 +30,7 @@ class ChannelSettingsFrame(mutti.Frame):
         lower = 3 # three rows for "lower" neighbor matrix
         col_label = 1 # one column with labels
         num_rows = upper+16+lower
-        num_cols = col_label+5+upper+16+lower
+        num_cols = 5+col_label+upper+16+lower
         grid = mutti.Grid(num_rows, num_cols)
 
         t, b = 0, upper
@@ -40,8 +40,10 @@ class ChannelSettingsFrame(mutti.Frame):
         t, b = b, b+lower 
         lower_rows = range(t, b)
 
-        l, r = col_label, col_label+5
+        l, r = 0, 5
         setting_cols = range(l, r)
+        l, r = r, r+col_label
+        label_cols = range(l, r)
         l, r = r, r+upper
         neighbor_upper_cols = range(l, r)
         l, r = r, r+16
@@ -57,22 +59,22 @@ class ChannelSettingsFrame(mutti.Frame):
             u_dig = spadic_controller.digital.channel[i]
             for (c, d) in enumerate([
               SpadicToggle(u_ana, "enablecsa",
-                           "CSA [%s.%i]" % (g, i%16),
+                           "Power CSA [%s.%i]" % (g, i%16),
                            draw_label=False, min_width=3),
               SpadicDial(u_ana, "baseline", (0, 127), 3,
                            "Baseline trim [%s.%i]" % (g, i%16),
                            draw_label=False, min_width=9),
               SpadicToggle(u_ana, "enableadc",
-                           "ADC [%s.%i]" % (g, i%16),
+                           "Connect ADC [%s.%i]" % (g, i%16),
                            draw_label=False, min_width=5),
               SpadicToggle(u_dig, "enable",
-                           "Logic [%s.%i]" % (g, i%16),
+                           "Enable logic [%s.%i]" % (g, i%16),
                            draw_label=False, min_width=7),
               SpadicToggle(u_dig, "entrigger",
                            "Trigger input [%s.%i]" % (g, i%16),
                            draw_label=False, min_width=8),
               ]):
-                col = c+col_label
+                col = c
                 d._log = _log
                 d._status = statusbar
                 self.control_panels.append(d)
@@ -144,10 +146,11 @@ class ChannelSettingsFrame(mutti.Frame):
             
         # labels
         for (col, setting) in zip(setting_cols,
-         ["  CSA", "  Baseline", "  ADC", "  Logic", "  Trigger  "]):
+         ["CSA", "  Baseline", "  ADC", "  Logic", "  Trigger  "]):
             p = [grid._panel[(row, col)] for row in channel_rows]
             L = FilterLabel(p, setting)
-            grid.adopt(L, 0, col, update_size=False)
+            grid.adopt(L, upper-1, col, update_size=False)
+        label_col = label_cols[0]
         for row in channel_rows:
             p = [grid._panel[(row, col)] for col in
                  setting_cols + neighbor_lower_cols +
@@ -155,18 +158,18 @@ class ChannelSettingsFrame(mutti.Frame):
                                 neighbor_upper_cols
                  if (row, col) in grid._panel]
             i = row-upper
-            L = FilterLabel(p, "%s.%i" % (g, i))
-            grid.adopt(L, row, 0, update_size=False)
+            L = FilterLabel(p, "%s.%i  " % (g, i))
+            grid.adopt(L, row, label_col, update_size=False)
         for row in upper_rows:
             p = [grid._panel[(row, col)] for col in neighbor_channel_cols]
             s = "U%i"%row
-            L = FilterLabel(p, "%s.%s" % (g, s))
-            grid.adopt(L, row, 0, update_size=False)
+            L = FilterLabel(p, "%s.%s  " % (g, s))
+            grid.adopt(L, row, label_col, update_size=False)
         for row in lower_rows:
             p = [grid._panel[(row, col)] for col in neighbor_channel_cols]
             s = "L%i"%(row-upper-16)
-            L = FilterLabel(p, "%s.%s" % (g, s))
-            grid.adopt(L, row, 0, update_size=False)
+            L = FilterLabel(p, "%s.%s  " % (g, s))
+            grid.adopt(L, row, label_col, update_size=False)
             
         grid.update_size()
         self.adopt(grid)
