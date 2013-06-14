@@ -7,7 +7,7 @@ from frontend import Frontend
 from adcbias import AdcBias
 from digital import Digital
 
-AUTOSAVE_FILE = "spadic_autosave.spc"
+AUTOSAVE_FILE = "/tmp/spadic/spadic_autosave.spc"
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),

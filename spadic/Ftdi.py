@@ -3,7 +3,7 @@ import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
 
-LOGFILE = "spadic.log"
+LOGFILE = "/tmp/spadic/spadic.log"
 
 #--------------------------------------------------------------------
 # dictionary of known USB error codes
