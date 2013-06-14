@@ -90,7 +90,7 @@ class SpadicController:
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
-    def save(self, f=None, nonzero=True):
+    def save(self, f=None, nonzero=False):
         """Save the current configuration to a text file."""
         def fmtnumber(n, sz):
             if sz == 1:
@@ -99,21 +99,21 @@ class SpadicController:
                 nhex = sz//4 + (1 if sz%4 else 0)
                 fmt = '0x{:0'+str(nhex)+'X}'
             return fmt.format(n).rjust(6)
-        lines = [frame('Register file')]
+        lines = [frame('Register file', width=32)]
         rflines = []
-        for name in self.registerfile.dict(nonzero):
+        for name in self.registerfile:
             ln = name.ljust(25) + ' '
-            sz = self.registerfile.size(name)
-            ln += fmtnumber(self.registerfile[name], sz)
+            sz = self.registerfile[name].size
+            ln += fmtnumber(self.registerfile[name].get(), sz)
             rflines.append(ln)
         lines += sorted(rflines, key=str.lower)
         lines.append('')
-        lines.append(frame('Shift register'))
+        lines.append(frame('Shift register', width=32))
         srlines = []
-        for name in self.shiftregister.dict(nonzero):
+        for name in self.shiftregister:
             ln = name.ljust(25) + ' '
-            sz = self.shiftregister.size(name)
-            ln += fmtnumber(self.shiftregister[name], sz)
+            sz = self.shiftregister[name].size
+            ln += fmtnumber(self.shiftregister[name].get(), sz)
             srlines.append(ln)
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
