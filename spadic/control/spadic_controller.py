@@ -147,6 +147,8 @@ class SpadicController:
                     values[mode][name] = value
         self.registerfile.set(rf_values)
         self.shiftregister.set(sr_values)
+        self.registerfile.apply()
+        self.shiftregister.apply()
 
     def load(self, filename):
         with gzip.open(filename) as f:

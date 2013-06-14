@@ -17,7 +17,7 @@ RF_READ  = 2
 class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     """Wrapper for CBMnet interface <-> SPADIC communication."""
 
-    def __init__(self, reset=0, ui=0, **kwargs):
+    def __init__(self, reset=0, load=None, ui=0, **kwargs):
         try:
             ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
         except IOError:
@@ -48,7 +48,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._shiftregister = SpadicShiftRegister(self)
 
         # highest level configuration controller
-        self.control = SpadicController(self, reset)
+        self.control = SpadicController(self, reset, load)
         if (not self.control._update_test() and
             not self._read_register_test()):
             raise IOError("cannot read registers")
