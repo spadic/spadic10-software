@@ -111,6 +111,14 @@ class NeighborMatrix(ControlUnitBase):
     def _set(self, target, source, enable):
         tgt_idx = NB_MAP[str(target).upper()]
         src_idx = NB_MAP[str(source).upper()]
+        # begin workaround
+        # (upper and lower groups as source are swapped in
+        # SPADIC_NeighborSelect[Top/Bottom].v)
+        if src_idx in [0, 1, 2]:
+            src_idx += 19
+        elif src_idx in [19, 20, 21]:
+            src_idx -= 19
+        # end workaround
         if ((tgt_idx in [ 0,  1,  2] and src_idx in [ 0,  1,  2]) or
             (tgt_idx in [19, 20, 21] and src_idx in [19, 20, 21]) or
             (tgt_idx == src_idx)):
@@ -138,8 +146,16 @@ class NeighborMatrix(ControlUnitBase):
     def get(self):
         result = {}
         for (tgt_idx, src_list) in enumerate(self._targets):
-            src = [NB_MAP_INV[src_idx]
-                   for (src_idx, en) in enumerate(src_list) if en]
+            #src = [NB_MAP_INV[src_idx]
+            #       for (src_idx, en) in enumerate(src_list) if en]
+            # begin workaround (see _set)
+            src_uncorr = [src_idx
+                          for (src_idx, en) in enumerate(src_list) if en]
+            src_corr = [src_idx+19 if src_idx in [0, 1, 2] else
+                        src_idx-19 if src_idx in [19, 20, 21] else src_idx
+                        for src_idx in src_uncorr]
+            src = [NB_MAP_INV[src_idx] for src_idx in src_corr]
+            # end workaround
             if src:
                 result[NB_MAP_INV[tgt_idx]] = src
         return result
