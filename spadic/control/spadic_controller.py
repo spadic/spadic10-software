@@ -149,6 +149,6 @@ class SpadicController:
         self.shiftregister.set(sr_values)
 
     def load(self, filename):
-        with gzip.open(filename, 'w') as f:
+        with gzip.open(filename) as f:
             self._load(f)
 
