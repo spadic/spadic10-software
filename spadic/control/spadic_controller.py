@@ -33,7 +33,7 @@ class SpadicController:
       help(c.hitlogic)
 
     """
-    def __init__(self, spadic, reset=0):
+    def __init__(self, spadic, reset=0, load_file=None):
         self.registerfile = spadic._registerfile
         self.shiftregister = spadic._shiftregister
 
@@ -56,6 +56,9 @@ class SpadicController:
 
         if reset:
             self.reset()
+            self.apply()
+        if load_file:
+            self.load(load_file)
             self.apply()
 
     def reset(self):
@@ -119,8 +122,22 @@ class SpadicController:
         print >> f, '\n'.join(lines)
 
     def load(self, f):
-        """Load the configuration from a text file.
-        
-        (not yet implemented)"""
-        raise NotImplementedError
+        """Load the configuration from a text file."""
+        mode = None
+        rf_values = {}
+        sr_values = {}
+        values = {'RF': rf_values, 'SR': sr_values}
+        for line in f:
+            if not mode:
+                if '# Register file' in line:
+                    mode = 'RF'
+            else:
+                if '# Shift register' in line:
+                    mode = 'SR'
+                elif line.strip() and not line.startswith('#'):
+                    [name, value_str] = line.split()
+                    value = int(value_str, 0)
+                    values[mode][name] = value
+        self.registerfile.set(rf_values)
+        self.shiftregister.set(sr_values)
 
