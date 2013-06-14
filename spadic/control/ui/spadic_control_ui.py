@@ -36,11 +36,19 @@ class SpadicScreen(mutti.Screen):
                 self._update_all()
             elif key == curses.KEY_F6:
                 self._reset()
+            elif key == curses.KEY_F8:
+                self._save()
             else:
                 return key
         else:
             if self._directmode:
                 self._apply_all()
+
+    def _on_exit(self):
+        self._save()
+
+    def _save(self):
+        self.controller.save()
 
     def _set_all(self):
         for panel in self.control_panels:
