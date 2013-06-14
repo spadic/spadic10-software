@@ -1,3 +1,4 @@
+import gzip
 from led import Led
 from hitlogic import HitLogic
 from filter import Filter
@@ -5,6 +6,8 @@ from monitor import Monitor
 from frontend import Frontend
 from adcbias import AdcBias
 from digital import Digital
+
+AUTOSAVE_FILE = "spadic_autosave.spc"
 
 def frame(title, symbol='=', width=60):
     return '\n'.join(['#' + symbol*(width-1),
@@ -93,8 +96,8 @@ class SpadicController:
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
-    def save(self, f=None, nonzero=False):
-        """Save the current configuration to a text file."""
+    def _save(self, f=None, nonzero=False):
+        """Save the current configuration to a file."""
         def fmtnumber(n, sz):
             if sz == 1:
                 fmt = '{0}'
@@ -102,7 +105,7 @@ class SpadicController:
                 nhex = sz//4 + (1 if sz%4 else 0)
                 fmt = '0x{:0'+str(nhex)+'X}'
             return fmt.format(n).rjust(6)
-        lines = [frame('Register file', width=32)]
+        lines = ['# Register file']
         rflines = []
         for name in self.registerfile:
             ln = name.ljust(25) + ' '
@@ -110,8 +113,7 @@ class SpadicController:
             ln += fmtnumber(self.registerfile[name].get(), sz)
             rflines.append(ln)
         lines += sorted(rflines, key=str.lower)
-        lines.append('')
-        lines.append(frame('Shift register', width=32))
+        lines.append('# Shift register')
         srlines = []
         for name in self.shiftregister:
             ln = name.ljust(25) + ' '
@@ -121,8 +123,13 @@ class SpadicController:
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
 
-    def load(self, f):
-        """Load the configuration from a text file."""
+    def save(self, filename=None):
+        filename = filename or AUTOSAVE_FILE
+        with gzip.open(filename, 'w') as f:
+            self._save(f)
+
+    def _load(self, f):
+        """Load the configuration from a file."""
         mode = None
         rf_values = {}
         sr_values = {}
@@ -140,4 +147,8 @@ class SpadicController:
                     values[mode][name] = value
         self.registerfile.set(rf_values)
         self.shiftregister.set(sr_values)
+
+    def load(self, filename):
+        with gzip.open(filename, 'w') as f:
+            self._load(f)
 
