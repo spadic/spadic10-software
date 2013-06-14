@@ -11,28 +11,74 @@ from channelgroup import ChannelSettingsFrame
 
 #--------------------------------------------------------------------
 
+class SpadicScreen(mutti.Screen):
+    def __init__(self, spadic_controller, _log=None):
+        mutti.Screen.__init__(self)
+        self.controller = spadic_controller
+        self.control_panels = []
+        self._log = _log
+        self._directmode = False
+        self._build_panels()
+    
+    def _erase(self, height, width):
+        self.win.erase()
+        self.fill(height, width,
+                  ' ', mutti.colors.color_attr(bg="black"))
+
+    def _handle_key(self, key):
+        key = mutti.Screen._handle_key(self, key)
+        if key is not None:
+            if key == curses.KEY_F3:
+                self._directmode = not self._directmode
+            elif key == curses.KEY_F4:
+                self._apply_all()
+            elif key == curses.KEY_F5:
+                self._update_all()
+            elif key == curses.KEY_F6:
+                self._reset()
+            else:
+                return key
+        else:
+            if self._directmode:
+                self._apply_all()
+
+    def _set_all(self):
+        for panel in self.control_panels:
+            panel._set_all()
+
+    def _get_all(self):
+        for panel in self.control_panels:
+            panel._get_all()
+
+    def _apply_all(self):
+        self._set_all()
+        self.controller.apply()
+
+    def _update_all(self):
+        self.controller.update()
+        self._get_all()
+
+    def _reset(self):
+        self.controller.reset()
+        self.controller.apply()
+
+    def _build_panels(self):
+        raise NotImplementedError
+
+#--------------------------------------------------------------------
+
 class SpadicTabs(mutti.Tabs):
     def _erase(self, height, width):
         mutti.Tabs._erase(self, height, width)
         self.fill(height, width,
                   '/~', mutti.colors.color_attr("green"), top=2)
 
-class SpadicScreen(mutti.Screen):
-    def _erase(self, height, width):
-        self.win.erase()
-        self.fill(height, width,
-                  ' ', mutti.colors.color_attr(bg="black"))
-
 #--------------------------------------------------------------------
 
 class SpadicControlUI(SpadicScreen):
-    def __init__(self, spadic_controller, _log=None):
-        SpadicScreen.__init__(self)
-        c = spadic_controller
-        self.controller = c
-        self.control_panels = []
-        self._log = _log
-        self._directmode = False
+    def _build_panels(self):
+        c = self.controller
+        _log = self._log
 
         tabs = SpadicTabs()
         tabs._log = _log
@@ -106,41 +152,4 @@ class SpadicControlUI(SpadicScreen):
         self.adopt(tabs)
         self._update_all()
 
-
-    def _set_all(self):
-        for panel in self.control_panels:
-            panel._set_all()
-
-    def _get_all(self):
-        for panel in self.control_panels:
-            panel._get_all()
-
-    def _apply_all(self):
-        self._set_all()
-        self.controller.apply()
-
-    def _update_all(self):
-        self.controller.update()
-        self._get_all()
-
-    def _reset(self):
-        self.controller.reset()
-        self.controller.apply()
-
-    def _handle_key(self, key):
-        key = mutti.Screen._handle_key(self, key)
-        if key is not None:
-            if key == curses.KEY_F3:
-                self._directmode = not self._directmode
-            elif key == curses.KEY_F4:
-                self._apply_all()
-            elif key == curses.KEY_F5:
-                self._update_all()
-            elif key == curses.KEY_F6:
-                self._reset()
-            else:
-                return key
-        else:
-            if self._directmode:
-                self._apply_all()
 
