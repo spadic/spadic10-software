@@ -7,9 +7,10 @@ import threading
 class Register:
     """Representation of a single hardware register.
     
-    Has a "staging area" for preparing the value that is to be written to the
-    register and a "cache" for storing the last known value of the register,
-    so that the number of hardware write and read operations can be minimized.
+    Has a "staging area" for preparing the value that is to be written to
+    the register and a "cache" for storing the last known value of the
+    register, so that the number of hardware write and read operations can
+    be minimized.
     """
     def __init__(self, address, size):
         """Set the address and size of the register."""
@@ -17,7 +18,8 @@ class Register:
         self.size = size
         self._stage = 0     # staging area
         self._cache = None  # last known value of the hardware register
-        self._known = False # is the current value of the hardware register known?
+        self._known = False # is the current value of the hardware
+                            # register known?
 
 
     def _write(self, addr, value):
@@ -48,8 +50,8 @@ class Register:
         known value of the register differs from the staging area.
 
         After the write operation has been performed, the value of the
-        hardware register will be considered "not known". It will become known
-        again if the "update" or "read" methods are called.
+        hardware register will be considered "not known". It will become
+        known again if the "update" or "read" methods are called.
         """
         if self._stage != self._cache:
             self._write(self.addr, self._stage)
@@ -90,7 +92,8 @@ class Register:
 
 
     def write(self, value):
-        """Modify the register value, if necessary perform the write operation.
+        """
+        Modify the register value, if necessary perform the write operation.
         
         Has the same effect as calling "set" and then "apply".
         """
@@ -98,7 +101,8 @@ class Register:
         self.apply()
 
     def read(self):
-        """Return the register value, if necessary perform the read operation.
+        """
+        Return the register value, if necessary perform the read operation.
         
         Has the same effect as calling "update" and then "get".
         """
