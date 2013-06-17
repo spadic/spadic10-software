@@ -94,7 +94,7 @@ class HitLogicFrame(mutti.Frame):
         hitlogic_list.adopt(hitlogic_grid)
 
         selectmask = SelectMaskToggle(u, "mask", statusbar,
-                                      min_width=46)
+                                      min_width=49)
         hitlogic_list.adopt(selectmask)
         selectmask._log = _log
         self.control_panels.append(selectmask)
