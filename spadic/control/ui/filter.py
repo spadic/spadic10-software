@@ -78,21 +78,21 @@ class FilterFrame(mutti.Frame):
             self.control_panels.append(d)
             grid.adopt(d, 1, col)
 
-        d = SpadicDial(u, "scaling", (-256, 255), 4, " Scaling",
-                       min_width=14)
+        d = SpadicDial(u, "scaling", (-256, 255), 4, "  Scaling",
+                       min_width=15)
         d._log = _log
         d._status = statusbar
         self.control_panels.append(d)
         grid.adopt(d, 0, 5)
 
-        d = SpadicDial(u, "offset", (-256, 255), 4, " Offset",
-                       min_width=14)
+        d = SpadicDial(u, "offset", (-256, 255), 4, "  Offset",
+                       min_width=15)
         d._log = _log
         d._status = statusbar
         self.control_panels.append(d)
         grid.adopt(d, 1, 5)
 
-        for (col, w) in zip(range(1, 1+5), [4, 4, 4, 4, 13]):
+        for (col, w) in zip(range(1, 1+5), [5, 5, 5, 5, 15]):
             i = col-1
             d = EnableStage(i, u, "enable",
                             ("Stage %i" % i) if i<4 else "Scaling/Offset",

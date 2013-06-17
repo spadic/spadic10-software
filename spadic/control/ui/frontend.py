@@ -55,21 +55,21 @@ class FrontendFrame(mutti.Frame):
         u = spadic_controller.frontend
 
         xfbdial = SpadicDial(u, "xfb", (0, 127), 3,
-                             "xFB", min_width=14)
+                             "xFB", min_width=13)
 
         grid = mutti.Grid(2, 3)
         for (i, d) in enumerate([
           SpadicDial(u, "baseline",    (0, 127), 3,
-                     "Baseline",     min_width=14),
+                     "Baseline",     min_width=13),
           xfbdial,
           SpadicDial(u, "pcasc",       (0, 127), 3,
-                     " pCasc",       min_width=12),
+                     "  pCasc",       min_width=12),
           SpadicDial(u, "ncasc",       (0, 127), 3,
-                     " nCasc",       min_width=12),
+                     "  nCasc",       min_width=12),
           SpadicDial(u, "psourcebias", (0, 127), 3,
-                     " pSourceBias", min_width=19),
+                     "  pSourceBias", min_width=18),
           SpadicDial(u, "nsourcebias", (0, 127), 3,
-                     " nSourceBias", min_width=19),
+                     "  nSourceBias", min_width=18),
           ]):
             d._status = statusbar
             d._log = _log

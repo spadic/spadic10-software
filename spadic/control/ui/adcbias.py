@@ -12,17 +12,17 @@ class AdcBiasFrame(mutti.Frame):
         u = spadic_controller.adcbias
         for (i, d) in enumerate([
           SpadicDial(u, "vndel", (0, 127), 3, "VNDel",
-                     min_width=15),                                
+                     min_width=13),                                
           SpadicDial(u, "vpdel", (0, 127), 3, "VPDel",
-                     min_width=15),                                
-          SpadicDial(u, "vploadfb", (0, 127), 3, " VPLoadFB",
-                     min_width=15),                                
-          SpadicDial(u, "vploadfb2", (0, 127), 3, " VPLoadFB2",
-                     min_width=15),                                
-          SpadicDial(u, "vpfb", (0, 127), 3, " VPFB",
-                     min_width=15),                                
-          SpadicDial(u, "vpamp", (0, 127), 3, " VPAmp",
-                     min_width=15),                                
+                     min_width=13),                                
+          SpadicDial(u, "vploadfb", (0, 127), 3, "  VPLoadFB",
+                     min_width=16),                                
+          SpadicDial(u, "vploadfb2", (0, 127), 3, "  VPLoadFB2",
+                     min_width=16),                                
+          SpadicDial(u, "vpfb", (0, 127), 3, "  VPFB",
+                     min_width=14),                                
+          SpadicDial(u, "vpamp", (0, 127), 3, "  VPAmp",
+                     min_width=14),                                
           ]):
             d._status = statusbar
             d._log = _log

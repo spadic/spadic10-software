@@ -81,10 +81,10 @@ class HitLogicFrame(mutti.Frame):
                      min_width=17),                                
           SpadicDial(u, "threshold2", (-256, 255), 4, "Threshold 2",
                      min_width=17),
-          SpadicDial(u, "window", (0, 63), 2, " "*5+"Hit window length",
-                     min_width=27),
-          SpadicToggle(u, "diffmode", " "*5+"Differential mode",
-                       min_width=26),
+          SpadicDial(u, "window", (0, 63), 2, " "*7+"Hit window length",
+                     min_width=32),
+          SpadicToggle(u, "diffmode", " "*7+"Differential mode",
+                       min_width=32),
           ]):
             d._status = statusbar
             hitlogic_grid.adopt(d, row=(i%2), col=(i//2))
@@ -94,7 +94,7 @@ class HitLogicFrame(mutti.Frame):
         hitlogic_list.adopt(hitlogic_grid)
 
         selectmask = SelectMaskToggle(u, "mask", statusbar,
-                                      min_width=44)
+                                      min_width=46)
         hitlogic_list.adopt(selectmask)
         selectmask._log = _log
         self.control_panels.append(selectmask)
