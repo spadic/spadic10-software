@@ -1,13 +1,14 @@
 import curses
 import mutti
 from base import SpadicToggle
-from hitlogic import HitLogicFrame
-from filter import FilterFrame
-from dlmtrigger import DlmTriggerFrame
-from led import LedFrame
 from adcbias import AdcBiasFrame
-from frontend import FrontendFrame
 from channelgroup import ChannelSettingsFrame
+from dlmtrigger import DlmTriggerFrame
+from filter import FilterFrame
+from frontend import FrontendFrame
+from hitlogic import HitLogicFrame
+from led import LedFrame
+from monitor import MonitorFrame
 
 #--------------------------------------------------------------------
 
@@ -154,6 +155,11 @@ class SpadicControlUI(SpadicScreen):
         led_frame = LedFrame(c, self.statusbar, _log)
         misc_list.adopt(led_frame)
         self.control_panels.append(led_frame)
+
+        # Monitor bus
+        monitor_frame = MonitorFrame(c, self.statusbar, _log)
+        misc_list.adopt(monitor_frame)
+        self.control_panels.append(monitor_frame)
 
         tabs.adopt(misc_list, "Misc. settings")
 
