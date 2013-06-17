@@ -1,4 +1,6 @@
 import gzip
+import os
+
 from led import Led
 from hitlogic import HitLogic
 from filter import Filter
@@ -125,6 +127,9 @@ class SpadicController:
 
     def save(self, filename=None):
         filename = filename or AUTOSAVE_FILE
+        save_dir = os.path.dirname(os.path.abspath(filename))
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
         with gzip.open(filename, 'w') as f:
             self._save(f)
 

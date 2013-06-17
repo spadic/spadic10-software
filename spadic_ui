@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 import sys
 import spadic
 
@@ -10,6 +11,15 @@ reset = "--reset" in sys.argv
 full_error = "--full-error" in sys.argv
 
 try:
+    log_file = sys.argv[sys.argv.index("--log")+1]
+except:
+    log_file = "/tmp/spadic/spadic.log"
+log_dir = os.path.dirname(os.path.abspath(log_file))
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+log_file_p = open(log_file, 'w')
+
+try:
     load_file = sys.argv[sys.argv.index("--load")+1]
 except:
     load_file = None
@@ -18,7 +28,8 @@ except:
 # start spadic controller and user interface
 #--------------------------------------------------------------------
 try:
-    s = spadic.Spadic(reset, load_file, _debug_cbmif=1)
+    s = spadic.Spadic(reset, load_file,
+                      _debug_cbmif=1, _debug_out=log_file_p)
     s.ui_run()
 except:
     if full_error:

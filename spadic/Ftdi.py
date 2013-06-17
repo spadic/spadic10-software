@@ -3,8 +3,6 @@ import ftdi
 # http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
 
 
-LOGFILE = "/tmp/spadic/spadic.log"
-
 #--------------------------------------------------------------------
 # dictionary of known USB error codes
 #--------------------------------------------------------------------
@@ -24,7 +22,7 @@ class Ftdi:
     #----------------------------------------------------------------
     # connection management methods
     #----------------------------------------------------------------
-    def __init__(self, VID=0x0403, PID=0x6010):
+    def __init__(self, VID=0x0403, PID=0x6010, _debug_out=None):
         """Open USB connection and initialize FTDI context."""
         context = ftdi.ftdi_new()
         if not (ftdi.ftdi_usb_open(context, VID, PID) == 0):
@@ -34,7 +32,7 @@ class Ftdi:
         ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
         self._debug_ftdi = False
-        self._debug_out = open(LOGFILE, 'w')
+        self._debug_out = _debug_out
         self._debug_lock = threading.Lock()
 
         # how to get and set the write buffer chunk size:
