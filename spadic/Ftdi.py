@@ -55,6 +55,8 @@ class Ftdi:
 
     def __exit__(self, *args):
         """Deinitialize FTDI context and close USB connection."""
+        self.purge()
+        self.reset()
         if self.ftdic is not None:
             #ftdi.ftdi_set_bitmode(self.ftdic, 0, ftdi.BITMODE_RESET)
             ftdi.ftdi_free(self.ftdic)

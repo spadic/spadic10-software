@@ -51,6 +51,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self.control = SpadicController(self, reset, load)
         if (not self.control._update_test() and
             not self._read_register_test()):
+            self.__exit__()
             raise IOError("cannot read registers")
 
         self.readout_enable(1)
@@ -112,7 +113,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             self._cbmif_write(addr, words)
         if not request_only:
             try:
-                return self._ctrl_queue.get(address, timeout=2)
+                return self._ctrl_queue.get(address, timeout=10)
             except IOError:
                 raise
 

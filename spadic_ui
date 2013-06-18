@@ -28,9 +28,9 @@ except:
 # start spadic controller and user interface
 #--------------------------------------------------------------------
 try:
-    s = spadic.Spadic(reset, load_file,
-                      _debug_cbmif=1, _debug_out=log_file_p)
-    s.ui_run()
+    with spadic.Spadic(reset=reset, load=load_file,
+                       _debug_cbmif=1, _debug_out=log_file_p) as s:
+        s.ui_run()
 except:
     if full_error:
         raise
