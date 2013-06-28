@@ -45,10 +45,17 @@ def mask_to_x(mask):
     return [31-i for i in reversed(range(32)) if (mask>>i)&1]
 
 class SpadicDataMonitor(SpadicDataReader):
+    def __init__(self, *args, **kwargs):
+        SpadicDataReader.__init__(self, *args, **kwargs)
+        plt.ion()
+        fig = plt.figure()
+        self.ax = fig.add_subplot(111)
+
     def plot_last(self, channel):
         if self.data_buffer[channel].empty():
             raise RuntimeError("no data for channel %i" % channel)
         (data, mask) = self.data_buffer[channel].get()
         x = mask_to_x(mask)
-        print zip(x, data)
+        self.ax.plot(x, data)
+        plt.show()
 
