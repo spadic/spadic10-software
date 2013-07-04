@@ -483,16 +483,37 @@ class SpadicShiftRegister(ShiftRegister):
             self._write_register(0x300, int(chunk, 2))
 
     def _read(self):
-        """Perform the write operation of the whole shift register."""
+        """
+        Perform the write operation of the whole shift register.
+        
+        Calls _read_once several times as workaround for the retransmit
+        bug.
+        """
+        while True:
+            try:
+                return self._read_once()
+            except IOError: # failed completely
+                raise
+            except RuntimeError: # failed only partly, try again
+                continue
+
+    def _read_once(self):
+        """
+        Perform the write operation of the whole shift register.
+
+        This method would be sufficient without the retransmit bug.
+        """
         ctrl_data = (self._length << 3) + SR_READ
         self._write_register(0x2F0, ctrl_data)
 
         # send read requests for 16 bit chunks
         bits_left = self._length
         chunks = []
+        cleared = False
         while bits_left:
             len_chunk = min(bits_left, 16)
-            self._read_register(0x300, request_only=True)
+            self._read_register(0x300, request_only=True, clear_skip=cleared)
+            cleared = True # clear only before the first request
             chunks.append(len_chunk)
             bits_left -= len_chunk
 
@@ -505,7 +526,10 @@ class SpadicShiftRegister(ShiftRegister):
             try:
                 chunk = self._read_register(0x300, request_skip=True)
             except IOError:
-                raise
+                if not bits:
+                    raise IOError("cannot read shift register")
+                else:
+                    raise RuntimeError("try again")
             chunk_bits = ''.join(reversed(int2bitstring(chunk, len_chunk)))
             bits = chunk_bits + bits
         return bits

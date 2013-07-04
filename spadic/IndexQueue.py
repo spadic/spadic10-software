@@ -23,3 +23,9 @@ class IndexQueue:
             raise IOError("could not read %X" % key)
         return value
 
+    def clear(self, key):
+        if not key in self.data:
+            return
+        while not self.data[key].empty():
+            self.data[key].get()
+

@@ -147,15 +147,26 @@ class RegisterFile:
 
     def update(self):
         """Perform the read operation for all registers."""
-        threads = []
-        for name in self:
-            t = self[name].update(blocking=False)
-            if t is not None:
-                threads.append(t)
-        for t in threads:
-            t.join()
-        if not all(self[name]._known for name in self):
-            raise IOError("could not read all registers")
+        last_unknown = 0
+        fail_count = 0
+        while True:
+            unknown = [name for name in self if not self[name]._known]
+            if len(unknown) != last_unknown:
+                fail_count = 0
+            else:
+                fail_count += 1
+            last_unknown = len(unknown)
+            if not unknown or fail_count == 3:
+                break
+            # the code from here would be needed without the retransmit bug
+            threads = []
+            for name in unknown:
+                t = self[name].update(blocking=False)
+                if t is not None:
+                    threads.append(t)
+            for t in threads:
+                t.join()
+            # until here
 
     def write(self, config):
         """Write the register configuration contained in a dictionary.
