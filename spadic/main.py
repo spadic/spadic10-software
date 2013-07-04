@@ -49,10 +49,6 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
         # highest level configuration controller
         self.control = SpadicController(self, reset, load)
-        if (not self.control._update_test() and
-            not self._read_register_test()):
-            self.__exit__()
-            raise IOError("cannot read registers")
 
         self.readout_enable(1)
 
@@ -104,25 +100,25 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         words = [RF_WRITE, address, value]
         self._cbmif_write(addr, words)
 
-    def read_register(self, address,
+    def read_register(self, address, clear_skip=False,
                       request_skip=False, request_only=False):
         """Read the value from a register."""
         if not request_skip:
+            if not clear_skip:
+                # Workaround for retransmit bug in SPADIC 1.0 CBMnet:
+                # Sometimes old register reads are retransmitted -> Clear
+                # software read buffer before sending the read request to be
+                # sure to get the newest value.
+                self._ctrl_queue.clear(address)
+                # End workaround
             addr = ftdi_cbmnet.ADDR_CTRL
             words = [RF_READ, address, 0]
             self._cbmif_write(addr, words)
         if not request_only:
             try:
-                return self._ctrl_queue.get(address, timeout=10)
+                return self._ctrl_queue.get(address, timeout=1)
             except IOError:
                 raise
-
-    def _read_register_test(self):
-        try:
-            self.read_register(8)
-            return True
-        except IOError:
-            return False
         
 
     #----------------------------------------------------------------
