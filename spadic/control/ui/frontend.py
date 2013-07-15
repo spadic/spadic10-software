@@ -17,7 +17,7 @@ class FrontendToggle(SpadicToggle):
 
     def get(self):
         result = SpadicToggle.get(self)
-        self._xfbpanel.label = {'P': 'nFB', 'N': 'pFB'}[result]
+        self._xfbpanel.label = {'P': '  nFB', 'N': '  pFB'}[result]
         return result
 
     def _handle_key(self, key):
@@ -47,7 +47,7 @@ class FrontendToggle(SpadicToggle):
 
 class FrontendFrame(mutti.Frame):
     def __init__(self, spadic_controller, statusbar, _log=None):
-        mutti.Frame.__init__(self, "Frontend")
+        mutti.Frame.__init__(self, "CSA Bias")
         self.control_panels = []
         self._log = _log
 
@@ -55,27 +55,7 @@ class FrontendFrame(mutti.Frame):
         u = spadic_controller.frontend
 
         xfbdial = SpadicDial(u, "xfb", (0, 127), 3,
-                             "xFB", min_width=13)
-
-        grid = mutti.Grid(2, 3)
-        for (i, d) in enumerate([
-          SpadicDial(u, "baseline",    (0, 127), 3,
-                     "Baseline",     min_width=13),
-          xfbdial,
-          SpadicDial(u, "pcasc",       (0, 127), 3,
-                     "  pCasc",       min_width=12),
-          SpadicDial(u, "ncasc",       (0, 127), 3,
-                     "  nCasc",       min_width=12),
-          SpadicDial(u, "psourcebias", (0, 127), 3,
-                     "  pSourceBias", min_width=18),
-          SpadicDial(u, "nsourcebias", (0, 127), 3,
-                     "  nSourceBias", min_width=18),
-          ]):
-            d._status = statusbar
-            d._log = _log
-            self.control_panels.append(d)
-            grid.adopt(d, row=(i%2), col=(i//2))
-        vlist.adopt(grid)
+                             "  xFB", min_width=10)
 
         d = FrontendToggle(xfbdial, u, "frontend",
                            "Frontend polarity", min_width=20)
@@ -83,6 +63,24 @@ class FrontendFrame(mutti.Frame):
         d._log = _log
         self.control_panels.append(d)
         vlist.adopt(d)
+
+        grid = mutti.Grid(2, 3)
+        for (i, d) in enumerate([
+          SpadicDial(u, "psourcebias", (0, 127), 3,
+                     "pSourceBias", min_width=16),
+          SpadicDial(u, "nsourcebias", (0, 127), 3,
+                     "nSourceBias", min_width=16),
+          SpadicDial(u, "pcasc", (0, 127), 3,
+                     "  pCasc",     min_width=12),
+          SpadicDial(u, "ncasc", (0, 127), 3,
+                     "  nCasc",     min_width=12),
+          xfbdial,
+          ]):
+            d._status = statusbar
+            d._log = _log
+            self.control_panels.append(d)
+            grid.adopt(d, row=(i%2), col=(i//2))
+        vlist.adopt(grid)
 
         self.adopt(vlist)
 

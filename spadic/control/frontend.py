@@ -73,7 +73,6 @@ class FrontendChannel(ControlUnitBase):
 # Global settings
 #----------------------------------------------------------------
 _FRONTEND_SELECT = 1 # N=0, P=1
-_FRONTEND_BASELINE = 0
 _FRONTEND_PCASC = 0
 _FRONTEND_NCASC = 0
 _FRONTEND_PSOURCEBIAS = 0
@@ -85,7 +84,6 @@ class Frontend(ControlUnitBase):
 
     Controls the following global settings of the analog frontend:
     - frontend N or P
-    - baseline trim
     - CSA bias settings (pCasc, nCasc, pSourceBias, nSourceBias, xFB)
     
     Additionally controls the following channel-specific settings:
@@ -102,14 +100,14 @@ class Frontend(ControlUnitBase):
     def reset(self):
         for ch in self.channel:
             ch.reset()
-        self.set(_FRONTEND_SELECT, _FRONTEND_BASELINE,
+        self.set(_FRONTEND_SELECT,
                  _FRONTEND_PCASC, _FRONTEND_NCASC,
                  _FRONTEND_PSOURCEBIAS, _FRONTEND_NSOURCEBIAS,
                  _FRONTEND_XFB)
 
-    def set(self, frontend=None, baseline=None, pcasc=None, ncasc=None,
+    def set(self, frontend=None, pcasc=None, ncasc=None,
                   psourcebias=None, nsourcebias=None, xfb=None):
-        """Select N/P frontend, set global baseline trim, set CSA bias."""
+        """Select N/P frontend, set CSA bias."""
 
         if frontend is not None:
             self._frontend = (0 if str(frontend) in 'nN' else
@@ -118,9 +116,6 @@ class Frontend(ControlUnitBase):
             for ch in self.channel:
                 ch._select_frontend(self._frontend)
 
-        if baseline is not None:
-            checkvalue(baseline, 0, 127, 'baseline')
-            self._baseline = baseline
         if pcasc is not None:
             checkvalue(pcasc, 0, 127, 'pcasc')
             self._pcasc = pcasc
@@ -137,7 +132,6 @@ class Frontend(ControlUnitBase):
             checkvalue(xfb, 0, 127, 'xfb')
             self._xfb = xfb
 
-        self._shiftregister['baselineTrimN'].set(self._baseline)
         self._shiftregister['DecSelectNP'].set(self._frontend)
 
         r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
@@ -156,7 +150,6 @@ class Frontend(ControlUnitBase):
     def update(self):
         self._shiftregister.update()
 
-        self._baseline = self._shiftregister['baselineTrimN'].get()
         self._frontend = self._shiftregister['DecSelectNP'].get()
         fe ={0: 'N', 1: 'P'}[self._frontend] 
         self._pcasc = self._shiftregister['pCasc'+fe].get()
@@ -174,13 +167,12 @@ class Frontend(ControlUnitBase):
                 'pcasc': self._pcasc, 'ncasc': self._ncasc,
                 'psourcebias': self._psourcebias,
                 'nsourcebias': self._nsourcebias,
-                'xfb': self._xfb, 
-                'baseline': self._baseline}
+                'xfb': self._xfb}
 
     def __str__(self):
-        s = [('frontend: %s  baseline: %3i  pCasc: %3i  nCasc: %3i\n'
+        s = [('frontend: %s  pCasc: %3i  nCasc: %3i\n'
               'pSourceBias: %3i  nSourceBias: %3i  xFB: %3i\n' %
-              ({0: 'N', 1: 'P'}[self._frontend], self._baseline,
+              ({0: 'N', 1: 'P'}[self._frontend],
               self._pcasc, self._ncasc, self._psourcebias,
               self._nsourcebias, self._xfb))]
         s += [('channel %2i: ' % ch._id) + str(ch) for ch in self.channel]
