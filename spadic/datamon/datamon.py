@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import threading
 import Queue
 
@@ -45,17 +46,39 @@ def mask_to_x(mask):
     return [31-i for i in reversed(range(32)) if (mask>>i)&1]
 
 class SpadicDataMonitor(SpadicDataReader):
-    def __init__(self, *args, **kwargs):
-        SpadicDataReader.__init__(self, *args, **kwargs)
-        plt.ion()
+    def __init__(self, spadic):
+        SpadicDataReader.__init__(self, spadic)
+        #plt.ion()
         fig = plt.figure()
         self.ax = fig.add_subplot(111)
-
-    def plot_last(self, channel):
-        if self.data_buffer[channel].empty():
-            raise RuntimeError("no data for channel %i" % channel)
-        (data, mask) = self.data_buffer[channel].get()
-        x = mask_to_x(mask)
-        self.ax.plot(x, data)
+        self.ax.set_ylim(-256, 256)
+        self.ax.set_xlim(0, 32)
+        self.lines = self.ax.plot([], [])
+        ani = animation.FuncAnimation(fig, self.plot_last, self.gen,
+                                      blit=True, interval=20, repeat=False)
         plt.show()
+
+    def gen(self):
+        channel = 0
+        while True:
+            (y, mask) = self.data_buffer[channel].get()
+            x = mask_to_x(mask)
+            yield (x, y)
+
+    def plot_last(self, data):
+        x, y = data
+        line = plt.Line2D(x, y)
+        self.lines = self.lines[-2:]+[line]
+        self.ax.clear()
+        for line in self.lines:
+            self.ax.add_line(line)
+        return self.ax.lines
+
+
+if __name__=='__main__':
+    import spadic
+    f = open('/tmp/spadic/spadic.log', 'w')
+    with spadic.Spadic(_debug_cbmif=1, _debug_out=f) as s:
+        s.control.load('datamon.spc')
+        mon = SpadicDataMonitor(s)
 
