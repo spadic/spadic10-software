@@ -145,7 +145,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
 
 
     #--------------------------------------------------------------------
-    # overwrite the user interface
+    # overwrite the non-threaded user interface
     #--------------------------------------------------------------------
     def _cbmif_write(self, addr, words):
         """Write words to the CBMnet send interface."""
