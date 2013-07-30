@@ -30,8 +30,10 @@ class SpadicDataReader:
                 self.data_buffer[c].put((m.data(), mask))
         return read_group_task
 
-    def __exit__(self):
-        print "DataReader exit"
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
         if not self._stop.is_set():
             self._stop.set()
         for t in [self.groupA_reader, self.groupB_reader]:
@@ -60,12 +62,18 @@ class SpadicDataMonitor(SpadicDataReader):
             return self.ax.lines
         ani = animation.FuncAnimation(fig, self.plot_last, self.gen, init_func,
                                       blit=False, interval=1, repeat=False)
-        plt.show()
+        print "Press CTRL-C to exit."
+        fig.show()
 
     def gen(self):
         channel = 0
         while True:
-            (y, mask) = self.data_buffer[channel].get()
+            try:
+                (y, mask) = self.data_buffer[channel].get(timeout=1)
+            except Queue.Empty:
+                continue
+            except KeyboardInterrupt:
+                break
             x = mask_to_x(mask)
             yield (x, y)
 
@@ -86,12 +94,8 @@ class SpadicDataMonitor(SpadicDataReader):
 if __name__=='__main__':
     import spadic
     f = open('/tmp/spadic/spadic.log', 'w')
-    try:
-        with spadic.Spadic(reset=1, _debug_cbmif=1, _debug_out=f) as s:
-            s.control.load('datamon32.spc')
-            with SpadicDataMonitor(s) as mon:
-                pass
-    except KeyboardInterrupt:
-        print "abort"
-        pass
+    with spadic.Spadic(reset=1, _debug_cbmif=1, _debug_out=f) as s:
+        s.control.load('datamon32.spc')
+        with SpadicDataMonitor(s) as mon:
+            pass
 
