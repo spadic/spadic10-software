@@ -23,7 +23,7 @@ class SpadicDataReader:
         def read_group_task():
             while not self._stop.is_set():
                 m = readmethod()
-                if not m:
+                if not m or m.channel_id is None:
                     continue
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
                 mask = self.spadic.control.hitlogic.read()['mask']
@@ -31,10 +31,12 @@ class SpadicDataReader:
         return read_group_task
 
     def __exit__(self):
+        print "DataReader exit"
         if not self._stop.is_set():
             self._stop.set()
         for t in [self.groupA_reader, self.groupB_reader]:
-            t.join()
+            while t.is_alive():
+                t.join(timeout=1)
 
 
 def mask_to_x(mask):
@@ -54,8 +56,10 @@ class SpadicDataMonitor(SpadicDataReader):
         self.ax.set_ylim(-256, 256)
         self.ax.set_xlim(0, 32)
         self.lines = self.ax.plot([], [])
-        ani = animation.FuncAnimation(fig, self.plot_last, self.gen,
-                                      blit=True, interval=20, repeat=False)
+        def init_func():
+            return self.ax.lines
+        ani = animation.FuncAnimation(fig, self.plot_last, self.gen, init_func,
+                                      blit=False, interval=1, repeat=False)
         plt.show()
 
     def gen(self):
@@ -67,6 +71,10 @@ class SpadicDataMonitor(SpadicDataReader):
 
     def plot_last(self, data):
         x, y = data
+        if len(x) != len(y):
+            L = min(len(x), len(y))
+            x = x[:L]
+            y = y[:L]
         line = plt.Line2D(x, y)
         self.lines = self.lines[-2:]+[line]
         self.ax.clear()
@@ -78,7 +86,12 @@ class SpadicDataMonitor(SpadicDataReader):
 if __name__=='__main__':
     import spadic
     f = open('/tmp/spadic/spadic.log', 'w')
-    with spadic.Spadic(_debug_cbmif=1, _debug_out=f) as s:
-        s.control.load('datamon.spc')
-        mon = SpadicDataMonitor(s)
+    try:
+        with spadic.Spadic(reset=1, _debug_cbmif=1, _debug_out=f) as s:
+            s.control.load('datamon32.spc')
+            with SpadicDataMonitor(s) as mon:
+                pass
+    except KeyboardInterrupt:
+        print "abort"
+        pass
 
