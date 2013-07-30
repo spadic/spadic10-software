@@ -32,7 +32,13 @@ def run(data):
 
     return line,
 
-ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=1000,
+# for f in frames:
+#     func(f)
+# func -> run
+# frames -> data_gen
+# for d in data_gen:
+#     run(d)
+ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=10,
     repeat=False)
 plt.show()
 
