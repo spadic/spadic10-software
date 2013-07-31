@@ -38,7 +38,11 @@ class SpadicServerRF:
         buf = ''
         p = re.compile('\n')
         while True:
-            data = buf + self.connection.recv(64)
+            received = self.connection.recv(64)
+            if not received:
+                print "lost connection"
+                break
+            data = buf + received
             while True:
                     m = p.search(data)
                     if not m:
