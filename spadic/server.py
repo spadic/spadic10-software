@@ -6,22 +6,26 @@ from main import Spadic
 PORT_BASE = 45000
 PORT_OFFSET = {"RF": 0, "SR": 1, "DATA": 2, "DLM": 3}
 
-class SpadicServerRF:
+class SpadicBaseRequestServer:
     def __init__(self, port_base=None):
-        port = (port_base or PORT_BASE) + PORT_OFFSET["RF"]
+        port = (port_base or PORT_BASE) + self.port_offset
         # TODO optionally use AF_UNIX
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((socket.gethostname(), port))
-        s.listen(1)
-        print "waiting for connection"
-        c, a = s.accept()
+
+        self.socket = s
+        self.connection = None
+
+    def start(self):
+        self.socket.listen(1)
+        print "waiting for connection on port", self.socket.getsockname()[1]
+        c, a = self.socket.accept()
         try:
             name = socket.gethostbyaddr(a[0])[0]
         except:
             name = a[0]
         print "got connection from", name
-        self.socket = s
         self.connection = c
 
     def __enter__(self):
@@ -30,11 +34,12 @@ class SpadicServerRF:
     def __exit__(self, *args, **kwargs):
         if self.connection:
             self.connection.close()
-            print "closing", self.connection
-        print "closing", self.socket
         self.socket.close()
 
     def run(self):
+        if not self.connection:
+            print "not connected."
+            return
         buf = ''
         p = re.compile('\n')
         while True:
