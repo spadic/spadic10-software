@@ -44,15 +44,15 @@ class SpadicServerRF:
                 break
             data = buf + received
             while True:
-                    m = p.search(data)
-                    if not m:
-                            buf = data
-                            break
-                    i = m.end()
-                    chunk, data = data[:i], data[i:]
-                    try:
-                        decoded = json.loads(chunk)
-                    except ValueError:
-                        continue
-                    print decoded
+                m = p.search(data)
+                if not m:
+                    buf = data
+                    break
+                i = m.end()
+                chunk, data = data[:i], data[i:]
+                try:
+                    decoded = json.loads(chunk)
+                except ValueError:
+                    continue
+                self.process(decoded)
             
