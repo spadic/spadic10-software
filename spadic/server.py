@@ -14,8 +14,13 @@ class SpadicServerRF:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((socket.gethostname(), port))
         s.listen(1)
+        print "waiting for connection"
         c, a = s.accept()
-        print "got connection from", a
+        try:
+            name = socket.gethostbyaddr(a[0])[0]
+        except:
+            name = a[0]
+        print "got connection from", name
         self.socket = s
         self.connection = c
 
