@@ -15,14 +15,29 @@ RF_READ  = 2
 
 
 class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
-    """Wrapper for CBMnet interface <-> SPADIC communication."""
+    """
+    Wrapper for CBMnet interface <-> SPADIC communication.
+    
+    Arguments:
+    reset - flag for initial reset of the chip configuration
+    load  - name of .spc configuration file to be loaded
 
-    def __init__(self, reset=0, load=None, ui=0, **kwargs):
+    Optional debugging keyword arguments:
+    _debug_out   - file-like object where debug output is sent to
+    _debug_ftdi  - flag for logging FTDI communication
+    _debug_cbmif - flag for logging CBMnet interface communication
+    """
+    def __init__(self, reset=False, load=None, **kwargs):
         try:
             ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
         except IOError:
             raise # TODO enter offline mode
-        self.__dict__.update(kwargs)
+
+        # here we enforce arguments to be passed as keyword arguments
+        debug_kwargs = ['_debug_out', '_debug_ftdi', '_debug_cbmif']
+        for arg in debug_kwargs:
+            if arg in kwargs:
+                setattr(self, arg, kwargs[arg])
 
         self.readout_enable(0)
 
