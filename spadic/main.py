@@ -6,7 +6,6 @@ from message import MessageSplitter, Message
 from registerfile import SpadicRegisterFile
 from shiftregister import SpadicShiftRegister
 from control import SpadicController
-from control.ui import SpadicControlUI
 
 
 # CBMnet control port <-> register file read/write commands
@@ -66,11 +65,6 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self.control = SpadicController(self, reset, load)
 
         self.readout_enable(1)
-
-        # controller user interface
-        self._ui = None
-        if ui:
-            self.ui_run()
 
 
     def _recv_job(self):
@@ -170,14 +164,4 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             return Message(self._dataB_queue.get(timeout=timeout))
         except Queue.Empty:
             return None
-        
-
-    #----------------------------------------------------------------
-    # user interface
-    #----------------------------------------------------------------
-    def ui_run(self):
-        if not self._ui:
-            self._ui = SpadicControlUI(self.control, _log=self._debug_out)
-        self._ui.run()
-
 
