@@ -60,4 +60,26 @@ class SpadicBaseRequestServer:
                 except ValueError:
                     continue
                 self.process(decoded)
+
+
+class SpadicRFServer(SpadicBaseRequestServer):
+    port_offset = PORT_OFFSET["RF"]
+
+    def __init__(self, registerfile, port_base=None):
+        SpadicBaseRequestServer.__init__(self, port_base)
+        self.registerfile = registerfile
             
+    def process(self, decoded):
+        command, registers = decoded
+        if command == 'W':
+            # registers must be a dictionary {name: value, ...}
+            self.registerfile.write(registers)
+        elif command == 'R':
+            # registers must be a list [name1, name2, ...] or the string "all"
+            contents = self.registerfile.read()
+            if registers == "all":
+                result = contents
+            else:
+                result = {name: contents[name] for name in registers}
+            self.connection.sendall(json.dumps(result)+'\n')
+
