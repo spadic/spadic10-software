@@ -64,7 +64,7 @@ class SpadicController:
             self.apply()
         if load_file:
             self.load(load_file)
-            self.apply()
+            self.update()
 
     def reset(self):
         """Reset all control units."""
