@@ -6,7 +6,11 @@ from main import Spadic
 PORT_BASE = 45000
 PORT_OFFSET = {"RF": 0, "SR": 1, "DATA": 2, "DLM": 3}
 
-class SpadicBaseRequestServer:
+
+#---------------------------------------------------------------------------
+# BaseRequestServer
+
+class BaseRequestServer:
     def __init__(self, port_base=None):
         port = (port_base or PORT_BASE) + self.port_offset
         # TODO optionally use AF_UNIX
@@ -62,46 +66,58 @@ class SpadicBaseRequestServer:
                 self.process(decoded)
 
 
-class SpadicRFServer(SpadicBaseRequestServer):
+#---------------------------------------------------------------------------
+# BaseRequestServer
+#  \
+#  SpadicDLMServer
+
+class SpadicDLMServer(BaseRequestServer):
+    port_offset = PORT_OFFSET["DLM"]
+
+    def __init__(self, dlm_send_func, port_base=None):
+        BaseRequestServer.__init__(self, port_base)
+        self.send_dlm = dlm_send_func
+
+    def process(self, decoded):
+        self.send_dlm(decoded) # must be a number
+
+
+#---------------------------------------------------------------------------
+# BaseRequestServer
+#  \
+#  BaseRegisterServer
+#   \               \
+#   SpadicRFServer  SpadicSRServer
+
+class BaseRegisterServer(BaseRequestServer):
+    # needs an attribute self._registers,
+    # e.g. SpadicShiftRegister or SpadicRegisterFile
+
+    def process(self, decoded):
+        command, registers = decoded
+        if command == 'W':
+            # registers must be a dictionary {name: value, ...}
+            self._registers.write(registers)
+        elif command == 'R':
+            # registers must be a list [name1, name2, ...] or the string "all"
+            contents = self._registers.read()
+            if registers == "all":
+                result = contents
+            else:
+                result = {name: contents[name] for name in registers}
+            self.connection.sendall(json.dumps(result)+'\n')
+
+class SpadicRFServer(BaseRegisterServer):
     port_offset = PORT_OFFSET["RF"]
 
     def __init__(self, registerfile, port_base=None):
-        SpadicBaseRequestServer.__init__(self, port_base)
-        self.registerfile = registerfile
-            
-    def process(self, decoded):
-        command, registers = decoded
-        if command == 'W':
-            # registers must be a dictionary {name: value, ...}
-            self.registerfile.write(registers)
-        elif command == 'R':
-            # registers must be a list [name1, name2, ...] or the string "all"
-            contents = self.registerfile.read()
-            if registers == "all":
-                result = contents
-            else:
-                result = {name: contents[name] for name in registers}
-            self.connection.sendall(json.dumps(result)+'\n')
+        BaseRegisterServer.__init__(self, port_base)
+        self._registers = registerfile
 
-
-class SpadicSRServer(SpadicBaseRequestServer):
+class SpadicSRServer(BaseRegisterServer):
     port_offset = PORT_OFFSET["SR"]
 
     def __init__(self, shiftregister, port_base=None):
-        SpadicBaseRequestServer.__init__(self, port_base)
-        self.shiftregister = shiftregister
-            
-    def process(self, decoded):
-        command, registers = decoded
-        if command == 'W':
-            # registers must be a dictionary {name: value, ...}
-            self.shiftregister.write(registers)
-        elif command == 'R':
-            # registers must be a list [name1, name2, ...] or the string "all"
-            contents = self.shiftregister.read()
-            if registers == "all":
-                result = contents
-            else:
-                result = {name: contents[name] for name in registers}
-            self.connection.sendall(json.dumps(result)+'\n')
+        BaseRegisterServer.__init__(self, port_base)
+        self._registers = shiftregister
 
