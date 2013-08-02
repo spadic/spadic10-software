@@ -62,7 +62,7 @@ class Ftdi:
             ftdi.ftdi_free(self.ftdic)
                     # free -> deinit -> usb_close_internal -> usb_close
         if self._debug_ftdi:
-            self._debug("FTDI exit")
+            self._debug("[FTDI] exit")
 
     def purge(self):
         """Purge all FTDI buffers."""
@@ -85,8 +85,8 @@ class Ftdi:
     def _ftdi_write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
         if self._debug_ftdi:
-            self._debug("FTDI write [" +
-                " ".join("%02X" % b for b in byte_list) + "]")
+            self._debug("[FTDI] write",
+                        "[%s]"%(" ".join("%02X" % b for b in byte_list)))
         bytes_left = byte_list
         iter_left = max_iter
         while bytes_left:
@@ -122,7 +122,7 @@ class Ftdi:
             if iter_left is not None:
                 iter_left -= 1
         if self._debug_ftdi and bytes_read:
-            self._debug("FTDI  read [" +
-                " ".join("%02X" % b for b in bytes_read) + "]")
+            self._debug("[FTDI] read",
+                        "[%s]"%(" ".join("%02X" % b for b in bytes_read)))
         return bytes_read
 

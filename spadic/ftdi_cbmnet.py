@@ -43,8 +43,8 @@ class FtdiCbmnet(Ftdi.Ftdi):
             raise ValueError("Wrong number of words for this CBMnet port.")
 
         if self._debug_cbmif:
-            self._debug("CBMnet write " +
-                "%i"%addr + ", ["+" ".join("%X"%w for w in words)+"]")
+            self._debug("[CBMnet] write", "%i,"%addr,
+                        "[%s]"%(" ".join("%X"%w for w in words)))
 
         header = [addr, len(words)]
         data = []
@@ -81,8 +81,8 @@ class FtdiCbmnet(Ftdi.Ftdi):
             words.append(w)
 
         if self._debug_cbmif:
-            self._debug("CBMnet  read " +
-                "%i"%addr + ", ["+" ".join("%X"%w for w in words)+"]")
+            self._debug("[CBMnet] read", "%i,"%addr,
+                        "[%s]"%(" ".join("%X"%w for w in words)))
 
         return (addr, words)
 
@@ -140,7 +140,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
             #while w.is_alive():
             #    w.join(timeout=1)
             if self._debug_cbmif:
-                self._debug(w.name, "finished")
+                self._debug("[CBMnet]", w.name, "finished")
         FtdiCbmnet.__exit__(self)
 
 

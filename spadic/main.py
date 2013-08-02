@@ -100,7 +100,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         #while self._recv_worker.is_alive():
         #    self._recv_worker.join(timeout=1)
         if self._debug_cbmif:
-            self._debug(self._recv_worker.name, "finished")
+            self._debug("[main]", self._recv_worker.name, "finished")
 
         
     #----------------------------------------------------------------
