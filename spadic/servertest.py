@@ -1,15 +1,15 @@
 import sys
+import time
 
-import main
 import server
 
 f = open('/tmp/spadic/spadic.log', 'w')
-with main.Spadic(_debug_cbmif=1, _debug_out=f) as sp:
-    rf = sp._registerfile
-    with server.SpadicRFServer(rf) as serv:
+with server.SpadicServer(_debug_cbmif=1, _debug_out=f) as s:
+    s._debug("started server")
+    while True:
         try:
-            serv.start()
-            serv.run()
+            time.sleep(1)
         except KeyboardInterrupt:
-            sys.exit('Quit.')
+            break
+    s._debug("interrupted server")
 

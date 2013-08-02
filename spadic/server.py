@@ -8,6 +8,53 @@ PORT_BASE = 45000
 PORT_OFFSET = {"RF": 0, "SR": 1, "DATA": 2, "DLM": 3}
 
 
+class SpadicServer(Spadic):
+    def __init__(self, reset=False, load=None, port_base=None, **kwargs):
+        Spadic.__init__(self, reset, load, **kwargs)
+
+        def _run_gen(cls, *args, **kwargs):
+            with cls(*args, **kwargs) as serv:
+                serv._stop = self._stop
+                while not serv._stop.is_set():
+                    try:
+                        serv.wait_connection()
+                    except SystemExit:
+                        return
+                    serv.run()
+
+        def _run_rf_server():
+            _run_gen(SpadicRFServer, self._registerfile)
+
+        def _run_sr_server():
+            _run_gen(SpadicSRServer, self._shiftregister)
+
+        def _run_dlm_server():
+            _run_gen(SpadicDLMServer, self.send_dlm)
+
+        self._rf_server = threading.Thread(name="RF server")
+        self._rf_server.run = _run_rf_server
+        self._rf_server.start()
+
+        self._sr_server = threading.Thread(name="SR server")
+        self._sr_server.run = _run_sr_server
+        self._sr_server.start()
+
+        self._dlm_server = threading.Thread(name="DLM server")
+        self._dlm_server.run = _run_dlm_server
+        self._dlm_server.start()
+
+
+    def __exit__(self, *args):
+        Spadic.__exit__(self)
+        if not hasattr(self, '_stop'):
+            return
+        if not self._stop.is_set():
+            self._stop.set()
+        for s in [self._rf_server, self._sr_server, self._dlm_server]:
+            s.join()
+            self._debug(s.name, "finished")
+
+
 #---------------------------------------------------------------------------
 # BaseRequestServer
 
