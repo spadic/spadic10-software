@@ -1,6 +1,7 @@
 import json
 import re
 import socket
+import threading
 from main import Spadic
 
 PORT_BASE = 45000
@@ -16,15 +17,24 @@ class BaseRequestServer:
         # TODO optionally use AF_UNIX
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.settimeout(1)
         s.bind((socket.gethostname(), port))
 
         self.socket = s
         self.connection = None
+        self._stop = None # can be replaced by a threading.Event() object
 
-    def start(self):
+    def wait_connection(self):
         self.socket.listen(1)
         print "waiting for connection on port", self.socket.getsockname()[1]
-        c, a = self.socket.accept()
+        while True:
+            if not(self._stop is None or not self._stop.is_set()):
+                raise SystemExit
+            try:
+                c, a = self.socket.accept()
+                break
+            except socket.timeout:
+                continue
         try:
             name = socket.gethostbyaddr(a[0])[0]
         except:
@@ -46,8 +56,11 @@ class BaseRequestServer:
             return
         buf = ''
         p = re.compile('\n')
-        while True:
+        while self._stop is None or not self._stop.is_set():
+            print "waiting for data"
+            # TODO this cannot be aborted until data is received
             received = self.connection.recv(64)
+            print "received", received
             if not received:
                 print "lost connection"
                 break
@@ -63,7 +76,11 @@ class BaseRequestServer:
                     decoded = json.loads(chunk)
                 except ValueError:
                     continue
-                self.process(decoded)
+                print "processing", decoded
+                try:
+                    self.process(decoded)
+                except:
+                    continue # don't crash on invalid input
 
 
 #---------------------------------------------------------------------------
