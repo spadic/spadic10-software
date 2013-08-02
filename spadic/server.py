@@ -54,7 +54,7 @@ class SpadicServer(Spadic):
             self._stop.set()
         for s in [self._rf_server, self._sr_server, self._dlm_server]:
             s.join()
-            self._debug(s.name, "finished")
+            self._debug("[main]", s.name, "finished")
 
 
 #---------------------------------------------------------------------------
