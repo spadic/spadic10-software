@@ -95,13 +95,13 @@ class BaseRegisterServer(BaseRequestServer):
 
     def process(self, decoded):
         command, registers = decoded
-        if command == 'W':
+        if command.lower() == 'w':
             # registers must be a dictionary {name: value, ...}
             self._registers.write(registers)
-        elif command == 'R':
+        elif command.lower() == 'r':
             # registers must be a list [name1, name2, ...] or the string "all"
             contents = self._registers.read()
-            if registers == "all":
+            if registers.lower() == "all":
                 result = contents
             else:
                 result = {name: contents[name] for name in registers}
