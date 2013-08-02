@@ -165,9 +165,12 @@ class BaseRegisterServer(BaseRequestServer):
         elif command.lower() == 'r':
             # registers must be a list [name1, name2, ...] or the string "all"
             contents = self._registers.read()
-            if registers.lower() == "all":
-                result = contents
-            else:
+            try:
+                if registers.lower() == "all":
+                    result = contents
+                else:
+                    raise ValueError
+            except AttributeError:
                 result = {name: contents[name] for name in registers}
             self.connection.sendall(json.dumps(result)+'\n')
 
