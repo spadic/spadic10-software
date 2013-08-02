@@ -22,14 +22,16 @@ class SpadicServer(Spadic):
                         return
                     serv.run()
 
+        debug = self._debug if '_debug_server' in kwargs else None
+
         def _run_rf_server():
-            _run_gen(SpadicRFServer, self._registerfile)
+            _run_gen(SpadicRFServer, self._registerfile, debug=debug)
 
         def _run_sr_server():
-            _run_gen(SpadicSRServer, self._shiftregister)
+            _run_gen(SpadicSRServer, self._shiftregister, debug=debug)
 
         def _run_dlm_server():
-            _run_gen(SpadicDLMServer, self.send_dlm)
+            _run_gen(SpadicDLMServer, self.send_dlm, debug=debug)
 
         self._rf_server = threading.Thread(name="RF server")
         self._rf_server.run = _run_rf_server
@@ -59,7 +61,7 @@ class SpadicServer(Spadic):
 # BaseRequestServer
 
 class BaseRequestServer:
-    def __init__(self, port_base=None):
+    def __init__(self, port_base=None, _debug_func=None):
         port = (port_base or PORT_BASE) + self.port_offset
         # TODO optionally use AF_UNIX
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -70,10 +72,15 @@ class BaseRequestServer:
         self.socket = s
         self.connection = None
         self._stop = None # can be replaced by a threading.Event() object
+        if not _debug_func:
+            def _debug_func(*args):
+                pass
+        self._debug = _debug_func
 
     def wait_connection(self):
         self.socket.listen(1)
-        print "waiting for connection on port", self.socket.getsockname()[1]
+        self._debug("waiting for connection on port",
+                    self.socket.getsockname()[1])
         while True:
             if not(self._stop is None or not self._stop.is_set()):
                 raise SystemExit
@@ -86,7 +93,7 @@ class BaseRequestServer:
             name = socket.gethostbyaddr(a[0])[0]
         except:
             name = a[0]
-        print "got connection from", name
+        self._debug("got connection from", name)
         self.connection = c
 
     def __enter__(self):
@@ -99,17 +106,15 @@ class BaseRequestServer:
 
     def run(self):
         if not self.connection:
-            print "not connected."
+            self._debug("not connected.")
             return
         buf = ''
         p = re.compile('\n')
         while self._stop is None or not self._stop.is_set():
-            print "waiting for data"
             # TODO this cannot be aborted until data is received
             received = self.connection.recv(64)
-            print "received", received
             if not received:
-                print "lost connection"
+                self._debug("lost connection")
                 break
             data = buf + received
             while True:
@@ -123,10 +128,11 @@ class BaseRequestServer:
                     decoded = json.loads(chunk)
                 except ValueError:
                     continue
-                print "processing", decoded
                 try:
                     self.process(decoded)
+                    self._debug("processed", decoded)
                 except:
+                    self._debug("failed to process", decoded)
                     continue # don't crash on invalid input
 
 
@@ -138,8 +144,13 @@ class BaseRequestServer:
 class SpadicDLMServer(BaseRequestServer):
     port_offset = PORT_OFFSET["DLM"]
 
-    def __init__(self, dlm_send_func, port_base=None):
-        BaseRequestServer.__init__(self, port_base)
+    def __init__(self, dlm_send_func, port_base=None, debug=None):
+        if debug:
+            def _debug(*args):
+                debug("[DLM server]", *args)
+        else:
+            _debug = None
+        BaseRequestServer.__init__(self, port_base, _debug)
         self.send_dlm = dlm_send_func
 
     def process(self, decoded):
@@ -177,14 +188,24 @@ class BaseRegisterServer(BaseRequestServer):
 class SpadicRFServer(BaseRegisterServer):
     port_offset = PORT_OFFSET["RF"]
 
-    def __init__(self, registerfile, port_base=None):
-        BaseRegisterServer.__init__(self, port_base)
+    def __init__(self, registerfile, port_base=None, debug=None):
+        if debug:
+            def _debug(*args):
+                debug("[RF server]", *args)
+        else:
+            _debug = None
+        BaseRegisterServer.__init__(self, port_base, _debug)
         self._registers = registerfile
 
 class SpadicSRServer(BaseRegisterServer):
     port_offset = PORT_OFFSET["SR"]
 
-    def __init__(self, shiftregister, port_base=None):
-        BaseRegisterServer.__init__(self, port_base)
+    def __init__(self, shiftregister, port_base=None, debug=None):
+        if debug:
+            def _debug(*args):
+                debug("[SR server]", *args)
+        else:
+            _debug = None
+        BaseRegisterServer.__init__(self, port_base, _debug)
         self._registers = shiftregister
 

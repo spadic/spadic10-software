@@ -4,7 +4,7 @@ import time
 import server
 
 f = open('/tmp/spadic/spadic.log', 'w')
-with server.SpadicServer(_debug_cbmif=1, _debug_out=f) as s:
+with server.SpadicServer(_debug_cbmif=1, _debug_server=1, _debug_out=f) as s:
     s._debug("started server")
     while True:
         try:
