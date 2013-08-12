@@ -1,6 +1,7 @@
 import json
 import re
 import socket
+import struct
 import threading
 from main import Spadic
 
@@ -285,5 +286,6 @@ class SpadicDataServer(BaseStreamServer):
         self.read_data = data_read_func
 
     def encode_data(self, data):
-        return json.dumps(data)+'\n'
+        # encode as unsigned short (16 bit), big-endian byte order
+        return struct.pack('!'+str(len(data))+'H', *data)
 
