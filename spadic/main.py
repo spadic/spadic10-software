@@ -60,19 +60,19 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             def write(value):
                 self.write_register(addr, value)
             return write
-
         def rf_read_gen(name, addr):
             def read():
                 return self.read_register(addr)
             return read
-
         self._registerfile = SpadicRegisterFile(rf_write_gen, rf_read_gen)
 
         # higher level shift register access
-        self._shiftregister = SpadicShiftRegister(self)
+        self._shiftregister = SpadicShiftRegister(self.write_register,
+                                                  self.read_register)
 
         # highest level configuration controller
-        self.control = SpadicController(self, reset, load)
+        self.control = SpadicController(self._registerfile,
+                                        self._shiftregister, reset, load)
 
         self.readout_enable(1)
 

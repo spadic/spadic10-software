@@ -463,9 +463,9 @@ SR_WRITE = 2
 
 class SpadicShiftRegister(ShiftRegister):
     """Representation of the SPADIC shift register."""
-    def __init__(self, spadic):
-        self._write_register = spadic.write_register
-        self._read_register = spadic.read_register
+    def __init__(self, write_register, read_register):
+        self._write_register = write_register
+        self._read_register = read_register
         ShiftRegister.__init__(self, SPADIC_SR_LENGTH, SPADIC_SR)
 
     def _write(self, bits):

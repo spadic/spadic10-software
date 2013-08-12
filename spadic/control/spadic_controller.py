@@ -38,9 +38,9 @@ class SpadicController:
       help(c.hitlogic)
 
     """
-    def __init__(self, spadic, reset=0, load_file=None):
-        self.registerfile = spadic._registerfile
-        self.shiftregister = spadic._shiftregister
+    def __init__(self, registerfile, shiftregister, reset=0, load_file=None):
+        self.registerfile = registerfile
+        self.shiftregister = shiftregister
 
         # add control units
         self._units = {}
