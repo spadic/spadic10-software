@@ -151,17 +151,19 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     #----------------------------------------------------------------
     # read messages from groups A and B
     #----------------------------------------------------------------
-    def read_groupA(self, timeout=1):
+    def read_groupA(self, timeout=1, raw=False):
         """Get one message from group A, if available."""
         try:
-            return Message(self._dataA_queue.get(timeout=timeout))
+            data = self._dataA_queue.get(timeout=timeout)
         except Queue.Empty:
             return None
+        return (data if raw else Message(data))
 
-    def read_groupB(self, timeout=1):
+    def read_groupB(self, timeout=1, raw=False):
         """Get one message from group B, if available."""
         try:
-            return Message(self._dataB_queue.get(timeout=timeout))
+            data = self._dataB_queue.get(timeout=timeout)
         except Queue.Empty:
             return None
+        return (data if raw else Message(data))
 
