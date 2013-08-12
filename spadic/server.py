@@ -249,8 +249,6 @@ class BaseStreamServer(BaseServer):
         if not self.connection:
             self._debug("not connected.")
             return
-        buf = ''
-        p = re.compile('\n')
         while self._stop is None or not self._stop.is_set():
             data = self.read_data()
             if data is not None:
