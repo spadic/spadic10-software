@@ -56,7 +56,17 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         self._recv_worker.start()
 
         # higher level register file access
-        self._registerfile = SpadicRegisterFile(self)
+        def rf_write_gen(name, addr):
+            def write(value):
+                self.write_register(addr, value)
+            return write
+
+        def rf_read_gen(name, addr):
+            def read():
+                return self.read_register(addr)
+            return read
+
+        self._registerfile = SpadicRegisterFile(rf_write_gen, rf_read_gen)
 
         # higher level shift register access
         self._shiftregister = SpadicShiftRegister(self)

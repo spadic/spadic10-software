@@ -12,9 +12,8 @@ class Register:
     register, so that the number of hardware write and read operations can
     be minimized.
     """
-    def __init__(self, address, size):
-        """Set the address and size of the register."""
-        self.addr = address
+    def __init__(self, size):
+        """Set the size of the register."""
         self.size = size
         self._stage = 0     # staging area
         self._cache = None  # last known value of the hardware register
@@ -22,13 +21,13 @@ class Register:
                             # register known?
 
 
-    def _write(self, addr, value):
+    def _write(self, value):
         raise NotImplementedError(
-            "Overwrite this with the hardware write operation.")
+            "Overwrite this with the appropriate write operation.")
 
-    def _read(self, addr):
+    def _read(self):
         raise NotImplementedError(
-            "Overwrite this with the hardware read operation.")
+            "Overwrite this with the appropriate read operation.")
 
 
     def set(self, value):
@@ -54,7 +53,7 @@ class Register:
         known again if the "update" or "read" methods are called.
         """
         if self._stage != self._cache:
-            self._write(self.addr, self._stage)
+            self._write(self._stage)
             self._cache = self._stage
             self._known = False
 
@@ -73,7 +72,6 @@ class Register:
         if not self._known or self._stage != self._cache:
             t = threading.Thread()
             t.run = self._update_task
-            t.name = "reg_%03X_reader" % self.addr
             t.start()
             if blocking:
                 t.join()
@@ -83,7 +81,7 @@ class Register:
     def _update_task(self):
         """Perform the hardware read operation."""
         try:
-            result = self._read(self.addr)
+            result = self._read()
         except IOError:
             return
         self._cache = result
@@ -113,14 +111,9 @@ class Register:
 class RegisterFile:
     """Representation of a generic register file."""
 
-    def __init__(self, reg_map, write_method, read_method):
+    def __init__(self, registers):
         """Set up all registers."""
-        self._registers = {}
-        for (name, (addr, size)) in reg_map.iteritems():
-            r = Register(addr, size)
-            r._write = write_method
-            r._read = read_method
-            self._registers[name] = r
+        self._registers = registers
 
         # emulate dictionary behaviour (read-only)
         self.__contains__ = self._registers.__contains__
@@ -246,8 +239,21 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
 #--------------------------------------------------------------------
 class SpadicRegisterFile(RegisterFile):
     """Representation of the SPADIC register file."""
-    def __init__(self, spadic):
-        wr = spadic.write_register
-        rd = spadic.read_register
-        RegisterFile.__init__(self, SPADIC_RF, wr, rd)
+
+    def __init__(self, write_gen, read_gen):
+        """
+        Set up the SPADIC registers.
+
+        write_gen/read_gen must return functions that write/read the
+        register with the given name or address.
+        """
+        registers = {}
+
+        for (name, (addr, size)) in SPADIC_RF.iteritems():
+            r = Register(size)
+            r._write = write_gen(name, addr)
+            r._read = read_gen(name, addr)
+            registers[name] = r
+
+        RegisterFile.__init__(self, registers)
 
