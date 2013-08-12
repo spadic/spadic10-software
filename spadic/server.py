@@ -5,6 +5,18 @@ import struct
 import threading
 from main import Spadic
 
+
+# inheritance tree:
+# 
+# BaseServer------------------------------
+# \                                       \
+#  BaseRequestServer-----                  BaseStreamServer
+#  \                     \                 \
+#   BaseRegisterServer    SpadicDLMServer   SpadicDataServer
+#   \               \
+#    SpadicRFServer  SpadicSRServer
+
+
 PORT_BASE = 45000
 PORT_OFFSET = {"RF": 0, "SR": 1, "DLM": 2, "DATA_A": 3, "DATA_B": 4}
 
@@ -77,7 +89,6 @@ class SpadicServer(Spadic):
 
 
 #---------------------------------------------------------------------------
-# BaseServer
 
 class BaseServer:
     def __init__(self, port_base=None, _debug_func=None):
@@ -125,9 +136,6 @@ class BaseServer:
 
 
 #---------------------------------------------------------------------------
-# BaseServer
-# \
-#  BaseRequestServer
 
 class BaseRequestServer(BaseServer):
     def run(self):
@@ -164,11 +172,6 @@ class BaseRequestServer(BaseServer):
 
 
 #---------------------------------------------------------------------------
-# BaseServer
-# \
-#  BaseRequestServer
-#  \
-#   SpadicDLMServer
 
 class SpadicDLMServer(BaseRequestServer):
     port_offset = PORT_OFFSET["DLM"]
@@ -187,13 +190,6 @@ class SpadicDLMServer(BaseRequestServer):
 
 
 #---------------------------------------------------------------------------
-# BaseServer
-# \
-#  BaseRequestServer
-#  \
-#   BaseRegisterServer
-#   \               \
-#    SpadicRFServer  SpadicSRServer
 
 class BaseRegisterServer(BaseRequestServer):
     # needs an attribute self._registers,
@@ -242,9 +238,6 @@ class SpadicSRServer(BaseRegisterServer):
 
 
 #---------------------------------------------------------------------------
-# BaseServer
-# \
-#  BaseStreamServer
 
 # TODO use UDP/multicast?
 class BaseStreamServer(BaseServer):
@@ -270,11 +263,6 @@ class BaseStreamServer(BaseServer):
 
 
 #---------------------------------------------------------------------------
-# BaseServer
-# \
-#  BaseStreamServer
-#  \
-#   SpadicDataServer
 
 class SpadicDataServer(BaseStreamServer):
     def __init__(self, group, data_read_func, port_base=None, debug=None):
