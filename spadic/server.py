@@ -138,6 +138,7 @@ class BaseRequestServer(BaseServer):
         p = re.compile('\n')
         while self._stop is None or not self._stop.is_set():
             # TODO this cannot be aborted until data is received
+            # if the connection was closed, '' is returned
             received = self.connection.recv(64)
             if not received:
                 self._debug("lost connection")
@@ -245,6 +246,7 @@ class SpadicSRServer(BaseRegisterServer):
 # \
 #  BaseStreamServer
 
+# TODO use UDP/multicast?
 class BaseStreamServer(BaseServer):
     def run(self):
         if not self.connection:
