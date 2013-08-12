@@ -254,7 +254,11 @@ class BaseStreamServer(BaseServer):
             data = self.read_data()
             if data is not None:
                 encoded = self.encode_data(data)
-                self.connection.sendall(encoded)
+                try:
+                    self.connection.sendall(encoded)
+                except socket.error:
+                    self._debug("lost connection")
+                    break
 
     def read_data(self):
         raise NotImplementedError
