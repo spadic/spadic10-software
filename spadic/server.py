@@ -5,7 +5,7 @@ import threading
 from main import Spadic
 
 PORT_BASE = 45000
-PORT_OFFSET = {"RF": 0, "SR": 1, "DATA": 2, "DLM": 3}
+PORT_OFFSET = {"RF": 0, "SR": 1, "DLM": 2, "DATA_A": 3, "DATA_B": 4}
 
 
 class SpadicServer(Spadic):
@@ -33,6 +33,16 @@ class SpadicServer(Spadic):
         def _run_dlm_server():
             _run_gen(SpadicDLMServer, self.send_dlm, debug=debug)
 
+        def _run_dataA_server():
+            def data_read_func():
+                return self.read_groupA(raw=True)
+            _run_gen(SpadicDataServer, "A", data_read_func, debug=debug)
+
+        def _run_dataB_server():
+            def data_read_func():
+                return self.read_groupB(raw=True)
+            _run_gen(SpadicDataServer, "B", data_read_func, debug=debug)
+
         self._rf_server = threading.Thread(name="RF server")
         self._rf_server.run = _run_rf_server
         self._rf_server.start()
@@ -44,6 +54,14 @@ class SpadicServer(Spadic):
         self._dlm_server = threading.Thread(name="DLM server")
         self._dlm_server.run = _run_dlm_server
         self._dlm_server.start()
+
+        self._dataA_server = threading.Thread(name="DataA server")
+        self._dataA_server.run = _run_dataA_server
+        self._dataA_server.start()
+
+        self._dataB_server = threading.Thread(name="DataB server")
+        self._dataB_server.run = _run_dataB_server
+        self._dataB_server.start()
 
 
     def __exit__(self, *args):
@@ -58,9 +76,9 @@ class SpadicServer(Spadic):
 
 
 #---------------------------------------------------------------------------
-# BaseRequestServer
+# BaseServer
 
-class BaseRequestServer:
+class BaseServer:
     def __init__(self, port_base=None, _debug_func=None):
         port = (port_base or PORT_BASE) + self.port_offset
         # TODO optionally use AF_UNIX
@@ -104,6 +122,13 @@ class BaseRequestServer:
             self.connection.close()
         self.socket.close()
 
+
+#---------------------------------------------------------------------------
+# BaseServer
+# \
+#  BaseRequestServer
+
+class BaseRequestServer(BaseServer):
     def run(self):
         if not self.connection:
             self._debug("not connected.")
@@ -137,9 +162,11 @@ class BaseRequestServer:
 
 
 #---------------------------------------------------------------------------
-# BaseRequestServer
+# BaseServer
+# \
+#  BaseRequestServer
 #  \
-#  SpadicDLMServer
+#   SpadicDLMServer
 
 class SpadicDLMServer(BaseRequestServer):
     port_offset = PORT_OFFSET["DLM"]
@@ -158,11 +185,13 @@ class SpadicDLMServer(BaseRequestServer):
 
 
 #---------------------------------------------------------------------------
-# BaseRequestServer
+# BaseServer
+# \
+#  BaseRequestServer
 #  \
-#  BaseRegisterServer
+#   BaseRegisterServer
 #   \               \
-#   SpadicRFServer  SpadicSRServer
+#    SpadicRFServer  SpadicSRServer
 
 class BaseRegisterServer(BaseRequestServer):
     # needs an attribute self._registers,
@@ -208,4 +237,45 @@ class SpadicSRServer(BaseRegisterServer):
             _debug = None
         BaseRegisterServer.__init__(self, port_base, _debug)
         self._registers = shiftregister
+
+
+#---------------------------------------------------------------------------
+# BaseServer
+# \
+#  BaseStreamServer
+
+class BaseStreamServer(BaseServer):
+    def run(self):
+        if not self.connection:
+            self._debug("not connected.")
+            return
+        buf = ''
+        p = re.compile('\n')
+        while self._stop is None or not self._stop.is_set():
+            data = self.read_data()
+            if data is not None:
+                self.connection.sendall(json.dumps(data)+'\n')
+
+
+#---------------------------------------------------------------------------
+# BaseServer
+# \
+#  BaseStreamServer
+#  \
+#   SpadicDataServer
+
+class SpadicDataServer(BaseStreamServer):
+    def __init__(self, group, data_read_func, port_base=None, debug=None):
+        if not group in 'aAbB':
+            raise ValueError
+        g = group.upper()
+
+        if debug:
+            def _debug(*args):
+                debug("[Data%s server]"%g, *args)
+        else:
+            _debug = None
+        self.port_offset = PORT_OFFSET["DATA_%s"%g]
+        BaseStreamServer.__init__(self, port_base, _debug)
+        self.read_data = data_read_func
 
