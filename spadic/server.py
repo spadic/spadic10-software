@@ -254,7 +254,14 @@ class BaseStreamServer(BaseServer):
         while self._stop is None or not self._stop.is_set():
             data = self.read_data()
             if data is not None:
-                self.connection.sendall(json.dumps(data)+'\n')
+                encoded = self.encode_data(data)
+                self.connection.sendall(encoded)
+
+    def read_data(self):
+        raise NotImplementedError
+
+    def encode_data(self, data):
+        raise NotImplementedError
 
 
 #---------------------------------------------------------------------------
@@ -278,4 +285,7 @@ class SpadicDataServer(BaseStreamServer):
         self.port_offset = PORT_OFFSET["DATA_%s"%g]
         BaseStreamServer.__init__(self, port_base, _debug)
         self.read_data = data_read_func
+
+    def encode_data(self, data):
+        return json.dumps(data)+'\n'
 
