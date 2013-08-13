@@ -92,14 +92,8 @@ class SpadicServer(Spadic):
 
 class BaseServer:
     def __init__(self, port_base=None, _debug_func=None):
-        port = (port_base or PORT_BASE) + self.port_offset
-        # TODO optionally use AF_UNIX
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.settimeout(1)
-        s.bind((socket.gethostname(), port))
-
-        self.socket = s
+        self.port_base = port_base
+        self.socket = None
         self.connection = None
         self._stop = None # can be replaced by a threading.Event() object
         if not _debug_func:
@@ -107,8 +101,18 @@ class BaseServer:
                 pass
         self._debug = _debug_func
 
+    def new_socket(self):
+        port = (self.port_base or PORT_BASE) + self.port_offset
+        # TODO optionally use AF_UNIX
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.settimeout(1)
+        s.bind((socket.gethostname(), port))
+        self.socket = s
+
     def wait_connection(self):
-        self.socket.listen(1)
+        self.new_socket()
+        self.socket.listen(0)
         self._debug("waiting for connection on port",
                     self.socket.getsockname()[1])
         while True:
@@ -116,6 +120,7 @@ class BaseServer:
                 raise SystemExit
             try:
                 c, a = self.socket.accept()
+                self.socket.close() # prevent further connection attempts
                 break
             except socket.timeout:
                 continue
