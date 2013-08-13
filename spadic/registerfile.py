@@ -240,7 +240,7 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
 class SpadicRegisterFile(RegisterFile):
     """Representation of the SPADIC register file."""
 
-    def __init__(self, write_gen, read_gen):
+    def __init__(self, write_gen, read_gen, register_map=None):
         """
         Set up the SPADIC registers.
 
@@ -248,8 +248,9 @@ class SpadicRegisterFile(RegisterFile):
         register with the given name or address.
         """
         registers = {}
+        register_map = register_map or SPADIC_RF
 
-        for (name, (addr, size)) in SPADIC_RF.iteritems():
+        for (name, (addr, size)) in register_map.iteritems():
             r = Register(size)
             r._write = write_gen(name, addr)
             r._read = read_gen(name, addr)
