@@ -10,10 +10,12 @@ from server import PORT_BASE, PORT_OFFSET
 class BaseRegisterClient:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(1)
         self._recv_queue = IndexQueue()
         self._recv_worker = threading.Thread(name="recv worker")
         self._recv_worker.run = self._recv_job
         self._recv_worker.daemon = True
+        self._stop = threading.Event()
 
     def connect(self, server_address, port_base=None):
         port = (port_base or PORT_BASE) + self.port_offset
@@ -24,6 +26,8 @@ class BaseRegisterClient:
         return self
 
     def __exit__(self, *args, **kwargs):
+        if not self._stop.is_set():
+            self._stop.set()
         self.socket.close()
 
     def write_registers(self, register_values):
@@ -48,8 +52,11 @@ class BaseRegisterClient:
         """Process data received from the RF server."""
         buf = ''
         p = re.compile('\n')
-        while True:
-            received = self.socket.recv(1024)
+        while not self._stop.is_set():
+            try:
+                received = self.socket.recv(1024)
+            except socket.timeout:
+                continue
             data = buf + received
             while True:
                 m = p.search(data)
