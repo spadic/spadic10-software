@@ -5,7 +5,11 @@ import threading
 
 from IndexQueue import IndexQueue
 from server import PORT_BASE, PORT_OFFSET
+from registerfile import SpadicRegisterFile
+from shiftregister import SPADIC_SR
+from control import SpadicController
 
+#--------------------------------------------------------------------
 
 class BaseRegisterClient:
     def __init__(self):
@@ -78,4 +82,58 @@ class SpadicRFClient(BaseRegisterClient):
 
 class SpadicSRClient(BaseRegisterClient):
     port_offset = PORT_OFFSET["SR"]
+
+#--------------------------------------------------------------------
+
+class SpadicControlClient:
+    """Client for the RF/SR parts of the SpadicServer."""
+
+    def __init__(self, reset=False, load=None):
+        self.rf_client = SpadicRFClient()
+        self.sr_client = SpadicSRClient()
+
+        # nested function generators!
+        def gen_write_gen(client):
+            def write_gen(name, addr):
+                def write(value):
+                    client.write_registers({name: value})
+                return write
+            return write_gen
+        def gen_read_gen(client):
+            def read_gen(name, addr):
+                def read():
+                    return client.read_registers([name])[name]
+                return read
+            return read_gen
+
+        # Create registerfile and shiftregister representations providing
+        # the appropriate read and write methods.
+        self._registerfile = SpadicRegisterFile(
+                                 gen_write_gen(self.rf_client),
+                                 gen_read_gen(self.rf_client))
+
+        # The shiftregister actually behaves like the registerfile here,
+        # we only have to override the default register map using SPADIC_SR.
+        # format: {name: (address, size), ...}, (address not used here)
+        sr_map = {name: (0, len(bits))
+                  for (name, bits) in SPADIC_SR.iteritems()}
+        self._shiftregister = SpadicRegisterFile(
+                                  gen_write_gen(self.sr_client),
+                                  gen_read_gen(self.sr_client),
+                                  register_map=sr_map)
+
+        # this is exactly like in main.Spadic
+        self.control = SpadicController(self._registerfile,
+                                        self._shiftregister, reset, load)
+
+    def connect(self, server_address):
+        self.rf_client.connect(server_address)
+        self.sr_client.connect(server_address)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.rf_client.__exit__(*args, **kwargs)
+        self.sr_client.__exit__(*args, **kwargs)
 
