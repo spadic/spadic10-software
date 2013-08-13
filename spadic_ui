@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
 import os
+import socket
 import sys
-import spadic
+
+from spadic.client import SpadicControlClient
 
 #--------------------------------------------------------------------
 # parse options
@@ -24,13 +26,17 @@ try:
 except:
     load_file = None
 
+try:
+    hostname = sys.argv[sys.argv.index("--host")+1]
+except:
+    hostname = socket.gethostname()
+
 #--------------------------------------------------------------------
 # start spadic controller and user interface
 #--------------------------------------------------------------------
 try:
-    with spadic.Spadic(reset=reset, load=load_file,
-                       _debug_cbmif=1, _debug_out=log_file_p) as s:
-        s.ui_run()
+    with SpadicControlClient(hostname, reset=reset, load=load_file) as c:
+        c.ui_run()
 except:
     if full_error:
         raise

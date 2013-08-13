@@ -8,6 +8,7 @@ from server import PORT_BASE, PORT_OFFSET
 from registerfile import SpadicRegisterFile
 from shiftregister import SPADIC_SR
 from control import SpadicController
+from control.ui import SpadicControlUI
 
 #--------------------------------------------------------------------
 
@@ -88,7 +89,7 @@ class SpadicSRClient(BaseRegisterClient):
 class SpadicControlClient:
     """Client for the RF/SR parts of the SpadicServer."""
 
-    def __init__(self, reset=False, load=None):
+    def __init__(self, server_address, reset=False, load=None, ui=False):
         self.rf_client = SpadicRFClient()
         self.sr_client = SpadicSRClient()
 
@@ -105,6 +106,9 @@ class SpadicControlClient:
                     return client.read_registers([name])[name]
                 return read
             return read_gen
+
+        self.rf_client.connect(server_address)
+        self.sr_client.connect(server_address)
 
         # Create registerfile and shiftregister representations providing
         # the appropriate read and write methods.
@@ -125,10 +129,16 @@ class SpadicControlClient:
         # this is exactly like in main.Spadic
         self.control = SpadicController(self._registerfile,
                                         self._shiftregister, reset, load)
+ 
+        # controller user interface
+        self._ui = None
+        if ui:
+            self.ui_run()
 
-    def connect(self, server_address):
-        self.rf_client.connect(server_address)
-        self.sr_client.connect(server_address)
+    def ui_run(self):
+        if not self._ui:
+            self._ui = SpadicControlUI(self.control)
+        self._ui.run()
 
     def __enter__(self):
         return self
