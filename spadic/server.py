@@ -43,23 +43,23 @@ class SpadicServer(Spadic):
         debug = self._debug if '_debug_server' in kwargs else None
 
         def _run_rf_server():
-            _run_gen(SpadicRFServer, self._registerfile, debug=debug)
+            _run_gen(SpadicRFServer, self._registerfile, port_base, debug)
 
         def _run_sr_server():
-            _run_gen(SpadicSRServer, self._shiftregister, debug=debug)
+            _run_gen(SpadicSRServer, self._shiftregister, port_base, debug)
 
         def _run_dlm_server():
-            _run_gen(SpadicDLMServer, self.send_dlm, debug=debug)
+            _run_gen(SpadicDLMServer, self.send_dlm, port_base, debug)
 
         def _run_dataA_server():
             def data_read_func():
                 return self.read_groupA(timeout=1, raw=True)
-            _run_gen(SpadicDataServer, "A", data_read_func, debug=debug)
+            _run_gen(SpadicDataServer, "A", data_read_func, port_base, debug)
 
         def _run_dataB_server():
             def data_read_func():
                 return self.read_groupB(timeout=1, raw=True)
-            _run_gen(SpadicDataServer, "B", data_read_func, debug=debug)
+            _run_gen(SpadicDataServer, "B", data_read_func, port_base, debug)
 
         self._rf_server = threading.Thread(name="RF server")
         self._rf_server.run = _run_rf_server
