@@ -1,11 +1,18 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import sys
 import threading
 import Queue
 
+from spadic import SpadicDataClient
+
 class SpadicDataReader:
-    def __init__(self, spadic):
-        self.spadic = spadic
+    def __init__(self, host):
+        self.dataA_client = SpadicDataClient('A')
+        self.dataA_client.connect(host)
+        self.dataB_client = SpadicDataClient('B')
+        self.dataB_client.connect(host)
+
         self.data_buffer = [Queue.Queue() for _ in range(32)]
         self._stop = threading.Event()
         self.groupA_reader = threading.Thread(name="groupA_reader")
@@ -18,15 +25,15 @@ class SpadicDataReader:
         self.groupB_reader.start()
 
     def _read_group_task(self, group):
-        readmethod = {'A': self.spadic.read_groupA,
-                      'B': self.spadic.read_groupB}[group]
+        readmethod = {'A': self.dataA_client.read_message,
+                      'B': self.dataB_client.read_message}[group]
         def read_group_task():
             while not self._stop.is_set():
                 m = readmethod()
                 if not m or m.channel_id is None:
                     continue
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
-                mask = self.spadic.control.hitlogic.read()['mask']
+                mask = 0xFFFFFFFF #self.ctrl_client.control.hitlogic.read()['mask']
                 self.data_buffer[c].put((m.data(), mask))
         return read_group_task
 
@@ -50,8 +57,8 @@ def mask_to_x(mask):
     return [31-i for i in reversed(range(32)) if (mask>>i)&1]
 
 class SpadicDataMonitor(SpadicDataReader):
-    def __init__(self, spadic):
-        SpadicDataReader.__init__(self, spadic)
+    def __init__(self, host):
+        SpadicDataReader.__init__(self, host)
         #plt.ion()
         fig = plt.figure()
         self.ax = fig.add_subplot(111)
@@ -66,7 +73,7 @@ class SpadicDataMonitor(SpadicDataReader):
         fig.show()
 
     def gen(self):
-        channel = 0
+        channel = 31
         while True:
             try:
                 (y, mask) = self.data_buffer[channel].get(timeout=1)
@@ -92,10 +99,7 @@ class SpadicDataMonitor(SpadicDataReader):
 
 
 if __name__=='__main__':
-    import spadic
-    f = open('/tmp/spadic/spadic.log', 'w')
-    with spadic.Spadic(reset=1, _debug_cbmif=1, _debug_out=f) as s:
-        s.control.load('datamon32.spc')
-        with SpadicDataMonitor(s) as mon:
-            pass
+    host = sys.argv[sys.argv.index('--host')+1]
+    with SpadicDataMonitor(host) as mon:
+        pass
 
