@@ -14,12 +14,12 @@ full_error = "--full-error" in sys.argv
 
 try:
     log_file = sys.argv[sys.argv.index("--log")+1]
+    log_dir = os.path.dirname(os.path.abspath(log_file))
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    log_file_p = open(log_file, 'w')
 except:
-    log_file = "/tmp/spadic/server.log"
-log_dir = os.path.dirname(os.path.abspath(log_file))
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-log_file_p = open(log_file, 'w')
+    log_file_p = None
 
 try:
     load_file = sys.argv[sys.argv.index("--load")+1]
