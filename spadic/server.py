@@ -3,7 +3,9 @@ import re
 import socket
 import struct
 import threading
+
 from main import Spadic
+import message
 
 
 # inheritance tree:
@@ -19,6 +21,9 @@ from main import Spadic
 
 PORT_BASE = 45000
 PORT_OFFSET = {"RF": 0, "SR": 1, "DLM": 2, "DATA_A": 3, "DATA_B": 4}
+
+WNOP = sum((v & m) for (v, m) in [message.preamble['wINF'],
+                                  message.infotype['iNOP']])
 
 
 class SpadicServer(Spadic):
@@ -48,12 +53,12 @@ class SpadicServer(Spadic):
 
         def _run_dataA_server():
             def data_read_func():
-                return self.read_groupA(raw=True)
+                return self.read_groupA(timeout=1, raw=True)
             _run_gen(SpadicDataServer, "A", data_read_func, debug=debug)
 
         def _run_dataB_server():
             def data_read_func():
-                return self.read_groupB(raw=True)
+                return self.read_groupB(timeout=1, raw=True)
             _run_gen(SpadicDataServer, "B", data_read_func, debug=debug)
 
         self._rf_server = threading.Thread(name="RF server")
@@ -251,17 +256,15 @@ class BaseStreamServer(BaseServer):
             self._debug("not connected.")
             return
         while self._stop is None or not self._stop.is_set():
-            data = self.read_data()
-            if data is not None:
-                encoded = self.encode_data(data)
-                try:
-                    self.connection.sendall(encoded)
-                except socket.error:
-                    self._debug("lost connection")
-                    break
-    # problem: we do not notice that the client has disconnected before
-    # we try to send the next message - until then no other client can
-    # connect!
+            # try to read data - if it fails, we send a NOP word, so that
+            # we can detect if the client has disconnected
+            data = self.read_data() or [WNOP]
+            encoded = self.encode_data(data)
+            try:
+                self.connection.sendall(encoded)
+            except socket.error:
+                self._debug("lost connection")
+                break
 
     def read_data(self):
         raise NotImplementedError
