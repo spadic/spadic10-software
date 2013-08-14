@@ -1,14 +1,17 @@
 import json
 import re
 import socket
+import struct
 import threading
+import Queue
 
 from IndexQueue import IndexQueue
-from server import PORT_BASE, PORT_OFFSET
-from registerfile import SpadicRegisterFile
-from shiftregister import SPADIC_SR
 from control import SpadicController
 from control.ui import SpadicControlUI
+from message import MessageSplitter, Message
+from registerfile import SpadicRegisterFile
+from server import PORT_BASE, PORT_OFFSET
+from shiftregister import SPADIC_SR
 
 class BaseClient:
     def __init__(self):
@@ -42,6 +45,7 @@ class BaseReceiveClient(BaseClient):
         self._recv_worker.start()
 
     def _recv_job(self):
+        """Receive and process data from the server."""
         raise NotImplementedError
 
 #--------------------------------------------------------------------
@@ -69,7 +73,6 @@ class BaseRegisterClient(BaseReceiveClient):
         return {name: self._recv_queue.get(name) for name in registers}
 
     def _recv_job(self):
-        """Receive and process data from the server."""
         buf = ''
         p = re.compile('\n')
         while not self._stop.is_set():
@@ -161,4 +164,34 @@ class SpadicControlClient:
     def __exit__(self, *args, **kwargs):
         self.rf_client.__exit__(*args, **kwargs)
         self.sr_client.__exit__(*args, **kwargs)
+
+#--------------------------------------------------------------------
+
+class SpadicDataClient(BaseReceiveClient):
+    def __init__(self, group):
+        BaseReceiveClient.__init__(self)
+        self._recv_queue = Queue.Queue()
+        self._splitter = MessageSplitter()
+
+        if not group in 'aAbB':
+            raise ValueError
+        g = group.upper()
+        self.port_offset = PORT_OFFSET["DATA_%s"%g]
+
+    def read_message(self, timeout=1, raw=False):
+        try:
+            data = self._recv_queue.get(timeout=timeout)
+        except Queue.Empty:
+            return None
+        return (data if raw else Message(data))
+
+    def _recv_job(self):
+        while not self._stop.is_set():
+            try:
+                received = self.socket.recv(1024)
+            except socket.timeout:
+                continue
+            words = struct.unpack('!'+str(len(received)/2)+'H', received)
+            for m in self._splitter(words):
+                self._recv_queue.put(m)
 

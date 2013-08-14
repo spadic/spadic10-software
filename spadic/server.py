@@ -259,6 +259,9 @@ class BaseStreamServer(BaseServer):
                 except socket.error:
                     self._debug("lost connection")
                     break
+    # problem: we do not notice that the client has disconnected before
+    # we try to send the next message - until then no other client can
+    # connect!
 
     def read_data(self):
         raise NotImplementedError
