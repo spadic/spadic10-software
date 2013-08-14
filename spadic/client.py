@@ -10,22 +10,15 @@ from shiftregister import SPADIC_SR
 from control import SpadicController
 from control.ui import SpadicControlUI
 
-#--------------------------------------------------------------------
-
-class BaseRegisterClient:
+class BaseClient:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(1)
-        self._recv_queue = IndexQueue()
-        self._recv_worker = threading.Thread(name="recv worker")
-        self._recv_worker.run = self._recv_job
-        self._recv_worker.daemon = True
         self._stop = threading.Event()
 
     def connect(self, server_address, port_base=None):
         port = (port_base or PORT_BASE) + self.port_offset
         self.socket.connect((server_address, port))
-        self._recv_worker.start()
 
     def __enter__(self):
         return self
@@ -34,6 +27,29 @@ class BaseRegisterClient:
         if not self._stop.is_set():
             self._stop.set()
         self.socket.close()
+
+#--------------------------------------------------------------------
+
+class BaseReceiveClient(BaseClient):
+    def __init__(self):
+        BaseClient.__init__(self)
+        self._recv_worker = threading.Thread()
+        self._recv_worker.run = self._recv_job
+        self._recv_worker.daemon = True
+
+    def connect(self, server_address, port_base=None):
+        BaseClient.connect(self, server_address, port_base)
+        self._recv_worker.start()
+
+    def _recv_job(self):
+        raise NotImplementedError
+
+#--------------------------------------------------------------------
+
+class BaseRegisterClient(BaseReceiveClient):
+    def __init__(self):
+        BaseReceiveClient.__init__(self)
+        self._recv_queue = IndexQueue()
 
     def write_registers(self, register_values):
         """
@@ -52,9 +68,8 @@ class BaseRegisterClient:
         self.socket.sendall(json.dumps(['r', registers])+'\n')
         return {name: self._recv_queue.get(name) for name in registers}
 
-
     def _recv_job(self):
-        """Process data received from the RF server."""
+        """Receive and process data from the server."""
         buf = ''
         p = re.compile('\n')
         while not self._stop.is_set():
