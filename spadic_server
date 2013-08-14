@@ -1,14 +1,57 @@
+#!/usr/bin/python
+
+import os
 import sys
 import time
 
-import server
+from spadic import SpadicServer
 
-f = open('/tmp/spadic/server.log', 'w')
-with server.SpadicServer(_debug_cbmif=1, _debug_ftdi=1,
-                         _debug_server=1, _debug_out=f) as s:
-    while True:
-        try:
-            time.sleep(1)
-        except KeyboardInterrupt:
-            break
+#--------------------------------------------------------------------
+# parse options
+#--------------------------------------------------------------------
+reset = "--reset" in sys.argv
+full_error = "--full-error" in sys.argv
+
+try:
+    log_file = sys.argv[sys.argv.index("--log")+1]
+except:
+    log_file = "/tmp/spadic/server.log"
+log_dir = os.path.dirname(os.path.abspath(log_file))
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+log_file_p = open(log_file, 'w')
+
+try:
+    load_file = sys.argv[sys.argv.index("--load")+1]
+except:
+    load_file = None
+
+try:
+    port = int(sys.argv[sys.argv.index("--port")+1])
+except:
+    port = None
+
+#--------------------------------------------------------------------
+# start spadic server
+#--------------------------------------------------------------------
+options = {'reset':         reset,
+           'load':          load_file,
+           'port_base':     port,
+           '_debug_cbmif':  1,
+           '_debug_ftdi':   1,
+           '_debug_server': 1,
+           '_debug_out':    log_file_p}
+
+try:
+    with SpadicServer(**options) as s:
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                break
+except:
+    if full_error:
+        raise
+    else:
+        sys.exit(sys.exc_value)
 

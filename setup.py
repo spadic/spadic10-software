@@ -10,6 +10,6 @@ setup(name='spadic',
       author_email='michael.krieger@ziti.uni-heidelberg.de',
       url='http://spadic.uni-hd.de',
       packages=['spadic', 'spadic.control', 'spadic.control.ui'],
-      scripts=['spadic_ui'],
+      scripts=['spadic_control', 'spadic_server'],
       )
 
