@@ -63,22 +63,27 @@ class SpadicServer(Spadic):
 
         self._rf_server = threading.Thread(name="RF server")
         self._rf_server.run = _run_rf_server
+        self._rf_server.daemon = True
         self._rf_server.start()
 
         self._sr_server = threading.Thread(name="SR server")
         self._sr_server.run = _run_sr_server
+        self._sr_server.daemon = True
         self._sr_server.start()
 
         self._dlm_server = threading.Thread(name="DLM server")
         self._dlm_server.run = _run_dlm_server
+        self._dlm_server.daemon = True
         self._dlm_server.start()
 
         self._dataA_server = threading.Thread(name="DataA server")
         self._dataA_server.run = _run_dataA_server
+        self._dataA_server.daemon = True
         self._dataA_server.start()
 
         self._dataB_server = threading.Thread(name="DataB server")
         self._dataB_server.run = _run_dataB_server
+        self._dataB_server.daemon = True
         self._dataB_server.start()
 
 
