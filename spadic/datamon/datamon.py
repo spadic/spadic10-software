@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import numpy as np
 import sys
 import threading
 import Queue
@@ -63,7 +64,10 @@ class SpadicDataMonitor(SpadicDataReader):
         fig = plt.figure()
         self.ax = fig.add_subplot(111)
         self.ax.set_ylim(-256, 256)
+        self.ax.set_yticks(np.linspace(-256, 256, 9))
         self.ax.set_xlim(0, 32)
+        self.ax.set_xticks(np.linspace(0, 32, 9))
+        self.ax.grid(True)
         self.lines = self.ax.plot([], [])
         def init_func():
             return self.ax.lines
@@ -90,9 +94,15 @@ class SpadicDataMonitor(SpadicDataReader):
             L = min(len(x), len(y))
             x = x[:L]
             y = y[:L]
-        line = plt.Line2D(x, y)
-        self.lines = self.lines[-2:]+[line]
-        self.ax.clear()
+        self.lines = self.lines[-9:]
+        for (i, line) in enumerate(self.lines):
+            line.set_color([(10-i)*0.1]*3) # wrong until 9 lines
+            line.set_linewidth(1)
+        newline = plt.Line2D(x, y)
+        newline.set_color([0.8, 0.1, 0.1])
+        newline.set_linewidth(2)
+        self.lines.append(newline)
+        self.ax.plot([], [])
         for line in self.lines:
             self.ax.add_line(line)
         return self.ax.lines
