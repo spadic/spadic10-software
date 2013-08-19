@@ -52,14 +52,10 @@ class SpadicServer(Spadic):
             _run_gen(SpadicDLMServer, self.send_dlm, port_base, debug)
 
         def _run_dataA_server():
-            def data_read_func():
-                return self.read_groupA(timeout=1, raw=True)
-            _run_gen(SpadicDataServer, "A", data_read_func, port_base, debug)
+            _run_gen(SpadicDataServer, "A", self.read_groupA, port_base, debug)
 
         def _run_dataB_server():
-            def data_read_func():
-                return self.read_groupB(timeout=1, raw=True)
-            _run_gen(SpadicDataServer, "B", data_read_func, port_base, debug)
+            _run_gen(SpadicDataServer, "B", self.read_groupB, port_base, debug)
 
         self._rf_server = threading.Thread(name="RF server")
         self._rf_server.run = _run_rf_server
@@ -261,9 +257,7 @@ class BaseStreamServer(BaseServer):
             self._debug("not connected.")
             return
         while self._stop is None or not self._stop.is_set():
-            # try to read data - if it fails, we send a NOP word, so that
-            # we can detect if the client has disconnected
-            data = self.read_data() or [WNOP]
+            data = self.read_data()
             encoded = self.encode_data(data)
             try:
                 self.connection.sendall(encoded)
@@ -293,7 +287,12 @@ class SpadicDataServer(BaseStreamServer):
             _debug = None
         self.port_offset = PORT_OFFSET["DATA_%s"%g]
         BaseStreamServer.__init__(self, port_base, _debug)
-        self.read_data = data_read_func
+        self._data_read_func = data_read_func
+
+    def read_data(self):
+        # try to read data - if it fails, we return a NOP word instead of
+        # None, so that we can detect if the client has disconnected
+        return self._data_read_func(timeout=1, raw=True) or [WNOP]
 
     def encode_data(self, data):
         # encode as unsigned short (16 bit), big-endian byte order
