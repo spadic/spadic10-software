@@ -169,7 +169,7 @@ class SpadicControlClient:
 #--------------------------------------------------------------------
 
 class SpadicDataClient(BaseReceiveClient):
-    def __init__(self, group):
+    def __init__(self, group, server_address, port_base=None):
         BaseReceiveClient.__init__(self)
         self._recv_queue = Queue.Queue()
         self._splitter = MessageSplitter()
@@ -178,6 +178,7 @@ class SpadicDataClient(BaseReceiveClient):
             raise ValueError
         g = group.upper()
         self.port_offset = PORT_OFFSET["DATA_%s"%g]
+        self.connect(server_address, port_base)
 
     def read_message(self, timeout=1, raw=False):
         try:
