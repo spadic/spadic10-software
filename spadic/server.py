@@ -93,7 +93,6 @@ class SpadicServer(Spadic):
         for s in [self._rf_server, self._sr_server, self._dlm_server,
                   self._dataA_server, self._dataB_server]:
             s.join()
-            self._debug("[main]", s.name, "finished")
 
 
 #---------------------------------------------------------------------------
@@ -148,6 +147,7 @@ class BaseServer:
         if self.connection:
             self.connection.close()
         self.socket.close()
+        self._debug("finished")
 
 
 #---------------------------------------------------------------------------
