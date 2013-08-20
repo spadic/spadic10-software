@@ -1,5 +1,5 @@
 import threading, Queue
-from IndexQueue import IndexQueue
+from util import IndexQueue
 
 import ftdi_cbmnet
 from message import MessageSplitter, Message

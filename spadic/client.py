@@ -5,7 +5,7 @@ import struct
 import threading
 import Queue
 
-from IndexQueue import IndexQueue
+from util import IndexQueue
 from control import SpadicController
 from control.ui import SpadicControlUI
 from message import MessageSplitter, Message

@@ -1,8 +1,9 @@
 import threading
 import Queue
 
-# thread-safe dictionary-like (used for register file reading)
+
 class IndexQueue:
+    "Thread-safe dictionary-like (used for register file reading)."
     def __init__(self):
         self.data = {}
         self.data_lock = threading.Lock()
@@ -28,4 +29,16 @@ class IndexQueue:
             return
         while not self.data[key].empty():
             self.data[key].get()
+
+
+class InfiniteSemaphore:
+    "Fake a threading.Semaphore with infinite capacity."
+    def acquire(self, blocking=None):
+        if blocking is None:
+            pass
+        else:
+            return True
+
+    def release(self):
+        pass
 
