@@ -33,12 +33,7 @@ class SpadicServer(Spadic):
         def _run_gen(cls, *args, **kwargs):
             with cls(*args, **kwargs) as serv:
                 serv._stop = self._stop
-                while not serv._stop.is_set():
-                    try:
-                        serv.wait_connection()
-                    except SystemExit:
-                        return
-                    serv.run()
+                serv.run()
 
         try:
             debug = self._debug if kwargs['_debug_server'] else None
@@ -101,12 +96,31 @@ class BaseServer:
     def __init__(self, port_base=None, _debug_func=None):
         self.port_base = port_base
         self.socket = None
-        self.connection = None
+        self.num_connections = 0
         self._stop = None # needs to be overwritten by a threading.Event()
         if not _debug_func:
             def _debug_func(*args):
                 pass
         self._debug = _debug_func
+
+    def run(self):
+        while not self._stop.is_set():
+            if self.num_connections < self.max_connections:
+                if self.socket is None:
+                    self.socket = self.new_socket()
+                    self.socket.listen(0)
+                    self._debug("waiting for connection on port",
+                                self.socket.getsockname()[1])
+                try:
+                    connection = self.wait_connection()
+                except SystemExit:
+                    return
+                else:
+                    self.num_connections += 1
+                    self.serve(connection)
+            else: # max. connections reached
+                self.socket.close()
+                self.socket = None
 
     def new_socket(self):
         port = (self.port_base or PORT_BASE) + self.port_offset
@@ -115,28 +129,24 @@ class BaseServer:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.settimeout(1)
         s.bind((socket.gethostname(), port))
-        self.socket = s
+        return s
 
     def wait_connection(self):
-        self.new_socket()
-        self.socket.listen(0)
-        self._debug("waiting for connection on port",
-                    self.socket.getsockname()[1])
         while True:
             if self._stop.is_set():
                 raise SystemExit
             try:
                 c, a = self.socket.accept()
-                self.socket.close() # prevent further connection attempts
-                break
             except socket.timeout:
                 continue
+            else:
+                break
         try:
             name = socket.gethostbyaddr(a[0])[0]
-        except:
+        except: # what could go wrong here??
             name = a[0]
         self._debug("got connection from", name)
-        self.connection = c
+        return c
 
     def __enter__(self):
         return self
