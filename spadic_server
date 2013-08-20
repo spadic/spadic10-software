@@ -22,6 +22,14 @@ except:
     log_file_p = None
 
 try:
+    _debug = int(sys.argv[sys.argv.index("--debug")+1], 0)
+except:
+    _debug = 0b110 # default: server+cbmif
+_debug_ftdi   = (_debug>>0) & 1
+_debug_cbmif  = (_debug>>1) & 1
+_debug_server = (_debug>>2) & 1
+
+try:
     load_file = sys.argv[sys.argv.index("--load")+1]
 except:
     load_file = None
@@ -37,9 +45,9 @@ except:
 options = {'reset':         reset,
            'load':          load_file,
            'port_base':     port,
-           '_debug_cbmif':  1,
-           '_debug_ftdi':   1,
-           '_debug_server': 1,
+           '_debug_ftdi':   _debug_ftdi,
+           '_debug_cbmif':  _debug_cbmif,
+           '_debug_server': _debug_server,
            '_debug_out':    log_file_p}
 
 try:

@@ -40,7 +40,10 @@ class SpadicServer(Spadic):
                         return
                     serv.run()
 
-        debug = self._debug if '_debug_server' in kwargs else None
+        try:
+            debug = self._debug if kwargs['_debug_server'] else None
+        except KeyError:
+            debug = None
 
         def _run_rf_server():
             _run_gen(SpadicRFServer, self._registerfile, port_base, debug)
