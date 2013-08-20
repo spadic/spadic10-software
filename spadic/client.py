@@ -13,6 +13,18 @@ from registerfile import SpadicRegisterFile
 from server import PORT_BASE, PORT_OFFSET
 from shiftregister import SPADIC_SR
 
+
+# inheritance tree:
+# 
+# BaseClient-----------------
+# \                          \
+#  BaseReceiveClient-----     SpadicDLMClient
+#  \                     \
+#   BaseRegisterClient    SpadicDataClient
+#   \               \
+#    SpadicRFClient  SpadicSRClient
+
+
 class BaseClient:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -113,7 +125,7 @@ class SpadicDLMClient(BaseClient):
 #--------------------------------------------------------------------
 
 class SpadicControlClient:
-    """Client for the RF/SR parts of the SpadicServer."""
+    """Client for the RF/SR/DLM parts of the SpadicServer."""
 
     def __init__(self, server_address, port_base=None,
                        reset=False, load=None, ui=False):
