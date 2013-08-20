@@ -104,6 +104,14 @@ class SpadicSRClient(BaseRegisterClient):
 
 #--------------------------------------------------------------------
 
+class SpadicDLMClient(BaseClient):
+    port_offset = PORT_OFFSET["DLM"]
+
+    def send_dlm(self, value):
+        self.socket.sendall(json.dumps(value)+'\n')
+
+#--------------------------------------------------------------------
+
 class SpadicControlClient:
     """Client for the RF/SR parts of the SpadicServer."""
 
@@ -111,6 +119,7 @@ class SpadicControlClient:
                        reset=False, load=None, ui=False):
         self.rf_client = SpadicRFClient()
         self.sr_client = SpadicSRClient()
+        self.dlm_client = SpadicDLMClient()
 
         # nested function generators!
         def gen_write_gen(client):
@@ -128,6 +137,7 @@ class SpadicControlClient:
 
         self.rf_client.connect(server_address, port_base)
         self.sr_client.connect(server_address, port_base)
+        self.dlm_client.connect(server_address, port_base)
 
         # Create registerfile and shiftregister representations providing
         # the appropriate read and write methods.
@@ -159,12 +169,16 @@ class SpadicControlClient:
             self._ui = SpadicControlUI(self.control)
         self._ui.run()
 
+    def send_dlm(self, value):
+        self.dlm_client.send_dlm(value)
+
     def __enter__(self):
         return self
 
     def __exit__(self, *args, **kwargs):
         self.rf_client.__exit__(*args, **kwargs)
         self.sr_client.__exit__(*args, **kwargs)
+        self.dlm_client.__exit__(*args, **kwargs)
 
 #--------------------------------------------------------------------
 
