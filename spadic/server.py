@@ -88,11 +88,10 @@ class SpadicServer(Spadic):
 
     def __exit__(self, *args):
         Spadic.__exit__(self)
-        if not hasattr(self, '_stop'):
-            return
         if not self._stop.is_set():
             self._stop.set()
-        for s in [self._rf_server, self._sr_server, self._dlm_server]:
+        for s in [self._rf_server, self._sr_server, self._dlm_server,
+                  self._dataA_server, self._dataB_server]:
             s.join()
             self._debug("[main]", s.name, "finished")
 
@@ -104,7 +103,7 @@ class BaseServer:
         self.port_base = port_base
         self.socket = None
         self.connection = None
-        self._stop = None # can be replaced by a threading.Event() object
+        self._stop = None # needs to be overwritten by a threading.Event()
         if not _debug_func:
             def _debug_func(*args):
                 pass
@@ -125,7 +124,7 @@ class BaseServer:
         self._debug("waiting for connection on port",
                     self.socket.getsockname()[1])
         while True:
-            if not(self._stop is None or not self._stop.is_set()):
+            if self._stop.is_set():
                 raise SystemExit
             try:
                 c, a = self.socket.accept()
@@ -144,6 +143,8 @@ class BaseServer:
         return self
 
     def __exit__(self, *args, **kwargs):
+        if not self._stop.is_set():
+            self._stop.set()
         if self.connection:
             self.connection.close()
         self.socket.close()
@@ -158,7 +159,7 @@ class BaseRequestServer(BaseServer):
             return
         buf = ''
         p = re.compile('\n')
-        while self._stop is None or not self._stop.is_set():
+        while not self._stop.is_set():
             # TODO this cannot be aborted until data is received
             # if the connection was closed, '' is returned
             received = self.connection.recv(64)
@@ -259,7 +260,7 @@ class BaseStreamServer(BaseServer):
         if not self.connection:
             self._debug("not connected.")
             return
-        while self._stop is None or not self._stop.is_set():
+        while not self._stop.is_set():
             data = self.read_data()
             encoded = self.encode_data(data)
             try:
