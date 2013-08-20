@@ -3,6 +3,7 @@ import re
 import socket
 import struct
 import threading
+import time
 
 from main import Spadic
 import message
@@ -24,6 +25,17 @@ PORT_OFFSET = {"RF": 0, "SR": 1, "DLM": 2, "DATA_A": 3, "DATA_B": 4}
 
 WNOP = sum((v & m) for (v, m) in [message.preamble['wINF'],
                                   message.infotype['iNOP']])
+
+class InfiniteSemaphore:
+    """Fake a threading.Semaphore with infinite capacity."""
+    def acquire(self, blocking=None):
+        if blocking is None:
+            pass
+        else:
+            return True
+
+    def release(self):
+        pass
 
 
 class SpadicServer(Spadic):
@@ -93,10 +105,14 @@ class SpadicServer(Spadic):
 #---------------------------------------------------------------------------
 
 class BaseServer:
+    max_connections = None # default: infinity
+
     def __init__(self, port_base=None, _debug_func=None):
         self.port_base = port_base
         self.socket = None
-        self.num_connections = 0
+        self.sem_conn = (
+            InfiniteSemaphore() if self.max_connections is None
+            else threading.BoundedSemaphore(self.max_connections))
         self._stop = None # needs to be overwritten by a threading.Event()
         if not _debug_func:
             def _debug_func(*args):
@@ -105,7 +121,7 @@ class BaseServer:
 
     def run(self):
         while not self._stop.is_set():
-            if self.num_connections < self.max_connections:
+            if self.sem_conn.acquire(blocking=False):
                 if self.socket is None:
                     self.socket = self.new_socket()
                     self.socket.listen(0)
@@ -116,13 +132,20 @@ class BaseServer:
                 except SystemExit:
                     return
                 else:
-                    self.num_connections += 1
-                    self.serve(connection)
+                    t = threading.Thread()
+                    def thread_serve():
+                        self.serve(connection)
+                    t.run = thread_serve
+                    t.start()
             else: # max. connections reached
-                self.socket.close()
+                if self.socket is not None:
+                    # prevent further connection attempts
+                    self.socket.close()
                 self.socket = None
+                time.sleep(1)
 
     def new_socket(self):
+        """Create and return a new socket."""
         port = (self.port_base or PORT_BASE) + self.port_offset
         # TODO optionally use AF_UNIX
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -132,6 +155,7 @@ class BaseServer:
         return s
 
     def wait_connection(self):
+        """Wait for an incoming connection and return it."""
         while True:
             if self._stop.is_set():
                 raise SystemExit
@@ -154,25 +178,28 @@ class BaseServer:
     def __exit__(self, *args, **kwargs):
         if not self._stop.is_set():
             self._stop.set()
-        if self.connection:
-            self.connection.close()
         self.socket.close()
         self._debug("finished")
+
+    def serve(self, connection):
+        self._serve_job(connection)
+        connection.close()
+        self.sem_conn.release()
+
+    def _serve_job(self, connection):
+        raise NotImplementedError
 
 
 #---------------------------------------------------------------------------
 
 class BaseRequestServer(BaseServer):
-    def run(self):
-        if not self.connection:
-            self._debug("not connected.")
-            return
+    def _serve_job(self, connection):
         buf = ''
         p = re.compile('\n')
         while not self._stop.is_set():
             # TODO this cannot be aborted until data is received
             # if the connection was closed, '' is returned
-            received = self.connection.recv(64)
+            received = connection.recv(64)
             if not received:
                 self._debug("lost connection")
                 break
@@ -189,11 +216,16 @@ class BaseRequestServer(BaseServer):
                 except ValueError:
                     continue
                 try:
-                    self.process(decoded)
+                    response = self.process(decoded)
+                    if response:
+                        connection.sendall(response)
                     self._debug("processed", decoded)
                 except:
                     self._debug("failed to process", decoded)
                     continue # don't crash on invalid input
+
+    def process(self, decoded):
+        raise NotImplementedError
 
 
 #---------------------------------------------------------------------------
@@ -235,7 +267,7 @@ class BaseRegisterServer(BaseRequestServer):
                     raise ValueError
             except AttributeError:
                 result = {name: contents[name] for name in registers}
-            self.connection.sendall(json.dumps(result)+'\n')
+            return json.dumps(result)+'\n'
 
 class SpadicRFServer(BaseRegisterServer):
     port_offset = PORT_OFFSET["RF"]
@@ -266,15 +298,14 @@ class SpadicSRServer(BaseRegisterServer):
 
 # TODO use UDP/multicast?
 class BaseStreamServer(BaseServer):
-    def run(self):
-        if not self.connection:
-            self._debug("not connected.")
-            return
+    max_connections = 1
+
+    def _serve_job(self, connection):
         while not self._stop.is_set():
             data = self.read_data()
             encoded = self.encode_data(data)
             try:
-                self.connection.sendall(encoded)
+                connection.sendall(encoded)
             except socket.error:
                 self._debug("lost connection")
                 break
