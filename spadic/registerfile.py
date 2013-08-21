@@ -12,13 +12,13 @@ class Register:
     register, so that the number of hardware write and read operations can
     be minimized.
     """
-    def __init__(self, size):
+    def __init__(self, size, use_cache=True):
         """Set the size of the register."""
         self.size = size
         self._stage = 0     # staging area
         self._cache = None  # last known value of the hardware register
-        self._known = False # is the current value of the hardware
-                            # register known?
+        self._known = False # is the current value of the hardware register known?
+        self._use_cache = use_cache # enables the cache
 
 
     def _write(self, value):
@@ -48,14 +48,18 @@ class Register:
         to the hardware register. It is considered necessary if the last
         known value of the register differs from the staging area.
 
+        Regardless of whether it is considered necessary, the write
+        operation will be performed if the "use_cache" option is False.
+
         After the write operation has been performed, the value of the
         hardware register will be considered "not known". It will become
         known again if the "update" or "read" methods are called.
         """
         if self._stage != self._cache:
             self._write(self._stage)
-            self._cache = self._stage
-            self._known = False
+            if self._use_cache:
+                self._cache = self._stage
+                self._known = False
 
 
     def update(self, blocking=True):
@@ -68,6 +72,9 @@ class Register:
         - once initially, and
         - after each time the write operation has been performed by calling
           the "apply" or "write" methods.
+
+        Regardless of whether it is considered necessary, the read
+        operation will be performed if the "use_cache" option is False.
         """
         if not self._known or self._stage != self._cache:
             t = threading.Thread()
@@ -84,9 +91,10 @@ class Register:
             result = self._read()
         except IOError:
             return
-        self._cache = result
-        self._stage = self._cache
-        self._known = True
+        self._stage = result
+        if self._use_cache:
+            self._cache = result
+            self._known = True
 
 
     def write(self, value):
@@ -242,7 +250,7 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
 class SpadicRegisterFile(RegisterFile):
     """Representation of the SPADIC register file."""
 
-    def __init__(self, write_gen, read_gen, register_map=None):
+    def __init__(self, write_gen, read_gen, register_map=None, use_cache=True):
         """
         Set up the SPADIC registers.
 
@@ -253,7 +261,7 @@ class SpadicRegisterFile(RegisterFile):
         register_map = register_map or SPADIC_RF
 
         for (name, (addr, size)) in register_map.iteritems():
-            r = Register(size)
+            r = Register(size, use_cache)
             r._write = write_gen(name, addr)
             r._read = read_gen(name, addr)
             registers[name] = r
