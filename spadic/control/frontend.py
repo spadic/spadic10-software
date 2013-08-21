@@ -51,7 +51,6 @@ class FrontendChannel(ControlUnitBase):
 
     def update(self):
         self._shiftregister.update()
-        i = str(self._id)
         self._baseline = self._shiftregister[self._reg_baseline].get()
         self._frontend = self._shiftregister[self._reg_frontend].get()
         self._enableadc = self._shiftregister[self._reg_enableadc].get()
