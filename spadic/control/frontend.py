@@ -47,17 +47,19 @@ class FrontendChannel(ControlUnitBase):
             if (self._enablecsa and self._frontend == 1) else 0)
 
     def apply(self):
-        self._shiftregister.apply()
+        self._shiftregister[self._reg_baseline].apply()
+        self._shiftregister[self._reg_frontend].apply()
+        self._shiftregister[self._reg_enableadc].apply()
+        self._shiftregister[self._reg_enablecsaN].apply()
+        self._shiftregister[self._reg_enablecsaP].apply()
 
     def update(self):
-        self._shiftregister.update()
-        i = str(self._id)
-        self._baseline = self._shiftregister[self._reg_baseline].get()
-        self._frontend = self._shiftregister[self._reg_frontend].get()
-        self._enableadc = self._shiftregister[self._reg_enableadc].get()
+        self._baseline = self._shiftregister[self._reg_baseline].read()
+        self._frontend = self._shiftregister[self._reg_frontend].read()
+        self._enableadc = self._shiftregister[self._reg_enableadc].read()
         enamp = {0: self._reg_enablecsaN,
                  1: self._reg_enablecsaP}[self._frontend]
-        self._enablecsa = self._shiftregister[enamp].get()
+        self._enablecsa = self._shiftregister[enamp].read()
 
     def get(self):
         return {'baseline': self._baseline,
@@ -145,19 +147,21 @@ class Frontend(ControlUnitBase):
             self._shiftregister[name].set(value)
 
     def apply(self):
-        self._shiftregister.apply()
+        self._shiftregister['DecSelectNP'].apply()
+        r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
+             1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
+        for name in r[1-self._frontend]:
+            self._shiftregister[name].apply()
 
     def update(self):
-        self._shiftregister.update()
-
-        self._frontend = self._shiftregister['DecSelectNP'].get()
+        self._frontend = self._shiftregister['DecSelectNP'].read()
         fe ={0: 'N', 1: 'P'}[self._frontend] 
-        self._pcasc = self._shiftregister['pCasc'+fe].get()
-        self._ncasc = self._shiftregister['nCasc'+fe].get()
-        self._psourcebias = self._shiftregister['pSourceBias'+fe].get()
-        self._nsourcebias = self._shiftregister['nSourceBias'+fe].get()
+        self._pcasc = self._shiftregister['pCasc'+fe].read()
+        self._ncasc = self._shiftregister['nCasc'+fe].read()
+        self._psourcebias = self._shiftregister['pSourceBias'+fe].read()
+        self._nsourcebias = self._shiftregister['nSourceBias'+fe].read()
         xfb = {0: 'pFBN', 1: 'nFBP'}[self._frontend]
-        self._xfb = self._shiftregister[xfb].get()
+        self._xfb = self._shiftregister[xfb].read()
 
         for ch in self.channel:
             ch.update()
