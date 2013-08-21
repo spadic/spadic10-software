@@ -5,14 +5,13 @@ import sys
 import threading
 import Queue
 
-from spadic import SpadicDataClient
+from spadic import SpadicDataClient, SpadicControlClient
 
 class SpadicDataReader:
     def __init__(self, host):
-        self.dataA_client = SpadicDataClient('A')
-        self.dataA_client.connect(host)
-        self.dataB_client = SpadicDataClient('B')
-        self.dataB_client.connect(host)
+        self.dataA_client = SpadicDataClient('A', host)
+        self.dataB_client = SpadicDataClient('B', host)
+        self.ctrl_client = SpadicControlClient(host)
 
         self.data_buffer = [Queue.Queue() for _ in range(32)]
         self._stop = threading.Event()
@@ -34,7 +33,7 @@ class SpadicDataReader:
                 if not m or m.channel_id is None:
                     continue
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
-                mask = 0xFFFFFFFF #self.ctrl_client.control.hitlogic.read()['mask']
+                mask = self.ctrl_client.control.hitlogic.read()['mask']
                 self.data_buffer[c].put((m.data(), mask))
         return read_group_task
 
