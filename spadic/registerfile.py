@@ -41,24 +41,27 @@ class Register:
         return self._stage
 
 
-    def apply(self):
+    def apply(self, force=False):
         """Perform the hardware write operation, if necessary.
         
         The write operation will transfer the value from the staging area
         to the hardware register. It is considered necessary if the last
         known value of the register differs from the staging area.
 
+        Regardless of whether it is considered necessary, the write
+        operation will be performed if the "force" argument is True.
+
         After the write operation has been performed, the value of the
         hardware register will be considered "not known". It will become
         known again if the "update" or "read" methods are called.
         """
-        if self._stage != self._cache:
+        if force or self._stage != self._cache:
             self._write(self._stage)
             self._cache = self._stage
             self._known = False
 
 
-    def update(self, blocking=True):
+    def update(self, blocking=True, force=False):
         """Perform the hardware read operation, if necessary.
         
         The read operation will transfer the value of the hardware
@@ -68,8 +71,11 @@ class Register:
         - once initially, and
         - after each time the write operation has been performed by calling
           the "apply" or "write" methods.
+
+        Regardless of whether it is considered necessary, the read
+        operation will be performed if the "force" argument is True.
         """
-        if not self._known or self._stage != self._cache:
+        if force or not self._known or self._stage != self._cache:
             t = threading.Thread()
             t.run = self._update_task
             t.start()
@@ -89,31 +95,32 @@ class Register:
         self._known = True
 
 
-    def write(self, value):
+    def write(self, value, force=False):
         """
         Modify the register value, if necessary perform the write operation.
         
         Has the same effect as calling "set" and then "apply".
         """
         self.set(value)
-        self.apply()
+        self.apply(force=force)
 
-    def read(self):
+    def read(self, force=False):
         """
         Return the register value, if necessary perform the read operation.
         
         Has the same effect as calling "update" and then "get".
         """
-        self.update()
+        self.update(force=force)
         return self.get()
 
 
 class RegisterFile:
     """Representation of a generic register file."""
 
-    def __init__(self, registers):
+    def __init__(self, registers, force=False):
         """Set up all registers."""
         self._registers = registers
+        self._force = force
 
         # emulate dictionary behaviour (read-only)
         self.__contains__ = self._registers.__contains__
@@ -136,7 +143,7 @@ class RegisterFile:
     def apply(self):
         """Perform the write operation for all registers."""
         for name in self:
-            self[name].apply()
+            self[name].apply(force=self._force)
 
     def update(self):
         """Perform the read operation for all registers."""
@@ -154,7 +161,7 @@ class RegisterFile:
             # the code from here would be needed without the retransmit bug
             threads = []
             for name in unknown:
-                t = self[name].update(blocking=False)
+                t = self[name].update(blocking=False, force=self._force)
                 if t is not None:
                     threads.append(t)
             for t in threads:
@@ -162,7 +169,8 @@ class RegisterFile:
             # until here
 
     def write(self, config):
-        """Write the register configuration contained in a dictionary.
+        """
+        Write the register configuration contained in a dictionary.
         
         Has the same effect as calling "set" and then "apply".
         """
@@ -170,7 +178,8 @@ class RegisterFile:
         self.apply()
 
     def read(self):
-        """Read the register file configuration into a dictionary.
+        """
+        Read the register file configuration into a dictionary.
         
         Has the same effect as calling "update" and then "get".
         """
@@ -240,7 +249,7 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
 class SpadicRegisterFile(RegisterFile):
     """Representation of the SPADIC register file."""
 
-    def __init__(self, write_gen, read_gen, register_map=None):
+    def __init__(self, write_gen, read_gen, register_map=None, force=False):
         """
         Set up the SPADIC registers.
 
@@ -256,5 +265,5 @@ class SpadicRegisterFile(RegisterFile):
             r._read = read_gen(name, addr)
             registers[name] = r
 
-        RegisterFile.__init__(self, registers)
+        RegisterFile.__init__(self, registers, force)
 
