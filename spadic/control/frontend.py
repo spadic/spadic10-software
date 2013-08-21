@@ -150,7 +150,7 @@ class Frontend(ControlUnitBase):
         self._shiftregister['DecSelectNP'].apply()
         r = {0: ['pCascN','nCascN','pSourceBiasN','nSourceBiasN','pFBN'],
              1: ['pCascP','nCascP','pSourceBiasP','nSourceBiasP','nFBP']}
-        for name in r[1-self._frontend]:
+        for name in r[self._frontend]:
             self._shiftregister[name].apply()
 
     def update(self):
