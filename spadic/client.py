@@ -153,14 +153,14 @@ class SpadicControlClient:
 
         # Create registerfile and shiftregister representations providing
         # the appropriate read and write methods.
-        # The "force" argument is set to True, because other clients can
+        # The "use_cache" argument is set to False, because other clients can
         # modify the register configuration without our knowledge, so we
         # have to really read and write a register every time and cannot
         # rely on our last known values.
         self._registerfile = SpadicRegisterFile(
                                  gen_write_gen(self.rf_client),
                                  gen_read_gen(self.rf_client),
-                                 force=True)
+                                 use_cache=True)#False)
 
         # The shiftregister actually behaves like the registerfile here,
         # we only have to override the default register map using SPADIC_SR.
@@ -171,7 +171,7 @@ class SpadicControlClient:
                                   gen_write_gen(self.sr_client),
                                   gen_read_gen(self.sr_client),
                                   register_map=sr_map,
-                                  force=True)
+                                  use_cache=True)#False)
 
         # this is exactly like in main.Spadic
         self.control = SpadicController(self._registerfile,
