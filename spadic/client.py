@@ -160,7 +160,7 @@ class SpadicControlClient:
         self._registerfile = SpadicRegisterFile(
                                  gen_write_gen(self.rf_client),
                                  gen_read_gen(self.rf_client),
-                                 use_cache=True)#False)
+                                 use_cache=False)
 
         # The shiftregister actually behaves like the registerfile here,
         # we only have to override the default register map using SPADIC_SR.
@@ -171,7 +171,7 @@ class SpadicControlClient:
                                   gen_write_gen(self.sr_client),
                                   gen_read_gen(self.sr_client),
                                   register_map=sr_map,
-                                  use_cache=True)#False)
+                                  use_cache=False)
 
         # this is exactly like in main.Spadic
         self.control = SpadicController(self._registerfile,
