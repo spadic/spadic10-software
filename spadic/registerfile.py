@@ -162,7 +162,8 @@ class RegisterFile:
             # until here
 
     def write(self, config):
-        """Write the register configuration contained in a dictionary.
+        """
+        Write the register configuration contained in a dictionary.
         
         Has the same effect as calling "set" and then "apply".
         """
@@ -170,7 +171,8 @@ class RegisterFile:
         self.apply()
 
     def read(self):
-        """Read the register file configuration into a dictionary.
+        """
+        Read the register file configuration into a dictionary.
         
         Has the same effect as calling "update" and then "get".
         """
