@@ -55,17 +55,22 @@ class AdcBias(ControlUnitBase):
         self._shiftregister['baselineTrimN'].set(self._baseline)
 
     def apply(self):
-        self._shiftregister.apply()
+        self._shiftregister['VNDel'].apply()
+        self._shiftregister['VPDel'].apply()
+        self._shiftregister['VPLoadFB'].apply()
+        self._shiftregister['VPLoadFB2'].apply()
+        self._shiftregister['VPFB'].apply()
+        self._shiftregister['VPAmp'].apply()
+        self._shiftregister['baselineTrimN'].apply()
 
     def update(self):
-        self._shiftregister.update()
-        self._vndel = self._shiftregister['VNDel'].get()
-        self._vpdel = self._shiftregister['VPDel'].get()
-        self._vploadfb = self._shiftregister['VPLoadFB'].get()
-        self._vploadfb2 = self._shiftregister['VPLoadFB2'].get()
-        self._vpfb = self._shiftregister['VPFB'].get()
-        self._vpamp = self._shiftregister['VPAmp'].get()
-        self._baseline = self._shiftregister['baselineTrimN'].get()
+        self._vndel = self._shiftregister['VNDel'].read()
+        self._vpdel = self._shiftregister['VPDel'].read()
+        self._vploadfb = self._shiftregister['VPLoadFB'].read()
+        self._vploadfb2 = self._shiftregister['VPLoadFB2'].read()
+        self._vpfb = self._shiftregister['VPFB'].read()
+        self._vpamp = self._shiftregister['VPAmp'].read()
+        self._baseline = self._shiftregister['baselineTrimN'].read()
 
     def get(self):
         return {'vndel': self._vndel,

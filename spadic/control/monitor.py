@@ -44,14 +44,16 @@ class Monitor(ControlUnitBase):
             self._shiftregister['ampToBus_'+str(ch)].set(ampToBus[ch])
 
     def apply(self):
-        self._shiftregister.apply()
+        self._shiftregister['SelMonitor'].apply()
+        for ch in range(32):
+            self._shiftregister['enMonitorAdc_'+str(ch)].apply()
+            self._shiftregister['ampToBus_'+str(ch)].apply()
 
     def update(self):
-        self._shiftregister.update()
-        self._source = self._shiftregister['SelMonitor'].get()
+        self._source = self._shiftregister['SelMonitor'].read()
         reg = {0: 'enMonitorAdc_', 1: 'ampToBus_'}[self._source]
         for ch in range(32):
-            en = self._shiftregister[reg+str(ch)].get()
+            en = self._shiftregister[reg+str(ch)].read()
             if en:
                 self._channel = ch
                 break
