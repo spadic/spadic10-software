@@ -3,6 +3,7 @@ import re
 import socket
 import struct
 import threading
+import time
 import Queue
 
 from util import IndexQueue
@@ -63,9 +64,15 @@ class BaseReceiveClient(BaseClient):
 #--------------------------------------------------------------------
 
 class BaseRegisterClient(BaseReceiveClient):
-    def __init__(self):
+    def __init__(self, expires=2):
         BaseReceiveClient.__init__(self)
         self._recv_queue = IndexQueue()
+        self._cache = {}
+        self._expires = expires
+
+    def _update_cache(self, register_values):
+        self._cache.update({name: (value, time.time()+self._expires)
+                            for (name, value) in register_values.iteritems()})
 
     def write_registers(self, register_values):
         """
@@ -74,6 +81,7 @@ class BaseRegisterClient(BaseReceiveClient):
         register_values must be a dictionary {name: value, ...}
         """
         self.socket.sendall(json.dumps(['w', register_values])+'\n')
+        self._update_cache(register_values)
 
     def read_registers(self, registers):
         """
@@ -81,8 +89,14 @@ class BaseRegisterClient(BaseReceiveClient):
 
         registers must be a sequence of register names.
         """
-        self.socket.sendall(json.dumps(['r', registers])+'\n')
-        return {name: self._recv_queue.get(name) for name in registers}
+        needed = [name for name in registers
+                  if (not name in self._cache or
+                      time.time() > self._cache[name][1])]
+        if needed:
+            self.socket.sendall(json.dumps(['r', needed])+'\n')
+            read = {name: self._recv_queue.get(name) for name in needed}
+            self._update_cache(read)
+        return {name: self._cache[name][0] for name in registers}
 
     def _recv_job(self):
         buf = ''
