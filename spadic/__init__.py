@@ -5,7 +5,7 @@ del main
 del server
 del client
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 __all__ = ['Spadic', 'SpadicServer',
            'SpadicControlClient', 'SpadicDataClient']
 
