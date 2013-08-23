@@ -1,20 +1,71 @@
 import threading
 
+# libFTDI was renamed when version 1.0 was released -- try to get the
+# newer version first.
 try:
-    # libFTDI was renamed when version 1.0 was released -- try to get the
-    # newer version first.
     import ftdi1 as ftdi
+    LIBFTDI_OLD = False
 except ImportError:
     import ftdi
-    # Since libFTDI v0.20, the method names have changed:
-    # The file libftdi/python/ftdi1.i now contains the line
-    # %rename("%(strip:[ftdi_])s") "";
-    # If we have the older version of libFTDI, we change the method names
-    # now, so we are compatible with v1.0:
+    LIBFTDI_OLD = True
+
+# We write our code as if we had libFTDI v1.0 -- if not, we have to make
+# it compatible.
+
+# Since libFTDI v0.20, the method names have changed:
+# v0.x: ftdi.ftdi_[...]
+# v1.0: ftdi.[...]
+#
+# This comes from the following line in the file libftdi/python/ftdi1.i:
+#
+#   %rename("%(strip:[ftdi_])s") "";
+#
+# If we have the older version of libFTDI, we need to change the method
+# names here:
+if LIBFTDI_OLD:
     for name in dir(ftdi):
         if name.startswith('ftdi_'):
             newname = name[len('ftdi_'):]
             setattr(ftdi, newname, getattr(ftdi, name))
+
+# Next, we have to account for improved behaviour of some methods:
+#
+# v0.x: read_data(context, *buf, size) -> code
+# v1.0: read_data(context, size) -> [code, buf]
+#
+# This change comes from the following code in ftdi1.i:
+#
+#  %typemap(in,numinputs=1) (unsigned char *buf, int size) %{ $2 = PyInt_AsLong($input);$1 = (unsigned char*)malloc($2*sizeof(char)); %}
+#  %typemap(argout) (unsigned char *buf, int size) %{ if(result<0) $2=0; $result = SWIG_Python_AppendOutput($result, convertString((char*)$1, $2)); free($1); %}
+#      int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
+#  %clear (unsigned char *buf, int size);
+#
+# If we have the older version, we have to redefine the method:
+if LIBFTDI_OLD:
+    def read_data(context, size):
+        buf = '\x00'*size
+        code = ftdi.ftdi_read_data(context, buf, size)
+        result = '' if code < 0 else buf
+        return [code, result]
+    # here we are lucky that the names have changed...
+    ftdi.read_data = read_data
+
+# There are other methods that have changed, but are not needed here,
+# for example:
+#
+# v0.x: 
+#   chunksize_p = ftdi.new_uintp()
+#   ftdi.write_data_get_chunksize(context, chunksize_p)
+# v1.0:
+#   chunksize = ftdi.write_data_get_chunksize(context)[1]
+#
+# v0.x: 
+#   chunksize = ftdi.uintp_value(chunksize_p))
+#   ftdi.write_data_set_chunksize(context, chunksize)
+# v1.0:
+#   ftdi.write_data_set_chunksize(context, chunksize)
+#
+# For more details, get the libFTDI source code and consult python/ftdi1.i
 
 
 #--------------------------------------------------------------------
@@ -52,17 +103,6 @@ class Ftdi:
         self._debug_ftdi = False
         self._debug_out = _debug_out
         self._debug_lock = threading.Lock()
-
-        # how to get and set the write buffer chunk size:
-
-        # libFTDI <1.0:
-        #chunksize_p = ftdi.new_uintp()
-        #ftdi.write_data_get_chunksize(context, chunksize_p)
-        #chunksize = ftdi.uintp_value(chunksize_p))
-        #ftdi.write_data_set_chunksize(context, chunksize)
-        # libFTDI 1.0:
-        #chunksize = ftdi.write_data_get_chunksize(context)[1]
-        #ftdi.write_data_set_chunksize(context, chunksize)
 
     def _debug(self, *text):
         with self._debug_lock:
@@ -128,19 +168,19 @@ class Ftdi:
 
     def _ftdi_read(self, num_bytes, max_iter=None):
         """Read data from the FTDI chip."""
-        buf = chr(0)*num_bytes
+        bytes_left = num_bytes
         bytes_read = []
         iter_left = max_iter
-        while buf:
+        while bytes_left:
             if iter_left == 0:
                 break
-            n = ftdi.read_data(self.ftdic, buf, len(buf))
+            [n, buf] = ftdi.read_data(self.ftdic, bytes_left)
             if n < 0:
                 raise IOError('USB read error (error code %i: %s)'
                               % (n, USB_ERROR_CODE[n]
                                     if n in USB_ERROR_CODE else 'unknown'))
             bytes_read += map(ord, buf[:n])
-            buf = buf[n:]
+            bytes_left -= n
             if iter_left is not None:
                 iter_left -= 1
         if self._debug_ftdi and bytes_read:
