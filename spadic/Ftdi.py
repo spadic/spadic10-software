@@ -1,6 +1,20 @@
 import threading
-import ftdi
-# http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
+
+try:
+    # libFTDI was renamed when version 1.0 was released -- try to get the
+    # newer version first.
+    import ftdi1 as ftdi
+except ImportError:
+    import ftdi
+    # Since libFTDI v0.20, the method names have changed:
+    # The file libftdi/python/ftdi1.i now contains the line
+    # %rename("%(strip:[ftdi_])s") "";
+    # If we have the older version of libFTDI, we change the method names
+    # now, so we are compatible with v1.0:
+    for name in dir(ftdi):
+        if name.startswith('ftdi_'):
+            newname = name[len('ftdi_'):]
+            setattr(ftdi, newname, getattr(ftdi, name))
 
 
 #--------------------------------------------------------------------
@@ -16,6 +30,10 @@ USB_ERROR_CODE = {
 #====================================================================
 # FTDI communication wrapper
 #====================================================================
+
+# libFTDI documentation:
+# http://www.intra2net.com/en/developer/libftdi/documentation/group__libftdi.html
+
 class Ftdi:
     """Wrapper for simple FTDI communication."""
 
@@ -24,12 +42,12 @@ class Ftdi:
     #----------------------------------------------------------------
     def __init__(self, VID=0x0403, PID=0x6010, _debug_out=None):
         """Open USB connection and initialize FTDI context."""
-        context = ftdi.ftdi_new()
-        if not (ftdi.ftdi_usb_open(context, VID, PID) == 0):
-            ftdi.ftdi_free(context)
+        context = ftdi.new()
+        if not (ftdi.usb_open(context, VID, PID) == 0):
+            ftdi.free(context)
             self.ftdic = None
             raise IOError('could not open USB connection!')
-        ftdi.ftdi_set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
+        ftdi.set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
         self._debug_ftdi = False
         self._debug_out = _debug_out
@@ -37,10 +55,14 @@ class Ftdi:
 
         # how to get and set the write buffer chunk size:
 
+        # libFTDI <1.0:
         #chunksize_p = ftdi.new_uintp()
-        #ftdi.ftdi_write_data_get_chunksize(context, chunksize_p)
+        #ftdi.write_data_get_chunksize(context, chunksize_p)
         #chunksize = ftdi.uintp_value(chunksize_p))
-        #ftdi.ftdi_write_data_set_chunksize(context, chunksize)
+        #ftdi.write_data_set_chunksize(context, chunksize)
+        # libFTDI 1.0:
+        #chunksize = ftdi.write_data_get_chunksize(context)[1]
+        #ftdi.write_data_set_chunksize(context, chunksize)
 
     def _debug(self, *text):
         with self._debug_lock:
@@ -58,8 +80,8 @@ class Ftdi:
         self.purge()
         self.reset()
         if self.ftdic is not None:
-            #ftdi.ftdi_set_bitmode(self.ftdic, 0, ftdi.BITMODE_RESET)
-            ftdi.ftdi_free(self.ftdic)
+            #ftdi.set_bitmode(self.ftdic, 0, ftdi.BITMODE_RESET)
+            ftdi.free(self.ftdic)
                     # free -> deinit -> usb_close_internal -> usb_close
         if self._debug_ftdi:
             self._debug("[FTDI] exit")
@@ -67,12 +89,12 @@ class Ftdi:
     def purge(self):
         """Purge all FTDI buffers."""
         if self.ftdic is not None:
-            ftdi.ftdi_usb_purge_buffers(self.ftdic)
+            ftdi.usb_purge_buffers(self.ftdic)
         
     def reset(self):
         """Reset the FTDI chip."""
         if self.ftdic is not None:
-            ftdi.ftdi_usb_reset(self.ftdic)
+            ftdi.usb_reset(self.ftdic)
 
     def reconnect(self):
         """Close and re-open FTDI connection."""
@@ -92,7 +114,7 @@ class Ftdi:
         while bytes_left:
             if iter_left == 0:
                 break
-            n = ftdi.ftdi_write_data(self.ftdic,
+            n = ftdi.write_data(self.ftdic,
                     ''.join(map(chr, bytes_left)), len(bytes_left))
             if n < 0:
                 raise IOError('USB write error (error code %i: %s)'
@@ -112,7 +134,7 @@ class Ftdi:
         while buf:
             if iter_left == 0:
                 break
-            n = ftdi.ftdi_read_data(self.ftdic, buf, len(buf))
+            n = ftdi.read_data(self.ftdic, buf, len(buf))
             if n < 0:
                 raise IOError('USB read error (error code %i: %s)'
                               % (n, USB_ERROR_CODE[n]
