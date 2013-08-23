@@ -11,7 +11,7 @@ from control import SpadicController
 from control.ui import SpadicControlUI
 from message import MessageSplitter, Message
 from registerfile import SpadicRegisterFile
-from server import PORT_BASE, PORT_OFFSET
+from server_ports import PORT_BASE, PORT_OFFSET
 from shiftregister import SPADIC_SR
 
 

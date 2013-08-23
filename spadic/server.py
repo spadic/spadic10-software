@@ -21,8 +21,7 @@ import message
 #    SpadicRFServer  SpadicSRServer
 
 
-PORT_BASE = 45000
-PORT_OFFSET = {"RF": 0, "SR": 1, "DLM": 2, "DATA_A": 3, "DATA_B": 4}
+from server_ports import PORT_BASE, PORT_OFFSET
 
 WNOP = sum((v & m) for (v, m) in [message.preamble['wINF'],
                                   message.infotype['iNOP']])
