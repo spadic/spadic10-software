@@ -1,10 +1,9 @@
-installing system-wide:
+See README for installation requirements.
 
-  $ python setup.py install
+If the requirements are fulfilled, installation is simple:
 
+$ python setup.py install [--user]
 
-installing in single user's home directory:
-
-  $ python setup.py install --user
-
+With --user, the files are copied to ~/.local instead of the system-wide
+default location (probably /usr). Make sure to add ~/.local/bin to PATH.
 
