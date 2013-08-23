@@ -6,6 +6,11 @@ SPADIC 1.0 control software for Susibo/CBMnet readout
 Changes:
 --------
 
+* v1.1.5 (2013-08-23)
+  The installation will not fail if libFTDI is not installed. Only the
+  server part not be available in this case, but the client part can still
+  be used.
+
 * v1.1.2--4 (2013-08-22)
   Improvements in the caching of register file and shift register contents
   in the respective client components, so that configuration changes from
@@ -50,6 +55,7 @@ Requirements:
 
 
 * libFTDI v0.20 or newer with Python bindings
+  (not needed on client-only computers)
 
   Homepage: http://www.intra2net.com/en/developer/libftdi/
 
