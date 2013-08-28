@@ -3,7 +3,10 @@ import matplotlib.animation as animation
 import numpy as np
 import sys
 import threading
+import time
 import Queue
+
+INF = float('inf')
 
 from spadic import SpadicDataClient, SpadicControlClient
 
@@ -13,7 +16,12 @@ class SpadicDataReader:
         self.dataB_client = SpadicDataClient('B', host)
         self.ctrl_client = SpadicControlClient(host)
 
+        self.period = 0.5#100e-3
+
+        # data, mask, expiration date
         self.data_buffer = [Queue.Queue() for _ in range(32)]
+        self.data_expires = [-INF for _ in range(32)]
+        self.last_data = [Queue.Queue(maxsize=1) for _ in range(32)]
         self._stop = threading.Event()
         self.groupA_reader = threading.Thread(name="groupA_reader")
         self.groupB_reader = threading.Thread(name="groupB_reader")
@@ -29,12 +37,23 @@ class SpadicDataReader:
                       'B': self.dataB_client.read_message}[group]
         def read_group_task():
             while not self._stop.is_set():
-                m = readmethod()
+                m = readmethod(timeout=self.period)
+                print m
                 if not m or m.channel_id is None:
+                    self.ctrl_client.send_dlm(11)
+                    print "no data, sent DLM11"
+                    #raw_input()
                     continue
+                t = time.time()
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
+                if t < self.data_expires[c]:
+                    print "data still valid:", t, self.data_expires[c]
+                    continue
                 mask = self.ctrl_client.control.hitlogic.read()['mask']
-                self.data_buffer[c].put((m.data(), mask))
+                self.data_expires[c] = t+self.period
+                self.last_data[c].put((m.data(), mask))
+                print "data expired:", t, self.data_expires[c]
+                print "updated data:", m.data(), mask
         return read_group_task
 
     def __enter__(self):
@@ -64,7 +83,7 @@ class SpadicDataMonitor(SpadicDataReader):
                        'frames':    self.gen,
                        'init_func': self.plot_init,
                        'blit':      False,
-                       'interval':  1,
+                       'interval':  self.period,
                        'repeat':    False}
         ani = animation.FuncAnimation(self.fig, **ani_options)
         print "Press CTRL-C to exit."
@@ -87,11 +106,14 @@ class SpadicDataMonitor(SpadicDataReader):
         channel = 31
         while True:
             try:
-                (y, mask) = self.data_buffer[channel].get(timeout=1)
+                print "reading data"
+                (y, mask) = self.last_data[channel].get(timeout=self.period)
             except Queue.Empty:
+                print "no data"
                 continue
             except KeyboardInterrupt:
                 break
+            print "got", y, mask
             x = mask_to_x(mask)
             yield (x, y)
 
