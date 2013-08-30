@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore
+import Queue
 import sys
 import threading
 import time
-import Queue
 
 INF = float('inf')
 
@@ -16,7 +18,7 @@ class SpadicDataReader:
         self.dataB_client = SpadicDataClient('B', host)
         self.ctrl_client = SpadicControlClient(host)
 
-        self.period = 100e-3
+        self.period = 25-3#100e-3
         self.dlm_sent = False
 
         # data, mask, expiration date
@@ -40,7 +42,7 @@ class SpadicDataReader:
             while not self._stop.is_set():
                 m = readmethod(timeout=self.period)
                 if not m or m.channel_id is None:
-                    self.ctrl_client.send_dlm(11)
+                    #self.ctrl_client.send_dlm(11)
                     self.dlm_sent = True
                     continue
                 t = time.time()
@@ -83,16 +85,32 @@ def mask_to_x(mask):
 class SpadicDataMonitor(SpadicDataReader):
     def __init__(self, host):
         SpadicDataReader.__init__(self, host)
-        self.fig = plt.figure()
-        ani_options = {'func':      self.plot_last,
-                       'frames':    self.gen,
-                       'init_func': self.plot_init,
-                       'blit':      False,
-                       'interval':  1, # milliseconds!
-                       'repeat':    False}
-        ani = animation.FuncAnimation(self.fig, **ani_options)
-        print "Press CTRL-C to exit."
-        self.fig.show()
+        #self.fig = plt.figure()
+        #ani_options = {'func':      self.plot_last,
+        #               'frames':    self.gen,
+        #               'init_func': self.plot_init,
+        #               'blit':      False,
+        #               'interval':  1, # milliseconds!
+        #               'repeat':    False}
+        #ani = animation.FuncAnimation(self.fig, **ani_options)
+        #print "Press CTRL-C to exit."
+        #self.fig.show()
+
+        self.app = QtGui.QApplication([])
+        self.win = pg.GraphicsWindow()#title="Basic plotting examples")
+        self.win.resize(1000,600)
+        self.win.setWindowTitle("SPADIC Data Monitor")
+
+        self.plot = self.win.addPlot()
+        self.curve = self.plot.plot(pen="y")
+        
+
+    def run(self):
+        #QtGui.QApplication.instance().exec_()
+        timer = QtCore.QTimer()
+        timer.timeout.connect(self.gen)
+        timer.start(10)
+        self.app.exec_()
 
     def plot_init(self):
         """Initialize the plot."""
@@ -109,15 +127,16 @@ class SpadicDataMonitor(SpadicDataReader):
     def gen(self):
         """Fetch the latest data."""
         channel = 31
-        while True:
-            try:
-                (y, mask) = self.last_data[channel].get(timeout=self.period)
-            except Queue.Empty:
-                continue
-            except KeyboardInterrupt:
-                break
-            x = mask_to_x(mask)
-            yield (x, y)
+        try:
+            (y, mask) = self.last_data[channel].get(block=False)#timeout=self.period)
+        except Queue.Empty:
+            return
+        #except KeyboardInterrupt:
+        #    break
+        x = mask_to_x(mask)
+        #yield (x, y)
+        self.curve.setData(x, y)
+        print self.curve.yData
 
     def plot_last(self, data):
         """Plot the latest data and discard old data."""
@@ -147,5 +166,5 @@ class SpadicDataMonitor(SpadicDataReader):
 if __name__=='__main__':
     host = sys.argv[sys.argv.index('--host')+1]
     with SpadicDataMonitor(host) as mon:
-        pass
+        mon.run()
 
