@@ -44,12 +44,10 @@ class SpadicDataReader:
                 if not m or m.channel_id is None:
                     #self.ctrl_client.send_dlm(11)
                     #self.dlm_sent = True
-                    print "reader: no data"
                     continue
                 t = time.time()
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
                 if t < self.data_expires[c]:
-                    print "reader: data still valid"
                     continue
                 mask = self.ctrl_client.control.hitlogic.read()['mask']
                 if self.dlm_sent:
@@ -63,7 +61,6 @@ class SpadicDataReader:
                     except Queue.Empty:
                         pass
                 self.last_data[c].put((m.data(), mask))
-                print "reader: put data"
         return read_group_task
 
     def __enter__(self):
@@ -89,57 +86,43 @@ class SpadicDataMonitor:
     def __init__(self, spadic_data_reader):
         self.reader = spadic_data_reader
         self.period = 10e-3
-        #self.fig = plt.figure()
-        #ani_options = {'func':      self.plot_last,
-        #               'frames':    self.gen,
-        #               'init_func': self.plot_init,
-        #               'blit':      False,
-        #               'interval':  1, # milliseconds!
-        #               'repeat':    False}
-        #ani = animation.FuncAnimation(self.fig, **ani_options)
-        #print "Press CTRL-C to exit."
-        #self.fig.show()
 
-        self.app = QtGui.QApplication([])
-        self.win = pg.GraphicsWindow()#title="Basic plotting examples")
+        # set white background mode (must be done at the beginning)
+        pg.setConfigOption('background', 'w')
+        pg.setConfigOption('foreground', 'k')
+
+        # create window
+        self.win = pg.GraphicsWindow()
         self.win.resize(1000,600)
         self.win.setWindowTitle("SPADIC Data Monitor")
 
+        # create plot and set drawing options
         self.plot = self.win.addPlot()
-        self.curve = self.plot.plot(pen="y")
+        self.plot.setRange(xRange=(0, 31), yRange=(-256, 256),
+                           disableAutoRange=True)
+        def tickspacing(minval, maxval, size):
+            return [(128, 0), (64, 0), (32, 0)]
+        self.plot.getAxis('left').tickSpacing = tickspacing
+        self.plot.showGrid(x=True, y=True, alpha=0.2)
+
+        self.curve = self.plot.plot(pen='r')
         
 
     def run(self):
-        #QtGui.QApplication.instance().exec_()
         timer = QtCore.QTimer()
         timer.timeout.connect(self.gen)
         timer.start(self.period*1000) # milliseconds
-        self.app.exec_()
+        QtGui.QApplication.instance().exec_()
 
-    #def plot_init(self):
-    #    """Initialize the plot."""
-    #    self.ax = self.fig.add_subplot(111)
-    #    self.ax.set_ylim(-256, 256)
-    #    self.ax.set_yticks(np.linspace(-256, 256, 9))
-    #    self.ax.set_xlim(0, 32)
-    #    self.ax.set_xticks(np.linspace(0, 32, 9))
-    #    self.ax.grid(True)
-    #    self.lines = self.ax.plot([], [])
-    #    # not sure if this is needed and what it does
-    #    #return self.ax.lines
 
     def gen(self):
         """Fetch the latest data."""
         channel = 31
         try:
-            (y, mask) = self.reader.last_data[channel].get(block=False)#timeout=self.period)
+            (y, mask) = self.reader.last_data[channel].get(block=False)
         except Queue.Empty:
-            print "monitor: no data"
             return
-        #except KeyboardInterrupt:
-        #    break
         x = mask_to_x(mask)
-        #yield (x, y)
         self.curve.setData(x, y)
 
     #def plot_last(self, data):
@@ -172,4 +155,5 @@ if __name__=='__main__':
     with SpadicDataReader(host) as reader:
         mon = SpadicDataMonitor(reader)
         mon.run()
+        print "monitor finished"
 
