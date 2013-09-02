@@ -130,14 +130,16 @@ class SpadicController:
         sr_values = {}
         values = {'RF': rf_values, 'SR': sr_values}
         for line in f:
-            if not mode:
-                if '# Register file' in line:
-                    mode = 'RF'
+            if '# Register file' in line:
+                mode = 'RF'
+            elif '# Shift register' in line:
+                mode = 'SR'
             else:
-                if '# Shift register' in line:
-                    mode = 'SR'
-                elif line.strip() and not line.startswith('#'):
-                    [name, value_str] = line.split()
+                if not mode:
+                    continue
+                content = line.partition('#')[0]
+                if content.strip():
+                    [name, value_str] = content.split()
                     value = int(value_str, 0)
                     values[mode][name] = value
         self.registerfile.set(rf_values)
