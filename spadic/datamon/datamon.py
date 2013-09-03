@@ -18,7 +18,7 @@ class SpadicDataReader:
         self.dataB_client = SpadicDataClient('B', host)
         self.ctrl_client = SpadicControlClient(host)
 
-        self.period = 25-3#100e-3
+        self.period = 25e-3#100e-3
         self.dlm_sent = False
 
         # data, mask, expiration date
@@ -93,20 +93,30 @@ class SpadicDataMonitor:
 
         # create window
         self.win = pg.GraphicsWindow()
-        self.win.resize(1000,600)
+        self.win.resize(400,300)
         self.win.setWindowTitle("SPADIC Data Monitor")
 
         # create plot and set drawing options
         self.plot = self.win.addPlot()
-        self.plot.setRange(xRange=(0, 31), yRange=(-256, 256),
+        self.plot.setRange(xRange=(0, 32), yRange=(-256, 256),
                            disableAutoRange=True)
-        def tickspacing(minval, maxval, size):
+        def ytickspacing(minval, maxval, size):
             return [(128, 0), (64, 0), (32, 0)]
-        self.plot.getAxis('left').tickSpacing = tickspacing
+        def xtickspacing(minval, maxval, size):
+            return [(8, 0), (4, 0), (1, 0)]
+        self.plot.getAxis('left').tickSpacing = ytickspacing
+        self.plot.getAxis('bottom').tickSpacing = xtickspacing
         self.plot.showGrid(x=True, y=True, alpha=0.2)
 
-        self.curve = self.plot.plot(pen='r')
-        
+        self.curves = []
+        for i in reversed(range(10)):
+            curve = self.plot.plot(antialias=True)
+            if i == 0:
+                curve.setPen(width=2, color='r')
+            else:
+                curve.setPen(width=1, color=i*0.1)
+            self.curves.insert(0, curve)
+        self.data = []
 
     def run(self):
         timer = QtCore.QTimer()
@@ -123,31 +133,9 @@ class SpadicDataMonitor:
         except Queue.Empty:
             return
         x = mask_to_x(mask)
-        self.curve.setData(x, y)
-
-    #def plot_last(self, data):
-    #    """Plot the latest data and discard old data."""
-    #    # keep the 9 latest lines
-    #    self.lines = self.lines[:9]
-    #    for (i, line) in enumerate(self.lines):
-    #        line.set_color([i*0.1]*3) # newer = darker
-    #        line.set_linewidth(1)
-    #    # plot the newest data
-    #    x, y = data
-    #    if len(x) != len(y):
-    #        L = min(len(x), len(y))
-    #        x = x[:L]
-    #        y = y[:L]
-    #    newline = plt.Line2D(x, y)
-    #    newline.set_color([0.8, 0.1, 0.1])
-    #    newline.set_linewidth(2)
-    #    self.lines.insert(0, newline)
-    #    # update plot
-    #    self.ax.lines = []
-    #    for line in reversed(self.lines): # oldest first, newest last
-    #        self.ax.add_line(line)
-    #    # not sure if this is needed and what it does
-    #    #return self.ax.lines
+        self.data = [(x, y)] + self.data[:9]
+        for (i, data) in enumerate(self.data):
+            self.curves[i].setData(*data)
 
 
 if __name__=='__main__':
@@ -155,5 +143,4 @@ if __name__=='__main__':
     with SpadicDataReader(host) as reader:
         mon = SpadicDataMonitor(reader)
         mon.run()
-        print "monitor finished"
 
