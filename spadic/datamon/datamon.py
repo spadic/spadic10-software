@@ -48,7 +48,7 @@ class SpadicDataReader:
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
                 if t < self.data_expires[c]:
                     continue # data not yet expired
-                self.data_expires[c] += self._period
+                self.data_expires[c] = t + self._period
                 mask = self.ctrl_client.control.hitlogic.read()['mask']
                 if self.last_data[c].full():
                     try:
