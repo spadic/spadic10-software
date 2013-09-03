@@ -12,12 +12,12 @@ INF = float('inf')
 
 from spadic import SpadicDataClient, SpadicControlClient
 
-class SpadicDataReader:
+class SpadicDataMonitor:
     """
     Continuously reads data, discarding any messages that come faster than
     the specified rate.
     """
-    def __init__(self, host, rate=40):
+    def __init__(self, host, rate=60):
         self.dataA_client = SpadicDataClient('A', host)
         self.dataB_client = SpadicDataClient('B', host)
         self.ctrl_client = SpadicControlClient(host)
@@ -81,10 +81,12 @@ def mask_to_x(mask):
     """
     return [31-i for i in reversed(range(32)) if (mask>>i)&1]
 
-class SpadicDataMonitor:
-    def __init__(self, spadic_data_reader, channel=0):
-        self.reader = spadic_data_reader
-        self.period = 10e-3
+class SpadicScope:
+    """
+    Visualization of SpadicDataMonitor output.
+    """
+    def __init__(self, spadic_data_monitor, channel=0):
+        self.monitor = spadic_data_monitor
         self.channel = channel
 
         # set white background mode (must be done at the beginning)
@@ -121,14 +123,14 @@ class SpadicDataMonitor:
     def run(self):
         timer = QtCore.QTimer()
         timer.timeout.connect(self.gen)
-        timer.start(self.period*1000) # milliseconds
+        timer.start(self.monitor._period*1000) # milliseconds
         QtGui.QApplication.instance().exec_()
 
 
     def gen(self):
         """Fetch the latest data."""
         try:
-            (y, mask) = self.reader.get_last_data(self.channel, block=False)
+            (y, mask) = self.monitor.get_last_data(self.channel, block=False)
         except Queue.Empty:
             return
         x = mask_to_x(mask)
@@ -139,7 +141,7 @@ class SpadicDataMonitor:
 
 if __name__=='__main__':
     host = sys.argv[sys.argv.index('--host')+1]
-    with SpadicDataReader(host) as reader:
-        mon = SpadicDataMonitor(reader, channel=31)
-        mon.run()
+    with SpadicDataMonitor(host) as mon:
+        scope = SpadicScope(mon, channel=31)
+        scope.run()
 
