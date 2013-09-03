@@ -13,13 +13,16 @@ INF = float('inf')
 from spadic import SpadicDataClient, SpadicControlClient
 
 class SpadicDataReader:
-    def __init__(self, host):
+    """
+    Continuously reads data, discarding any messages that come faster than
+    the specified rate.
+    """
+    def __init__(self, host, rate=40):
         self.dataA_client = SpadicDataClient('A', host)
         self.dataB_client = SpadicDataClient('B', host)
         self.ctrl_client = SpadicControlClient(host)
 
-        self.period = 25e-3#100e-3
-        self.dlm_sent = False
+        self._period = 1.0/rate
 
         # data, mask, expiration date
         self.data_buffer = [Queue.Queue() for _ in range(32)]
@@ -30,8 +33,6 @@ class SpadicDataReader:
         self.groupB_reader = threading.Thread(name="groupB_reader")
         self.groupA_reader.run = self._read_group_task('A')
         self.groupB_reader.run = self._read_group_task('B')
-        self.groupA_reader.daemon = True
-        self.groupB_reader.daemon = True
         self.groupA_reader.start()
         self.groupB_reader.start()
 
@@ -40,21 +41,15 @@ class SpadicDataReader:
                       'B': self.dataB_client.read_message}[group]
         def read_group_task():
             while not self._stop.is_set():
-                m = readmethod(timeout=self.period)
-                if not m or m.channel_id is None:
-                    #self.ctrl_client.send_dlm(11)
-                    #self.dlm_sent = True
-                    continue
+                m = readmethod(timeout=self._period)
                 t = time.time()
+                if not m or m.channel_id is None:
+                    continue
                 c = m.channel_id + {'A': 0, 'B': 16}[group]
                 if t < self.data_expires[c]:
-                    continue
+                    continue # data not yet expired
+                self.data_expires[c] += self._period
                 mask = self.ctrl_client.control.hitlogic.read()['mask']
-                if self.dlm_sent:
-                    self.data_expires[c] = t
-                    self.dlm_sent = False
-                else:
-                    self.data_expires[c] += self.period
                 if self.last_data[c].full():
                     try:
                         self.last_data[c].get(block=False)
@@ -72,6 +67,10 @@ class SpadicDataReader:
         for t in [self.groupA_reader, self.groupB_reader]:
             while t.is_alive():
                 t.join(timeout=1)
+
+    def get_last_data(self, channel, **queue_args):
+        """Get the latest data of one channel."""
+        return self.last_data[channel].get(**queue_args)
 
 
 def mask_to_x(mask):
@@ -129,7 +128,7 @@ class SpadicDataMonitor:
         """Fetch the latest data."""
         channel = 31
         try:
-            (y, mask) = self.reader.last_data[channel].get(block=False)
+            (y, mask) = self.reader.get_last_data(self.channel, block=False)
         except Queue.Empty:
             return
         x = mask_to_x(mask)
