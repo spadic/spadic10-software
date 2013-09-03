@@ -150,7 +150,7 @@ class SpadicScope:
         return ([t-xcorr for t in x], y)
 
     def update_data(self):
-        """Fetch the latest data."""
+        """Display the latest data."""
         try:
             (y, mask) = self.monitor.get_last_data(self.channel, block=False)
         except Queue.Empty:
