@@ -122,12 +122,12 @@ class SpadicScope:
 
     def run(self):
         timer = QtCore.QTimer()
-        timer.timeout.connect(self.gen)
+        timer.timeout.connect(self.update_data)
         timer.start(self.monitor._period*1000) # milliseconds
         QtGui.QApplication.instance().exec_()
 
 
-    def gen(self):
+    def update_data(self):
         """Fetch the latest data."""
         try:
             (y, mask) = self.monitor.get_last_data(self.channel, block=False)
