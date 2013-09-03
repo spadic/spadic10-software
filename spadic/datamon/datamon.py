@@ -82,9 +82,10 @@ def mask_to_x(mask):
     return [31-i for i in reversed(range(32)) if (mask>>i)&1]
 
 class SpadicDataMonitor:
-    def __init__(self, spadic_data_reader):
+    def __init__(self, spadic_data_reader, channel=0):
         self.reader = spadic_data_reader
         self.period = 10e-3
+        self.channel = channel
 
         # set white background mode (must be done at the beginning)
         pg.setConfigOption('background', 'w')
@@ -126,7 +127,6 @@ class SpadicDataMonitor:
 
     def gen(self):
         """Fetch the latest data."""
-        channel = 31
         try:
             (y, mask) = self.reader.get_last_data(self.channel, block=False)
         except Queue.Empty:
@@ -140,6 +140,6 @@ class SpadicDataMonitor:
 if __name__=='__main__':
     host = sys.argv[sys.argv.index('--host')+1]
     with SpadicDataReader(host) as reader:
-        mon = SpadicDataMonitor(reader)
+        mon = SpadicDataMonitor(reader, channel=31)
         mon.run()
 
