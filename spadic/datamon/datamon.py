@@ -12,6 +12,7 @@ INF = float('inf')
 
 from spadic import SpadicDataClient, SpadicControlClient
 
+
 class SpadicDataMonitor:
     """
     Continuously reads data, discarding any messages that come faster than
@@ -81,6 +82,7 @@ def mask_to_x(mask):
     """
     return [31-i for i in reversed(range(32)) if (mask>>i)&1]
 
+
 class SpadicScope:
     """
     Visualization of SpadicDataMonitor output.
@@ -125,7 +127,6 @@ class SpadicScope:
         timer.timeout.connect(self.update_data)
         timer.start(self.monitor._period*1000) # milliseconds
         QtGui.QApplication.instance().exec_()
-
 
     def update_data(self):
         """Fetch the latest data."""
