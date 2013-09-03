@@ -6,6 +6,14 @@ SPADIC 1.0 control software for Susibo/CBMnet readout
 Changes:
 --------
 
+* v1.1.6 (2013-09-02)
+  Added a new package spadic.tools, which contains SpadicDataMonitor and
+  SpadicScope. SpadicDataMonitor reads all the data and discards all
+  messages coming in faster than a specified rate. This way, the data
+  output can be monitored without having to consume each message.
+  SpadicScope is a data plotting tools based on Qt (pyqtgraph) which uses
+  SpadicDataMonitor.
+
 * v1.1.5 (2013-08-23)
   The installation will not fail if libFTDI is not installed. Only the
   server part not be available in this case, but the client part can still
