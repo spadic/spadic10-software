@@ -9,7 +9,12 @@ setup(name='spadic',
       author='Michael Krieger',
       author_email='michael.krieger@ziti.uni-heidelberg.de',
       url='http://spadic.uni-hd.de',
-      packages=['spadic', 'spadic.control', 'spadic.control.ui', 'spadic.tools'],
-      scripts=['spadic_control', 'spadic_server', 'spadic_scope'],
-      )
+      packages=['spadic',
+                'spadic.control',
+                'spadic.control.ui',
+                'spadic.tools'],
+      scripts=['scripts/spadic_control',
+               'scripts/spadic_server',
+               'scripts/spadic_scope'],
+     )
 
