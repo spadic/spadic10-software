@@ -6,7 +6,7 @@ SPADIC 1.0 control software for Susibo/CBMnet readout
 Changes:
 --------
 
-* v1.1.6 (2013-09-02)
+* v1.1.6 (2013-09-03)
   Added a new package spadic.tools, which contains SpadicDataMonitor and
   SpadicScope. SpadicDataMonitor reads all the data and discards all
   messages coming in faster than a specified rate. This way, the data
