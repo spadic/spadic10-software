@@ -43,6 +43,9 @@ class SpadicScope:
         self.plot.getAxis('bottom').tickSpacing = xtickspacing
         self.plot.showGrid(x=True, y=True, alpha=0.2)
 
+        c = self.plot.plot(antialias=True)
+        c.setPen(width=1, color='b')
+        self.curve_res = c
         self.curves = []
         for i in reversed(range(10)):
             curve = self.plot.plot(antialias=True)
@@ -79,6 +82,9 @@ class SpadicScope:
         popt, _ = scipy.optimize.curve_fit(self.model, x, y, p0=[100, 0, 0, 2])
         print popt
         xcorr = popt[1]-x0
+        fit = self.model(x, *popt)
+        res = np.array(y)-fit
+        self.curve_res.setData([t-xcorr for t in x], res)
         return ([t-xcorr for t in x], y)
 
     def update_data(self):
