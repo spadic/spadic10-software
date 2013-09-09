@@ -79,7 +79,7 @@ class SpadicScope:
         function). By default, the rise of the pulse is moved to position 2.
         """
         x, y = data
-        popt, _ = scipy.optimize.curve_fit(self.model, x, y, p0=[100, 0, 0, 2])
+        popt, _ = scipy.optimize.curve_fit(self.model, x, y, p0=[200, 2, -100, 2])
         print popt
         xcorr = popt[1]-x0
         fit = self.model(x, *popt)
