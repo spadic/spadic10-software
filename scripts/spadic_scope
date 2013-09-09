@@ -6,12 +6,15 @@ from spadic.tools import SpadicDataMonitor, SpadicScope
 
 
 host = sys.argv[sys.argv.index('--host')+1]
+
 try:
     ch = int(sys.argv[sys.argv.index('--ch')+1])
 except ValueError:
     ch = 31
 
+nofit = '--nofit' in sys.argv
+
 with SpadicDataMonitor(host) as mon:
-    scope = SpadicScope(mon, channel=ch)
+    scope = SpadicScope(mon, channel=ch, fit=(not nofit))
     scope.run()
 

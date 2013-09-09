@@ -18,9 +18,10 @@ class SpadicScope:
     """
     Visualization of SpadicDataMonitor output.
     """
-    def __init__(self, spadic_data_monitor, channel=0):
+    def __init__(self, spadic_data_monitor, channel=0, fit=True):
         self.monitor = spadic_data_monitor
         self.channel = channel
+        self.fit = fit
 
         # set white background mode (must be done at the beginning)
         pg.setConfigOption('background', 'w')
@@ -94,7 +95,8 @@ class SpadicScope:
         except Queue.Empty:
             return
         x = mask_to_x(mask)
-        self.data = [self.correct_jitter((x, y))] + self.data[:9]
+        newdata = self.correct_jitter((x, y)) if self.fit else (x, y)
+        self.data = [newdata] + self.data[:9]
         for (i, data) in enumerate(self.data):
             self.curves[i].setData(*data)
 
