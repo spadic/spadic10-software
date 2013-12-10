@@ -6,6 +6,10 @@ SPADIC 1.0 control software for Susibo/CBMnet readout
 Changes:
 --------
 
+* v1.1.7 (2013-12-10)
+  The fit residual is now plotted in SpadicScope. Added the option to set
+  the number of samples used for fitting (0 turns fitting off).
+
 * v1.1.6 (2013-09-03)
   Added a new package spadic.tools, which contains SpadicDataMonitor and
   SpadicScope. SpadicDataMonitor reads all the data and discards all
