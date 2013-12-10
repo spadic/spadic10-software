@@ -7,14 +7,24 @@ from spadic.tools import SpadicDataMonitor, SpadicScope
 
 host = sys.argv[sys.argv.index('--host')+1]
 
-try:
-    ch = int(sys.argv[sys.argv.index('--ch')+1])
-except ValueError:
-    ch = 31
+# Optional arguments for SpadicScope are collected in this dictionary.
+# If they are not passed from the command line, they are left out of the
+# dictionary and the default behaviour of SpadicScope is used.
+options = {}
 
-nofit = '--nofit' in sys.argv
+# which channel to display
+try:
+    options['channel'] = int(sys.argv[sys.argv.index('--ch')+1])
+except ValueError:
+    pass
+
+# how many samples to use for fitting
+try:
+    options['fit'] = int(sys.argv[sys.argv.index('--fit')+1])
+except ValueError:
+    pass
 
 with SpadicDataMonitor(host) as mon:
-    scope = SpadicScope(mon, channel=ch, fit=(not nofit))
+    scope = SpadicScope(mon, **options)
     scope.run()
 

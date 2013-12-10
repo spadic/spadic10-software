@@ -18,9 +18,9 @@ class SpadicScope:
     """
     Visualization of SpadicDataMonitor output.
     """
-    def __init__(self, spadic_data_monitor, channel=0, fit=True):
+    def __init__(self, spadic_data_monitor, channel=31, fit=0):
         self.monitor = spadic_data_monitor
-        self.channel = channel
+        self.channel = channel # channel 31 has injection
         self.fit = fit
 
         # set white background mode (must be done at the beginning)
@@ -79,8 +79,12 @@ class SpadicScope:
         Detect and move the rise of the pulse (b parameter in the model
         function). By default, the rise of the pulse is moved to position 2.
         """
+        if not self.fit:
+            return data
         x, y = data
-        popt, _ = scipy.optimize.curve_fit(self.model, x, y, p0=[200, 2, -100, 2])
+        xfit = x[:self.fit]
+        yfit = y[:self.fit]
+        popt, _ = scipy.optimize.curve_fit(self.model, xfit, yfit, p0=[200, 2, -100, 2])
         print popt
         xcorr = popt[1]-x0
         fit = self.model(x, *popt)
@@ -94,8 +98,8 @@ class SpadicScope:
             (y, mask) = self.monitor.get_last_data(self.channel, block=False)
         except Queue.Empty:
             return
-        x = mask_to_x(mask)
-        newdata = self.correct_jitter((x, y)) if self.fit else (x, y)
+        x = mask_to_x(mask)[:len(y)]
+        newdata = self.correct_jitter((x, y))
         self.data = [newdata] + self.data[:9]
         for (i, data) in enumerate(self.data):
             self.curves[i].setData(*data)
