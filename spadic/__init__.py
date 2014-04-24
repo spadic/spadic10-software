@@ -20,5 +20,5 @@ from client import SpadicControlClient, SpadicDataClient
 del client
 __all__ += ['SpadicControlClient', 'SpadicDataClient']
 
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 
