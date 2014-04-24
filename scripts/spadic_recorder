@@ -66,11 +66,12 @@ usage:
     --num   number of data messages to record
 
   flags:
-    --dlm-trigger  use DLM force trigger (must be enabled for the selected
-                   channel in column 5 in pages 3/4 of spadic_control)
+    --dlm-trigger  if the flag is given, use DLM force trigger (must be
+                   enabled for the selected channel in column 5 in pages
+                   3/4 of spadic_control)
 
 example:
-  spadic_recorder --host mycomputer --ch 31 --num 100 --out data.txt
+  spadic_recorder --host mycomputer --ch 31 --num 100 > data.txt
 """
 
 if __name__=='__main__':
@@ -80,7 +81,6 @@ if __name__=='__main__':
         host     =     get_option('--host')
         channel  = int(get_option('--ch'))
         num      = int(get_option('--num'))
-        filename =     get_option('--out')
     except OptionError as err:
         raise SystemExit(str(err)+'\n'+usage_str)
     dlm_trigger = '--dlm-trigger' in sys.argv
@@ -92,7 +92,6 @@ if __name__=='__main__':
     # At this point, you have the data contained in the list named
     # "pulses", you can do whatever you want with it. Here we simply write
     # the data to stdout (one pulse per line).
-    with open(filename, 'w') as f:
-        for p in pulses:
-            print, ' '.join([str(x) for x in p])
+    for p in pulses:
+        print ' '.join([str(x) for x in p])
     
