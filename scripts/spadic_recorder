@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+import gzip
+import Queue
+import sys
+import spadic.tools
+import spadic
+
+
+def get_option(argv, name):
+    return argv[argv.index(name)+1]
+
+
+def stdout(d):
+    sys.stdout.write(d)
+    sys.stdout.flush()
+
+
+def record(monitor, channel, n, ctrl_client, dlm_trigger=False):
+    try:
+        pulse, mask = monitor.get_last_data(channel, block=False)
+    except Queue.Empty:
+        pass
+    # now any old data is gone
+    pulses = []
+    for i in range(n):
+        if dlm_trigger:
+            ctrl_client.send_dlm(11)
+        pulse, mask = monitor.get_last_data(channel)
+        stdout('.')
+        pulses.append(pulse)
+    stdout('\n')
+    return pulses
+
+
+if __name__=='__main__':
+    host     =     get_option(sys.argv, '--host')
+    channel  = int(get_option(sys.argv, '--ch'))
+    num      = int(get_option(sys.argv, '--num'))
+    filename =     get_option(sys.argv, '--out')
+    dlm_trigger = '--dlm-trigger' in sys.argv
+
+    with spadic.tools.SpadicDataMonitor(host) as mon:
+        with spadic.SpadicControlClient(host) as ctrl:
+            pulses = record(mon, channel, num, ctrl, dlm_trigger)
+
+    with gzip.open(filename, 'w') as f:
+        for p in pulses:
+            f.write(' '.join(map(str, p))+'\n')
+    
