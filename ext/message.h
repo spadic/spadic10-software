@@ -59,5 +59,8 @@ static struct Pattern hSAN = {0x0030, 0x0030};
 
 // functions
 int match_word(uint16_t w, struct Pattern p);
+uint16_t* seek_message_start(uint16_t* begin, uint16_t* end);
+size_t seek_message_start_all(uint16_t* begin, uint16_t* end);
+size_t seek_message_start_all_wrap(uint16_t* begin, size_t length);
 
 #endif

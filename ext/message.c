@@ -1,35 +1,42 @@
-#include <stdio.h>
+#include <stddef.h>
 #include "message.h"
 
-int match_word(uint16_t w, struct Pattern p)
+#include <stdio.h>
+
+int match_word(uint16_t w, struct Pattern t)
 {
-    return (w & p.mask) == p.value;
+    return (w & t.mask) == t.value;
 }
 
-// test
-int main(void)
+uint16_t* seek_message_start(uint16_t* begin, uint16_t* end)
 {
-    uint16_t word[10] = {
-      0x8343,
-      0x8343,
-      0x6303,
-      0x5303,
-      0x8503,
-      0x8503,
-      0xB543,
-      0xA543,
-      0x7543,
-      0x8543
-    };
-
-    int i;
-    for (i=0; i<10; i++) {
-        int result = match_word(word+i, wSOM);
-        if (result)
-            printf("success.\n");
-        else
-            printf("fail.\n");
+    uint16_t* p;
+    for (p=begin; p<end; p++) {
+        printf("word %i: %04X\n", p-begin, *p);
+        if (match_word(*p, wSOM)) {
+            printf("HIT\n");
+            goto exit;
+        }
     }
+    printf("NO hit\n");
+    exit:
 
-    return 0;
+    return p+1;
+}
+
+size_t seek_message_start_all(uint16_t* begin, uint16_t* end)
+{
+    size_t count = 0;
+    uint16_t* p = begin;
+    while (p<end) {
+        printf("p: %i\n", p);
+        p = seek_message_start(p, end);
+        count++;
+    }
+    return count;
+}
+
+size_t seek_message_start_all_wrap(uint16_t* begin, size_t length)
+{
+    return seek_message_start_all(begin, (uint16_t*)(begin+length));
 }

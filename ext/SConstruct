@@ -1,1 +1,4 @@
-Program('message.c')
+# ex: syntax=python
+
+Program('test_message', ['message.c', 'test.c'])
+SharedLibrary(['message.c'])
