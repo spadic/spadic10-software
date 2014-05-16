@@ -1,36 +1,36 @@
-#include <stddef.h>
 #include "message.h"
+#include "message_int.h"
 
 #include <stdio.h>
 
-int match_word(uint16_t w, struct Pattern t)
+int has_preamble(uint16_t w, struct Preamble p)
 {
-    return (w & t.mask) == t.value;
+    return (w & p.mask) == p.value;
 }
 
 uint16_t* seek_message_start(uint16_t* begin, uint16_t* end)
 {
-    uint16_t* p;
-    for (p=begin; p<end; p++) {
-        printf("word %i: %04X\n", p-begin, *p);
-        if (match_word(*p, wSOM)) {
+    uint16_t* pw;
+    for (pw=begin; pw<end; pw++) {
+        printf("word %i: %04X\n", pw-begin, *pw);
+        if (has_preamble(*pw, wSOM)) {
             printf("HIT\n");
             goto exit;
         }
     }
-    printf("NO hit\n");
+    printf("NO HIT\n");
     exit:
 
-    return p+1;
+    return pw+1;
 }
 
 size_t seek_message_start_all(uint16_t* begin, uint16_t* end)
 {
     size_t count = 0;
-    uint16_t* p = begin;
-    while (p<end) {
-        printf("p: %i\n", p);
-        p = seek_message_start(p, end);
+    uint16_t* pw = begin;
+    while (pw<end) {
+        printf("pw: %i\n", pw);
+        pw = seek_message_start(pw, end);
         count++;
     }
     return count;
