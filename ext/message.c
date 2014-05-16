@@ -3,14 +3,14 @@
 
 #include <stdio.h>
 
-int has_preamble(uint16_t w, struct Preamble p)
+int has_preamble(unsigned short w, struct Preamble p)
 {
     return (w & p.mask) == p.value;
 }
 
-uint16_t* seek_message_start(uint16_t* begin, uint16_t* end)
+unsigned short* read_message(unsigned short* begin, unsigned short* end)
 {
-    uint16_t* pw;
+    unsigned short* pw;
     for (pw=begin; pw<end; pw++) {
         printf("word %i: %04X\n", pw-begin, *pw);
         if (has_preamble(*pw, wSOM)) {
@@ -24,19 +24,19 @@ uint16_t* seek_message_start(uint16_t* begin, uint16_t* end)
     return pw+1;
 }
 
-size_t seek_message_start_all(uint16_t* begin, uint16_t* end)
+int seek_message_start_all(unsigned short* begin, unsigned short* end)
 {
-    size_t count = 0;
-    uint16_t* pw = begin;
+    int count = 0;
+    unsigned short* pw = begin;
     while (pw<end) {
-        printf("pw: %i\n", pw);
-        pw = seek_message_start(pw, end);
+        printf("pw: %u\n", (int)pw&0xFF);
+        pw = read_message(pw, end);
         count++;
     }
     return count;
 }
 
-size_t seek_message_start_all_wrap(uint16_t* begin, size_t length)
+int seek_message_start_all_wrap(unsigned short* begin, unsigned int length)
 {
-    return seek_message_start_all(begin, (uint16_t*)(begin+length));
+    return seek_message_start_all(begin, begin+length);
 }

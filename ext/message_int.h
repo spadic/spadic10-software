@@ -1,8 +1,8 @@
 #include <stdint.h>
 
 struct Preamble {
-    uint16_t value;
-    uint16_t mask;
+    unsigned short value;
+    unsigned short mask;
 };
 
 static const struct Preamble wSOM = {0x8000, 0xF000}; // start of message
@@ -15,12 +15,12 @@ static const struct Preamble wEXD = {0xE000, 0xF000}; // extracted data
 static const struct Preamble wINF = {0xF000, 0xF000}; // information 
 static const struct Preamble wCON = {0x0000, 0x8000}; // continuation preamble
 
-static int has_preamble(uint16_t w, struct Preamble p);
+static int has_preamble(unsigned short w, struct Preamble p);
 
 
 struct Field {
-    uint16_t value;
-    uint16_t mask;
+    unsigned short value;
+    unsigned short mask;
 };
 
 // stop types
