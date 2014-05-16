@@ -12,15 +12,10 @@ unsigned short* read_message(unsigned short* begin, unsigned short* end)
 {
     unsigned short* pw;
     for (pw=begin; pw<end; pw++) {
-        printf("word %i: %04X\n", pw-begin, *pw);
         if (has_preamble(*pw, wSOM)) {
-            printf("HIT\n");
-            goto exit;
+            break;
         }
     }
-    printf("NO HIT\n");
-    exit:
-
     return pw+1;
 }
 
