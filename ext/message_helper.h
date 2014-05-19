@@ -1,4 +1,27 @@
-#include <stdint.h>
+#ifndef MESSAGE_HELPER_H
+#define MESSAGE_HELPER_H
+
+struct _message {
+    // valid if type & 0x01
+    unsigned char group_id; // 8 bits
+    unsigned char channel_id; // 4 bits
+    // valid if type & 0x02
+    unsigned short timestamp; // 12 bits
+    // valid if type & 0x04
+    unsigned short* data; // pointer to array of 9-bit values
+    // valid if type & 0x08
+    unsigned char num_data; // 6 bits
+    unsigned char hit_type; // 2 bits
+    unsigned char stop_type; // 3 bits
+    // valid if type & 0x10
+    unsigned char buffer_overflow_count; // 8 bits
+    // valid if type & 0x20
+    unsigned short epoch_count; // 12 bits
+    // valid if type & 0x30
+    unsigned char info_type; // 4 bits
+
+    unsigned char valid;
+};
 
 struct Preamble {
     unsigned short value;
@@ -16,7 +39,9 @@ static const struct Preamble wINF = {0xF000, 0xF000}; // information
 static const struct Preamble wCON = {0x0000, 0x8000}; // continuation preamble
 
 static int has_preamble(unsigned short w, struct Preamble p);
+static int infotype_has_channel_id(unsigned char info_type);
 
+static void message_init(Message* m);
 
 struct Field {
     unsigned short value;
@@ -61,3 +86,4 @@ static struct Field hSLF = {0x0010, 0x0030};
 static struct Field hNBR = {0x0020, 0x0030};
 static struct Field hSAN = {0x0030, 0x0030};
 
+#endif

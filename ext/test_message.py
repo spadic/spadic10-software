@@ -1,7 +1,20 @@
 import ctypes
 import struct
 
-message = ctypes.cdll.LoadLibrary("libmessage.so")
+lib = ctypes.cdll.LoadLibrary("libmessage.so")
+
+class Message(ctypes.Structure):
+    _fields_ = [("group_id", ctypes.c_ubyte),
+                ("channel_id", ctypes.c_ubyte),
+                ("timestamp", ctypes.c_ushort),
+                ("data", ctypes.POINTER(ctypes.c_ushort)),
+                ("num_data", ctypes.c_ubyte),
+                ("hit_type", ctypes.c_ubyte),
+                ("stop_type", ctypes.c_ubyte),
+                ("buffer_overflow_count", ctypes.c_ubyte),
+                ("epoch_count", ctypes.c_ushort),
+                ("info_type", ctypes.c_ubyte),
+                ("valid", ctypes.c_ubyte)]
 
 def data_from_bytes(b):
     fmt = '>%iH'%(len(b)/2)
@@ -14,7 +27,7 @@ def read_messages(data):
     n = len(data)
     t = ctypes.c_ushort*n
     w = t(*data)
-    count = message.seek_message_start_all_wrap(w, n)
+    count = lib.seek_message_start_all_wrap(w, n)
     print "result:", count
 
 
