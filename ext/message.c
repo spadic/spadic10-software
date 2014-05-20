@@ -1,8 +1,11 @@
 #include <stdlib.h>
 
 #include "message.h"
+
+// move here again when cleaned up
 #include "message_helper.h"
 
+// temp
 #include <stdio.h>
 
 //===================================================================
