@@ -48,11 +48,11 @@ void message_delete(Message* m)
 
 //-------------------------------------------------------------------
 
-uint16_t* read_message(uint16_t* begin, uint16_t* end, Message* m)
+uint16_t* message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
 {
     Message _m;
     uint16_t* w;
-    for (w=begin; w<end; w++) {
+    for (w=buf; w<buf+end; w++) {
         printf("word: %04X\n", *w);
 
         // start of message -> group ID, channel ID

@@ -11,7 +11,7 @@ typedef struct _message Message;
 
 Message* message_new(void);
 void message_delete(Message* m);
-uint16_t* read_message(uint16_t* begin, uint16_t* end, Message* m);
+uint16_t* message_read_from_buffer(Message* m, uint16_t* buf, size_t len);
 
 #ifdef __cplusplus
 }
