@@ -48,7 +48,7 @@ void message_delete(Message* m)
 
 //-------------------------------------------------------------------
 
-uint16_t* message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
+size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
 {
     Message _m;
     uint16_t* w;
