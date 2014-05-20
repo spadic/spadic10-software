@@ -3,29 +3,29 @@
 
 struct _message {
     // valid if type & 0x01
-    unsigned char group_id; // 8 bits
-    unsigned char channel_id; // 4 bits
+    uint8_t group_id; // 8 bits
+    uint8_t channel_id; // 4 bits
     // valid if type & 0x02
-    unsigned short timestamp; // 12 bits
+    uint16_t timestamp; // 12 bits
     // valid if type & 0x04
-    unsigned short* data; // pointer to array of 9-bit values
+    uint16_t* data; // pointer to array of 9-bit values
     // valid if type & 0x08
-    unsigned char num_data; // 6 bits
-    unsigned char hit_type; // 2 bits
-    unsigned char stop_type; // 3 bits
+    uint8_t num_data; // 6 bits
+    uint8_t hit_type; // 2 bits
+    uint8_t stop_type; // 3 bits
     // valid if type & 0x10
-    unsigned char buffer_overflow_count; // 8 bits
+    uint8_t buffer_overflow_count; // 8 bits
     // valid if type & 0x20
-    unsigned short epoch_count; // 12 bits
+    uint16_t epoch_count; // 12 bits
     // valid if type & 0x30
-    unsigned char info_type; // 4 bits
+    uint8_t info_type; // 4 bits
 
-    unsigned char valid;
+    uint8_t valid;
 };
 
 struct Preamble {
-    unsigned short value;
-    unsigned short mask;
+    uint16_t value;
+    uint16_t mask;
 };
 
 static const struct Preamble wSOM = {0x8000, 0xF000}; // start of message
@@ -38,14 +38,14 @@ static const struct Preamble wEXD = {0xE000, 0xF000}; // extracted data
 static const struct Preamble wINF = {0xF000, 0xF000}; // information 
 static const struct Preamble wCON = {0x0000, 0x8000}; // continuation preamble
 
-static int has_preamble(unsigned short w, struct Preamble p);
-static int infotype_has_channel_id(unsigned char info_type);
+static int has_preamble(uint16_t w, struct Preamble p);
+static int infotype_has_channel_id(uint8_t info_type);
 
 static void message_init(Message* m);
 
 struct Field {
-    unsigned short value;
-    unsigned short mask;
+    uint16_t value;
+    uint16_t mask;
 };
 
 // stop types

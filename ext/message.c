@@ -9,7 +9,7 @@
 // private functions
 //===================================================================
 
-int has_preamble(unsigned short w, struct Preamble p)
+int has_preamble(uint16_t w, struct Preamble p)
 {
     return (w & p.mask) == p.value;
 }
@@ -46,11 +46,10 @@ void message_delete(Message* m)
 
 //-------------------------------------------------------------------
 
-unsigned short* read_message(unsigned short* begin, unsigned short* end,
-                             Message* m)
+uint16_t* read_message(uint16_t* begin, uint16_t* end, Message* m)
 {
     Message _m;
-    unsigned short* w;
+    uint16_t* w;
     for (w=begin; w<end; w++) {
         printf("word: %04X\n", *w);
 
@@ -97,7 +96,7 @@ unsigned short* read_message(unsigned short* begin, unsigned short* end,
     return w+1;
 }
 
-static int infotype_has_channel_id(unsigned char info_type)
+static int infotype_has_channel_id(uint8_t info_type)
 {
     switch (info_type) {
         case 0: return 1; // iDIS
@@ -112,11 +111,11 @@ static int infotype_has_channel_id(unsigned char info_type)
 // test/temp/dummy/wrap
 //===================================================================
 
-int seek_message_start_all(unsigned short* begin, unsigned short* end)
+int seek_message_start_all(uint16_t* begin, uint16_t* end)
 {
     Message m;
     int count = 0;
-    unsigned short* pw = begin;
+    uint16_t* pw = begin;
     while (pw<end) {
         printf("pw: %u\n", pw);
         pw = read_message(pw, end, &m);
@@ -127,7 +126,7 @@ int seek_message_start_all(unsigned short* begin, unsigned short* end)
 
 //-------------------------------------------------------------------
 
-int seek_message_start_all_wrap(unsigned short* begin, unsigned int length)
+int seek_message_start_all_wrap(uint16_t* begin, unsigned int length)
 {
     return seek_message_start_all(begin, begin+length);
 }
