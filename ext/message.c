@@ -51,6 +51,16 @@ void message_delete(Message* m)
 
 //-------------------------------------------------------------------
 
+int message_is_complete(Message* m)
+{
+    return (
+        m->valid == 0x0F || /* normal hit message */
+     /* m->valid == ... ||                        */
+    0);
+}
+
+//-------------------------------------------------------------------
+
 size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
 {
     Message _m;

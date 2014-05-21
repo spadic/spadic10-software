@@ -33,6 +33,7 @@ size_t message_read_from_buffer(Message* m,
  *   Whether a message could be read must be checked using the valid flags
  *   of the message object.
  */
+ int message_is_complete(Message* m);
 
 #ifdef __cplusplus
 }
