@@ -29,6 +29,19 @@ void message_init(Message* m)
     m->valid = 0;
 }
 
+//-------------------------------------------------------------------
+
+static int infotype_has_channel_id(uint8_t info_type)
+{
+    switch (info_type) {
+        case 0: return 1; // iDIS
+        case 1: return 1; // iNGT
+        case 3: return 1; // iNBE
+        case 4: return 1; // iMSB
+    }
+    return 0; // TODO use enum
+}
+
 //===================================================================
 // public functions
 //===================================================================
@@ -111,16 +124,6 @@ size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
     return w+1;
 }
 
-static int infotype_has_channel_id(uint8_t info_type)
-{
-    switch (info_type) {
-        case 0: return 1; // iDIS
-        case 1: return 1; // iNGT
-        case 3: return 1; // iNBE
-        case 4: return 1; // iMSB
-    }
-    return 0; // TODO use enum
-}
 
 //===================================================================
 // test/temp/dummy/wrap
