@@ -14,24 +14,33 @@ void message_delete(Message* m);
 size_t message_read_from_buffer(Message* m,
                                 const uint16_t* buf, size_t len);
 /*
- * arguments:
- *   m - pointer to Message object to be filled
- *   buf - pointer to array of 16-bit SPADIC words
- *   len - number of words to be read at most (i.e. length of buf)
+ * Read words from `buf` and fill message `m`, if possible.
  *
- * return value n:
- *   a) If a message could be read, buf+n will point to the word after the
- *      end of the message.
- *   b) Otherwise, buf+n will point to the first word after all words that
- *      are definitely not part of a valid message, i.e. either n == len
- *      if no meaningful data was contained in buf, or n < len if an
- *      incomplete message was contained at the end of buf, but the end is
- *      missing.
- *   In both cases, buf+n points to a location that may be used as the
- *   next value for buf in a repeated call of the function.
+ * The function consumes words from the buffer until either an
+ * end-of-message word is encountered or the end of the buffer is reached
+ * (i.e. `len` words have been read).
  *
- *   Whether a message could be read must be checked using the valid flags
- *   of the message object.
+ * The number `n` of consumed words is returned, so that `buf+n` is a
+ * suitable value to be passed as the `buf` argument for repeated calls of
+ * this function.
+ *
+ * Different possible cases:
+ * key:
+ *     ( = start of message
+ *     ) = end of message
+ *     x = any word except end of message
+ *     . = any word except start of message or end of message
+ *     | = end of buffer reached
+ *
+ * a:  xxx(....)  normal case
+ * b:  xxx(..|    missing end of message
+ * c:  ........)  missing start of message
+ * d:  ......|    missing start and end of message
+ *
+ * It is not guaranteed that a complete message was contained in the
+ * consumed words, this can be checked afterwards using
+ * `message_is_complete(m)`.
+ *
  */
  int message_is_complete(Message* m);
 
