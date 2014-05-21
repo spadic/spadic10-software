@@ -22,8 +22,11 @@ int has_preamble(uint16_t w, struct Preamble p)
 void message_init(Message* m)
 {
     if (!m) return;
+    if (m->data != NULL) {
+        free(m->data);
+        m->data = NULL;
+    }
     m->valid = 0;
-    m->data = NULL;
 }
 
 //===================================================================
