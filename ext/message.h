@@ -38,8 +38,15 @@ size_t message_read_from_buffer(Message* m,
  * d:  ......|    missing start and end of message
  *
  * It is not guaranteed that a complete message was contained in the
- * consumed words, this can be checked afterwards using
+ * consumed words (cases b-d), this can be checked afterwards using
  * `message_is_complete(m)`.
+ *
+ * The passed message object `m` is reset if, and only if, a
+ * start-of-message word is encountered. This means
+ * - all words before the last start-of-message word are effectively
+ *   ignored, and
+ * - cases b-d can be handled by passing the same Message object to
+ *   successive calls of this function.
  *
  */
 int message_is_complete(Message* m);
