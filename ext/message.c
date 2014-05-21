@@ -64,16 +64,6 @@ void message_delete(Message* m)
 
 //-------------------------------------------------------------------
 
-int message_is_complete(Message* m)
-{
-    return (
-        m->valid == 0x0F || /* normal hit message */
-     /* m->valid == ... ||                        */
-    0);
-}
-
-//-------------------------------------------------------------------
-
 size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
 {
     Message _m;
@@ -124,6 +114,19 @@ size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
     return w+1;
 }
 
+//-------------------------------------------------------------------
+
+int message_is_complete(Message* m)
+{
+    return (message_is_hit(m) ||
+            message_is_buffer_overflow(m) ||
+            message_is_epoch_marker(m) ||
+            message_is_info(m));
+//        m->valid == 0x0F || /* normal hit message */
+//        m->valid == 0x30 || /* info message */
+//     /* m->valid == ... ||                        */
+//    0);
+}
 
 //===================================================================
 // test/temp/dummy/wrap
