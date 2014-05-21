@@ -42,7 +42,19 @@ size_t message_read_from_buffer(Message* m,
  * `message_is_complete(m)`.
  *
  */
- int message_is_complete(Message* m);
+int message_is_complete(Message* m);
+
+/* message data accessors */
+uint8_t message_get_group_id(Message* m);
+uint8_t message_get_channel_id(Message* m);
+uint16_t message_get_timestamp(Message* m);
+uint16_t* message_get_data(Message* m);
+uint8_t message_get_num_data(Message* m);
+uint8_t message_get_hit_type(Message* m);
+uint8_t message_get_stop_type(Message* m);
+uint8_t message_get_buffer_overflow_count(Message* m);
+uint16_t message_get_epoch_count(Message* m);
+uint8_t message_get_info_type(Message* m);
 
 #ifdef __cplusplus
 }
