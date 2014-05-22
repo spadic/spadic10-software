@@ -1,89 +1,80 @@
-#ifndef MESSAGE_HELPER_H
-#define MESSAGE_HELPER_H
-
+/* Message */
 struct _message {
-    // valid if type & 0x01
-    uint8_t group_id; // 8 bits
-    uint8_t channel_id; // 4 bits
-    // valid if type & 0x02
-    uint16_t timestamp; // 12 bits
-    // valid if type & 0x04
-    uint16_t* data; // pointer to array of 9-bit values
-    // valid if type & 0x08
-    uint8_t num_data; // 6 bits
-    uint8_t hit_type; // 2 bits
-    uint8_t stop_type; // 3 bits
-    // valid if type & 0x10
-    uint8_t buffer_overflow_count; // 8 bits
-    // valid if type & 0x20
-    uint16_t epoch_count; // 12 bits
-    // valid if type & 0x30
-    uint8_t info_type; // 4 bits
+    uint8_t group_id;
+    uint8_t channel_id;
+    uint16_t timestamp;
+    uint16_t* data;
+    uint8_t num_data;
+    uint8_t hit_type;
+    uint8_t stop_type;
+    uint8_t buffer_overflow_count;
+    uint16_t epoch_count;
+    uint8_t info_type;
 
     uint8_t valid;
 };
 
-struct Preamble {
-    uint16_t value;
-    uint16_t mask;
-};
-
-static const struct Preamble wSOM = {0x8000, 0xF000}; // start of message
-static const struct Preamble wTSW = {0x9000, 0xF000}; // time stamp
-static const struct Preamble wRDA = {0xA000, 0xF000}; // raw data
-static const struct Preamble wEOM = {0xB000, 0xF000}; // end of data message
-static const struct Preamble wBOM = {0xC000, 0xF000}; // buffer overflow count
-static const struct Preamble wEPM = {0xD000, 0xF000}; // epoch marker
-static const struct Preamble wEXD = {0xE000, 0xF000}; // extracted data
-static const struct Preamble wINF = {0xF000, 0xF000}; // information 
-static const struct Preamble wCON = {0x0000, 0x8000}; // continuation preamble
-
-static int has_preamble(uint16_t w, struct Preamble p);
-static int infotype_has_channel_id(uint8_t info_type);
-
 static void message_init(Message* m);
+static void message_fill(Message* m, uint16_t w);
 
-struct Field {
+/* word types/preambles */
+struct _wordtype {
     uint16_t value;
     uint16_t mask;
-};
+    uint8_t valid;
+    void (fill*)(Message* m, uint16_t w);
+} Wordtype;
 
-// stop types
-static struct Field sEND = {0x0000, 0x0007};
-static struct Field sEBF = {0x0001, 0x0007};
-static struct Field sEFF = {0x0002, 0x0007};
-static struct Field sEDH = {0x0003, 0x0007};
-static struct Field sEDB = {0x0004, 0x0007};
-static struct Field sEDO = {0x0005, 0x0007};
+static int word_is_type(uint16_t w, Wordtype t);
+static Wordtype* word_get_type(uint16_t w);
+static int word_is_ignore(uint16_t w);
+static int word_is_start(uint16_t w);
+static int word_is_end(uint16_t w);
+
+static const Wordtype wSOM = {0x8000, 0xF000, 1<<0};
+static const Wordtype wTSW = {0x9000, 0xF000, 1<<1};
+static const Wordtype wRDA = {0xA000, 0xF000, 1<<2};
+static const Wordtype wEOM = {0xB000, 0xF000, 1<<3};
+static const Wordtype wBOM = {0xC000, 0xF000, 1<<4};
+static const Wordtype wEPM = {0xD000, 0xF000, 1<<5};
+static const Wordtype wEXD = {0xE000, 0xF000,    0};
+static const Wordtype wINF = {0xF000, 0xF000, 1<<6};
+static const Wordtype wCON = {0x0000, 0x8000,    0};
+
+/* stop types */
+static const uint8_t sEND = 0x0;
+static const uint8_t sEBF = 0x1;
+static const uint8_t sEFF = 0x2;
+static const uint8_t sEDH = 0x3;
+static const uint8_t sEDB = 0x4;
+static const uint8_t sEDO = 0x5;
 /* unused
-static struct Field sXX1 = {0x0006, 0x0007};
-static struct Field sXX2 = {0x0007, 0x0007};
+static const uint8_t sXX1 = 0x6;
+static const uint8_t sXX2 = 0x7;
 */
 
-// info types (value, mask)
-static struct Field iDIS = {0x0000, 0x0F00};
-static struct Field iNGT = {0x0100, 0x0F00};
-static struct Field iNRT = {0x0200, 0x0F00};
-static struct Field iNBE = {0x0300, 0x0F00};
-static struct Field iMSB = {0x0400, 0x0F00};
-static struct Field iNOP = {0x0500, 0x0F00};
-static struct Field iSYN = {0x0600, 0x0F00};
+/* info types */
+static const uint8_t iDIS = 0x0;
+static const uint8_t iNGT = 0x1;
+static const uint8_t iNRT = 0x2;
+static const uint8_t iNBE = 0x3;
+static const uint8_t iMSB = 0x4;
+static const uint8_t iNOP = 0x5;
+static const uint8_t iSYN = 0x6;
 /* unused
-static struct Field iXX3 = {0x0700, 0x0F00};
-static struct Field iXX4 = {0x0800, 0x0F00};
-static struct Field iXX5 = {0x0900, 0x0F00};
-static struct Field iXX6 = {0x0A00, 0x0F00};
-static struct Field iXX7 = {0x0B00, 0x0F00};
-static struct Field iXX8 = {0x0C00, 0x0F00};
-static struct Field iXX9 = {0x0D00, 0x0F00};
-static struct Field iXXA = {0x0E00, 0x0F00};
-static struct Field iXXB = {0x0F00, 0x0F00};
+static const uint8_t iXX3 = 0x7;
+static const uint8_t iXX4 = 0x8;
+static const uint8_t iXX5 = 0x9;
+static const uint8_t iXX6 = 0xA;
+static const uint8_t iXX7 = 0xB;
+static const uint8_t iXX8 = 0xC;
+static const uint8_t iXX9 = 0xD;
+static const uint8_t iXXA = 0xE;
+static const uint8_t iXXB = 0xF;
 */
 
-// hit types
-static struct Field hGLB = {0x0000, 0x0030};
-static struct Field hSLF = {0x0010, 0x0030};
-static struct Field hNBR = {0x0020, 0x0030};
-static struct Field hSAN = {0x0030, 0x0030};
-
-#endif
+/* hit types */
+static const uint8_t hGLB = 0x0;
+static const uint8_t hSLF = 0x1;
+static const uint8_t hNBR = 0x2;
+static const uint8_t hSAN = 0x3;
