@@ -51,7 +51,89 @@ Wordtype* word_get_type(uint16_t w)
 int word_is_ignore(uint16_t w)
 {
     if (!word_is_type(w, &wINF)) { return 0; }
-    else { return word_is_info_type(w, iNOP); }
+    else { return word_get_info_type(w) == iNOP; }
+}
+
+int word_is_start(uint16_t w)
+{
+    if (word_is_type(w, &wSOM)) {
+        return 1;
+    } else if (!word_is_type(w, &wINF)) {
+        return 0;
+    } else {
+        return (word_get_info_type(w) == iNGT ||
+                word_get_info_type(w) == iNRT ||
+                word_get_info_type(w) == iNBE);
+    }
+}
+
+int word_is_end(uint16_t w)
+{
+    if (word_is_type(w, &wINF)) {
+        return 1;
+    } else {
+        return (word_is_type(w, &wEOM) ||
+                word_is_type(w, &wBOM) ||
+                word_is_type(w, &wEPM));
+    }
+}
+
+/*-----------------------------------------------------------------*/
+
+uint8_t word_get_info_type(uint16_t w)
+{
+    return (w & 0x0F00) >> 8;
+}
+
+/* m != NULL must be checked outside of all fill_wXXX functions */
+
+static void fill_wSOM(Message* m, uint16_t w)
+{
+    m->group_id = (w & 0x0FF0) >> 4;
+    m->channel_id = (w & 0x000F);
+}
+
+static void fill_wTSW(Message* m, uint16_t w)
+{
+    m->timestamp = (w & 0xFFF);
+}
+
+static void fill_wRDA(Message* m, uint16_t w)
+{
+    /* TODO append word to temporary buffer */
+}
+
+static void fill_wEOM(Message* m, uint16_t w)
+{
+    m->num_data = (w & 0x0FC0) >> 6;
+    m->hit_type = (w & 0x0030) >> 4;
+    m->stop_type = (w & 0x0007);
+}
+
+static void fill_wBOM(Message* m, uint16_t w)
+{
+    m->buffer_overflow_count = (w & 0x00FF);
+}
+
+static void fill_wEPM(Message* m, uint16_t w)
+{
+    m->epoch_count = (w & 0x0FFF);
+}
+
+static void fill_wEXD(Message* m, uint16_t w)
+{ /* not implemented in SPADIC 1.0 */
+}
+
+static void fill_wINF(Message* m, uint16_t w)
+{
+    uint8_t t = word_get_info_type(w);
+    m->info_type = t;
+    /* TODO fill other fields depending on info type */
+}
+
+static void fill_wCON(Message* m, uint16_t w)
+{
+    /* TODO append word to temporary buffer */
 }
 
 /*==== public functions ===========================================*/
@@ -135,24 +217,30 @@ size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
 /*-----------------------------------------------------------------*/
 int message_is_hit(Message* m)
 {
-    return ((m->valid == (0x01 | 0x02 | 0x08) ||
-            ((m->valid == 0x40) && (m->info_type == ;
+    return ((m->valid == (wSOM.valid | wTSM.valid |
+                          wRDA.valid | wEOM.valid)) ||
+            ((m->valid == wINF.valid) &&
+             (m->info_type == iDIS || m->info_type == iMSB)));
 }
 
 int message_is_buffer_overflow(Message* m)
 {
-    return (m->valid == (0x01 | 0x02 | 0x10));
+    return (m->valid == (wSOM.valid | wTSW.valid | wBOM.valid));
 }
 
 int message_is_epoch_marker(Message* m)
 {
-    return (m->valid == (0x01 | 0x20) ||
-            m->valid == (0x01 | 0x30)); /* clarification needed */
+    return ((m->valid == (wSOM.valid | wEPM.valid)) ||
+            ((m->valid == (wSOM.valid | wINF.valid)) &&
+             (m->info_type == iSYN)));
 }
 
 int message_is_info(Message* m)
 {
-    return (m->valid == 0x30);
+    return ((m->valid == wINF.valid) &&
+            (m->info_type == iNGT ||
+             m->info_type == iNRT ||
+             m->info_type == iNBE);
 }
 
 int message_is_complete(Message* m)
@@ -161,10 +249,6 @@ int message_is_complete(Message* m)
             message_is_buffer_overflow(m) ||
             message_is_epoch_marker(m) ||
             message_is_info(m));
-//        m->valid == 0x0F || /* normal hit message */
-//        m->valid == 0x30 || /* info message */
-//     /* m->valid == ... ||                        */
-//    0);
 }
 
 /*==== test/temp/dummy/wrap =======================================*/
