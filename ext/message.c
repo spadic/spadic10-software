@@ -10,13 +10,20 @@
 
 /*==== private functions ==========================================*/
 
+void ptr_set_null(void* p)
+{
+    if (p != NULL) {
+        free(p);
+        p = NULL;
+    }
+}
+
 void message_init(Message* m)
 {
     if (!m) return;
-    if (m->data != NULL) {
-        free(m->data);
-        m->data = NULL;
-    }
+    ptr_set_null(m->samples);
+    ptr_set_null(m->raw_count);
+    m->raw_count = 0;
     m->valid = 0;
 }
 
@@ -105,7 +112,7 @@ static void fill_wRDA(Message* m, uint16_t w)
 
 static void fill_wEOM(Message* m, uint16_t w)
 {
-    m->num_data = (w & 0x0FC0) >> 6;
+    m->num_samples = (w & 0x0FC0) >> 6;
     m->hit_type = (w & 0x0030) >> 4;
     m->stop_type = (w & 0x0007);
 }
@@ -128,7 +135,11 @@ static void fill_wINF(Message* m, uint16_t w)
 {
     uint8_t t = word_get_info_type(w);
     m->info_type = t;
-    /* TODO fill other fields depending on info type */
+    if (t == iDIS || t == iNGT || t == iNBE || t == iMSB) {
+        m->channel_id = (w & 0x00F0) >> 4;
+    } else if (t == iSYN) {
+        m->epoch_count = (w & 0x00FF);
+    }
 }
 
 static void fill_wCON(Message* m, uint16_t w)
@@ -150,7 +161,7 @@ Message* message_new(void)
 
 void message_delete(Message* m)
 {
-    free(m->data);
+    free(m->samples);
     free(m);
 }
 
@@ -171,50 +182,8 @@ size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
     return n;
 }
 
-//        /* start of message -> group ID, channel ID */
-//        if (word_is_type(*w, wSOM)) {
-//            _m.group_id = (*w & 0x0FF0) >> 4
-//            _m.channel_id = (*w & 0x000F);
-//            _m.valid |= 0x01;
-//
-//        /* timestamp */
-//        } else if (word_is_type(*w, wTSW)) {
-//            _m.timestamp = (*w & 0x0FFF);
-//            _m.valid |= 0x02;
-//
-//        /* data... */
-//
-//        /* end of message -> num. data, hit type, stop type */
-//        } else if (word_is_type(*w, wEOM)) {
-//            _m.num_data = (*w & 0x0FC0) >> 6;
-//            _m.hit_type = (*w & 0x0030) >> 4;
-//            _m.stop_type = (*w & 0x0007);
-//            _m.valid |= 0x08;
-//
-//        /* buffer overflow count */
-//        } else if (word_is_type(*w, wBOM)) {
-//            _m.buffer_overflow_count = (*w & 0x00FF);
-//            _m.valid |= 0x10;
-//
-//        /* epoch marker */
-//        } else if (word_is_type(*w, wEPM)) {
-//            _m.epoch_count = (*w & 0x0FFF);
-//            _m.valid |= 0x20;
-//
-//        /* info words */
-//        } else if (word_is_type(*w, wINF)) {
-//            _m.info_type = (*w & 0x0F00) >> 8;
-//            if any(word_is_type(*w, t])
-//                   for it in ['iDIS', 'iNGT', 'iNBE', 'iMSB']):
-//                _m.channel_id = (w & 0x00F0) >> 4
-//            } else if ( word_is_type(*w, iSYN)) {
-//                _m.epoch_count = (w & 0x00FF)
-//        }
-//    }
-//    return w+1;
-//}
-
 /*-----------------------------------------------------------------*/
+
 int message_is_hit(Message* m)
 {
     return ((m->valid == (wSOM.valid | wTSM.valid |

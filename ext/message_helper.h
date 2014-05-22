@@ -1,10 +1,12 @@
+static void ptr_set_null(void* p);
+
 /* Message */
 struct _message {
     uint8_t group_id;
     uint8_t channel_id;
     uint16_t timestamp;
-    uint16_t* data;
-    uint8_t num_data;
+    uint16_t* samples;
+    uint8_t num_samples;
     uint8_t hit_type;
     uint8_t stop_type;
     uint8_t buffer_overflow_count;
@@ -12,6 +14,10 @@ struct _message {
     uint8_t info_type;
 
     uint8_t valid;
+
+    /* up to 20 message words contain raw data */
+    uint16_t* raw_buf;
+    uint8_t raw_count;
 };
 
 static void message_init(Message* m);
