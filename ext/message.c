@@ -1,12 +1,8 @@
 #include <stdlib.h>
-
 #include "message.h"
 
 /* move here again when cleaned up */
 #include "message_helper.h"
-
-/* temp */
-#include <stdio.h>
 
 /*==== private functions ==========================================*/
 
@@ -228,24 +224,3 @@ int message_is_complete(Message *m)
             (m->valid & wINF.valid));
 }
 
-/*==== test/temp/dummy/wrap =======================================*/
-
-int seek_message_start_all(uint16_t *begin, uint16_t *end)
-{
-    Message m;
-    int count = 0;
-    uint16_t *pw = begin;
-    while (pw<end) {
-        printf("pw: %u\n", pw);
-        pw = read_message(pw, end, &m);
-        count++;
-    }
-    return count;
-}
-
-/*-----------------------------------------------------------------*/
-
-int seek_message_start_all_wrap(uint16_t *begin, unsigned int length)
-{
-    return seek_message_start_all(begin, begin+length);
-}

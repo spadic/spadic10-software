@@ -1,3 +1,4 @@
 # ex: syntax=python
 
-SharedLibrary(['message.c'])
+m = SharedLibrary(['message.c'])
+SharedLibrary(['test_message.c', m])
