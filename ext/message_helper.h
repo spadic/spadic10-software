@@ -5,7 +5,7 @@ struct _message {
     uint8_t group_id;
     uint8_t channel_id;
     uint16_t timestamp;
-    uint16_t *samples;
+    int16_t *samples;
     uint8_t num_samples;
     uint8_t hit_type;
     uint8_t stop_type;

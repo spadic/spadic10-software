@@ -62,7 +62,7 @@ int message_is_complete(Message *m);
 uint8_t message_get_group_id(Message *m);
 uint8_t message_get_channel_id(Message *m);
 uint16_t message_get_timestamp(Message *m);
-uint16_t *message_get_samples(Message *m);
+int16_t *message_get_samples(Message *m);
 uint8_t message_get_num_samples(Message *m);
 uint8_t message_get_hit_type(Message *m);
 uint8_t message_get_stop_type(Message *m);

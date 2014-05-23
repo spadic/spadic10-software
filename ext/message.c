@@ -152,11 +152,10 @@ Message *message_new(void)
     return m;
 }
 
-/*-----------------------------------------------------------------*/
-
 void message_delete(Message *m)
 {
     free(m->samples);
+    free(m->raw_buf);
     free(m);
 }
 
