@@ -51,24 +51,24 @@ size_t message_read_from_buffer(Message *m,
  */
 
 /* query message type and completeness */
-int message_is_hit(Message *m);
-int message_is_buffer_overflow(Message *m);
-int message_is_epoch_marker(Message *m);
-int message_is_info(Message *m);
-int message_is_valid(Message *m);
-int message_is_complete(Message *m);
+int message_is_hit(const Message *m);
+int message_is_buffer_overflow(const Message *m);
+int message_is_epoch_marker(const Message *m);
+int message_is_info(const Message *m);
+int message_is_valid(const Message *m);
+int message_is_complete(const Message *m);
 
 /* access message data */
-uint8_t message_get_group_id(Message *m);
-uint8_t message_get_channel_id(Message *m);
-uint16_t message_get_timestamp(Message *m);
-int16_t *message_get_samples(Message *m);
-uint8_t message_get_num_samples(Message *m);
-uint8_t message_get_hit_type(Message *m);
-uint8_t message_get_stop_type(Message *m);
-uint8_t message_get_buffer_overflow_count(Message *m);
-uint16_t message_get_epoch_count(Message *m);
-uint8_t message_get_info_type(Message *m);
+uint8_t message_get_group_id(const Message *m);
+uint8_t message_get_channel_id(const Message *m);
+uint16_t message_get_timestamp(const Message *m);
+int16_t *message_get_samples(const Message *m);
+uint8_t message_get_num_samples(const Message *m);
+uint8_t message_get_hit_type(const Message *m);
+uint8_t message_get_stop_type(const Message *m);
+uint8_t message_get_buffer_overflow_count(const Message *m);
+uint16_t message_get_epoch_count(const Message *m);
+uint8_t message_get_info_type(const Message *m);
 
 #ifdef __cplusplus
 }

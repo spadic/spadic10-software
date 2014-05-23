@@ -179,7 +179,7 @@ size_t message_read_from_buffer(Message *m,
 
 /*-----------------------------------------------------------------*/
 
-int message_is_hit(Message *m)
+int message_is_hit(const Message *m)
 {
     return ((m->valid == (wSOM.valid | wTSW.valid |
                           wRDA.valid | wEOM.valid)) ||
@@ -187,19 +187,19 @@ int message_is_hit(Message *m)
              (m->info_type == iDIS || m->info_type == iMSB)));
 }
 
-int message_is_buffer_overflow(Message *m)
+int message_is_buffer_overflow(const Message *m)
 {
     return (m->valid == (wSOM.valid | wTSW.valid | wBOM.valid));
 }
 
-int message_is_epoch_marker(Message *m)
+int message_is_epoch_marker(const Message *m)
 {
     return ((m->valid == (wSOM.valid | wEPM.valid)) ||
             ((m->valid == (wSOM.valid | wINF.valid)) &&
              (m->info_type == iSYN)));
 }
 
-int message_is_info(Message *m)
+int message_is_info(const Message *m)
 {
     return ((m->valid == wINF.valid) &&
             (m->info_type == iNGT ||
@@ -207,7 +207,7 @@ int message_is_info(Message *m)
              m->info_type == iNBE));
 }
 
-int message_is_valid(Message *m)
+int message_is_valid(const Message *m)
 {
     return (message_is_hit(m) ||
             message_is_buffer_overflow(m) ||
@@ -215,7 +215,7 @@ int message_is_valid(Message *m)
             message_is_info(m));
 }
 
-int message_is_complete(Message *m)
+int message_is_complete(const Message *m)
 {
     return ((m->valid & wEOM.valid) ||
             (m->valid & wBOM.valid) ||
