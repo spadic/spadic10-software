@@ -166,16 +166,16 @@ size_t message_read_from_buffer(Message *m,
                                 const uint16_t *buf, size_t len)
 {
     uint16_t w;
-    size_t n;
+    size_t n = 0;
 
-    for (n=0; n<len; n++) {
-/* 1 */ w = buf[n];
+    while (n<len) {
+/* 1 */ w = buf[n++];
 /* 2 */ if (word_is_ignore(w)) { continue; }
 /* 3 */ if (word_is_start(w)) { message_init(m); }
 /* 4 */ message_fill(m, w);
 /* 5 */ if (word_is_end(w)) { break; }
     }
-    return n+1;
+    return n;
 }
 
 /*-----------------------------------------------------------------*/
