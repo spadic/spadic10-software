@@ -168,11 +168,11 @@ size_t message_read_from_buffer(Message *m,
     size_t n = 0;
 
     while (n<len) {
-/* 1 */ w = buf[n++];
-/* 2 */ if (word_is_ignore(w)) { continue; }
-/* 3 */ if (word_is_start(w)) { message_init(m); }
-/* 4 */ message_fill(m, w);
-/* 5 */ if (word_is_end(w)) { break; }
+        w = buf[n++];
+        if (word_is_ignore(w)) { continue; }
+        if (word_is_start(w)) { message_init(m); }
+        message_fill(m, w);
+        if (word_is_end(w)) { break; }
     }
     return n;
 }
@@ -221,5 +221,57 @@ int message_is_complete(Message *m)
             (m->valid & wBOM.valid) ||
             (m->valid & wEPM.valid) ||
             (m->valid & wINF.valid));
+}
+
+/*-----------------------------------------------------------------*/
+
+uint8_t message_get_group_id(const Message *m)
+{
+    /* TODO */
+}
+
+uint8_t message_get_channel_id(const Message *m)
+{
+    /* TODO */
+}
+
+uint16_t message_get_timestamp(const Message *m)
+{
+    /* TODO */
+}
+
+int16_t *message_get_samples(const Message *m)
+{
+    /* TODO */
+}
+
+uint8_t message_get_num_samples(const Message *m)
+{
+    /* TODO */
+}
+
+uint8_t message_get_hit_type(const Message *m)
+{
+    /* TODO */
+}
+
+uint8_t message_get_stop_type(const Message *m)
+{
+    /* TODO */
+}
+
+uint8_t message_get_buffer_overflow_count(const Message *m)
+{
+    /* TODO */
+}
+
+uint16_t message_get_epoch_count(const Message *m)
+{
+    /* TODO */
+}
+
+uint8_t message_get_info_type(const Message *m)
+{
+    /* TODO */
 }
 
