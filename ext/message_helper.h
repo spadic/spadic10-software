@@ -16,7 +16,7 @@ struct _message {
     uint8_t valid;
 
     /* up to 20 message words contain raw data */
-    uint16_t* raw_buf;
+    uint16_t (*raw_buf)[20];
     uint8_t raw_count;
 };
 
@@ -37,7 +37,7 @@ struct _wordtype {
     uint16_t value;
     uint16_t mask;
     uint8_t valid;
-    void (fill*)(Message* m, uint16_t w);
+    void (*fill)(Message* m, uint16_t w);
 } Wordtype;
 
 static int word_is_type(uint16_t w, Wordtype t);
