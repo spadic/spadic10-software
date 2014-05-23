@@ -8,11 +8,11 @@ extern "C" {
 #include <stdint.h>
 
 typedef struct _message Message;
-Message* message_new(void);
-void message_delete(Message* m);
+Message *message_new(void);
+void message_delete(Message *m);
 
-size_t message_read_from_buffer(Message* m,
-                                const uint16_t* buf, size_t len);
+size_t message_read_from_buffer(Message *m,
+                                const uint16_t *buf, size_t len);
 /*
  * Read words from `buf` and fill message `m`, if possible.
  *
@@ -51,23 +51,23 @@ size_t message_read_from_buffer(Message* m,
  */
 
 /* query message type and completeness */
-int message_is_hit(Message* m);
-int message_is_buffer_overflow(Message* m);
-int message_is_epoch_marker(Message* m);
-int message_is_info(Message* m);
-int message_is_complete(Message* m);
+int message_is_hit(Message *m);
+int message_is_buffer_overflow(Message *m);
+int message_is_epoch_marker(Message *m);
+int message_is_info(Message *m);
+int message_is_complete(Message *m);
 
 /* access message data */
-uint8_t message_get_group_id(Message* m);
-uint8_t message_get_channel_id(Message* m);
-uint16_t message_get_timestamp(Message* m);
-uint16_t* message_get_samples(Message* m);
-uint8_t message_get_num_samples(Message* m);
-uint8_t message_get_hit_type(Message* m);
-uint8_t message_get_stop_type(Message* m);
-uint8_t message_get_buffer_overflow_count(Message* m);
-uint16_t message_get_epoch_count(Message* m);
-uint8_t message_get_info_type(Message* m);
+uint8_t message_get_group_id(Message *m);
+uint8_t message_get_channel_id(Message *m);
+uint16_t message_get_timestamp(Message *m);
+uint16_t *message_get_samples(Message *m);
+uint8_t message_get_num_samples(Message *m);
+uint8_t message_get_hit_type(Message *m);
+uint8_t message_get_stop_type(Message *m);
+uint8_t message_get_buffer_overflow_count(Message *m);
+uint16_t message_get_epoch_count(Message *m);
+uint8_t message_get_info_type(Message *m);
 
 #ifdef __cplusplus
 }

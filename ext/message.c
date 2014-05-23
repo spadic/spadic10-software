@@ -10,7 +10,7 @@
 
 /*==== private functions ==========================================*/
 
-void ptr_set_null(void* p)
+void ptr_set_null(void *p)
 {
     if (p != NULL) {
         free(p);
@@ -18,7 +18,7 @@ void ptr_set_null(void* p)
     }
 }
 
-void message_init(Message* m)
+void message_init(Message *m)
 {
     if (!m) return;
     ptr_set_null(m->samples);
@@ -27,10 +27,10 @@ void message_init(Message* m)
     m->valid = 0;
 }
 
-void message_fill(Message* m, uint16_t w)
+void message_fill(Message *m, uint16_t w)
 {
     if (!m) return;
-    Wordtype* t = word_get_type(w);
+    Wordtype *t = word_get_type(w);
     if (t != NULL) {
         (t->fill)(m, w);
         m->valid |= t->valid;
@@ -39,14 +39,14 @@ void message_fill(Message* m, uint16_t w)
 
 /*-----------------------------------------------------------------*/
 
-int word_is_type(uint16_t w, Wordtype* t)
+int word_is_type(uint16_t w, Wordtype *t)
 {
     return (w & t->mask) == t->value;
 }
 
-Wordtype* word_get_type(uint16_t w)
+Wordtype *word_get_type(uint16_t w)
 {
-    Wordtype* t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM, &wEPM, &wEXD,
+    Wordtype *t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM, &wEPM, &wEXD,
                       &wINF, &wCON};
     int i;
     for (i=0, i<9, i++) {
@@ -94,44 +94,44 @@ uint8_t word_get_info_type(uint16_t w)
 
 /* m != NULL must be checked outside of all fill_wXXX functions */
 
-static void fill_wSOM(Message* m, uint16_t w)
+static void fill_wSOM(Message *m, uint16_t w)
 {
     m->group_id = (w & 0x0FF0) >> 4;
     m->channel_id = (w & 0x000F);
 }
 
-static void fill_wTSW(Message* m, uint16_t w)
+static void fill_wTSW(Message *m, uint16_t w)
 {
     m->timestamp = (w & 0xFFF);
 }
 
-static void fill_wRDA(Message* m, uint16_t w)
+static void fill_wRDA(Message *m, uint16_t w)
 {
     /* TODO append word to temporary buffer */
 }
 
-static void fill_wEOM(Message* m, uint16_t w)
+static void fill_wEOM(Message *m, uint16_t w)
 {
     m->num_samples = (w & 0x0FC0) >> 6;
     m->hit_type = (w & 0x0030) >> 4;
     m->stop_type = (w & 0x0007);
 }
 
-static void fill_wBOM(Message* m, uint16_t w)
+static void fill_wBOM(Message *m, uint16_t w)
 {
     m->buffer_overflow_count = (w & 0x00FF);
 }
 
-static void fill_wEPM(Message* m, uint16_t w)
+static void fill_wEPM(Message *m, uint16_t w)
 {
     m->epoch_count = (w & 0x0FFF);
 }
 
-static void fill_wEXD(Message* m, uint16_t w)
+static void fill_wEXD(Message *m, uint16_t w)
 { /* not implemented in SPADIC 1.0 */
 }
 
-static void fill_wINF(Message* m, uint16_t w)
+static void fill_wINF(Message *m, uint16_t w)
 {
     uint8_t t = word_get_info_type(w);
     m->info_type = t;
@@ -142,16 +142,16 @@ static void fill_wINF(Message* m, uint16_t w)
     }
 }
 
-static void fill_wCON(Message* m, uint16_t w)
+static void fill_wCON(Message *m, uint16_t w)
 {
     /* TODO append word to temporary buffer */
 }
 
 /*==== public functions ===========================================*/
 
-Message* message_new(void)
+Message *message_new(void)
 {
-    Message* m;
+    Message *m;
     m = malloc(sizeof *m);
     message_init(m);
     return m;
@@ -159,7 +159,7 @@ Message* message_new(void)
 
 /*-----------------------------------------------------------------*/
 
-void message_delete(Message* m)
+void message_delete(Message *m)
 {
     free(m->samples);
     free(m);
@@ -167,7 +167,7 @@ void message_delete(Message* m)
 
 /*-----------------------------------------------------------------*/
 
-size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
+size_t message_read_from_buffer(Message *m, uint16_t *buf, size_t len)
 {
     uint16_t w;
     size_t n;
@@ -184,7 +184,7 @@ size_t message_read_from_buffer(Message* m, uint16_t* buf, size_t len)
 
 /*-----------------------------------------------------------------*/
 
-int message_is_hit(Message* m)
+int message_is_hit(Message *m)
 {
     return ((m->valid == (wSOM.valid | wTSM.valid |
                           wRDA.valid | wEOM.valid)) ||
@@ -192,19 +192,19 @@ int message_is_hit(Message* m)
              (m->info_type == iDIS || m->info_type == iMSB)));
 }
 
-int message_is_buffer_overflow(Message* m)
+int message_is_buffer_overflow(Message *m)
 {
     return (m->valid == (wSOM.valid | wTSW.valid | wBOM.valid));
 }
 
-int message_is_epoch_marker(Message* m)
+int message_is_epoch_marker(Message *m)
 {
     return ((m->valid == (wSOM.valid | wEPM.valid)) ||
             ((m->valid == (wSOM.valid | wINF.valid)) &&
              (m->info_type == iSYN)));
 }
 
-int message_is_info(Message* m)
+int message_is_info(Message *m)
 {
     return ((m->valid == wINF.valid) &&
             (m->info_type == iNGT ||
@@ -212,7 +212,7 @@ int message_is_info(Message* m)
              m->info_type == iNBE);
 }
 
-int message_is_complete(Message* m)
+int message_is_complete(Message *m)
 {
     return (message_is_hit(m) ||
             message_is_buffer_overflow(m) ||
@@ -222,11 +222,11 @@ int message_is_complete(Message* m)
 
 /*==== test/temp/dummy/wrap =======================================*/
 
-int seek_message_start_all(uint16_t* begin, uint16_t* end)
+int seek_message_start_all(uint16_t *begin, uint16_t *end)
 {
     Message m;
     int count = 0;
-    uint16_t* pw = begin;
+    uint16_t *pw = begin;
     while (pw<end) {
         printf("pw: %u\n", pw);
         pw = read_message(pw, end, &m);
@@ -237,7 +237,7 @@ int seek_message_start_all(uint16_t* begin, uint16_t* end)
 
 /*-----------------------------------------------------------------*/
 
-int seek_message_start_all_wrap(uint16_t* begin, unsigned int length)
+int seek_message_start_all_wrap(uint16_t *begin, unsigned int length)
 {
     return seek_message_start_all(begin, begin+length);
 }

@@ -1,11 +1,11 @@
-static void ptr_set_null(void* p);
+static void ptr_set_null(void *p);
 
 /* Message */
 struct _message {
     uint8_t group_id;
     uint8_t channel_id;
     uint16_t timestamp;
-    uint16_t* samples;
+    uint16_t *samples;
     uint8_t num_samples;
     uint8_t hit_type;
     uint8_t stop_type;
@@ -20,28 +20,28 @@ struct _message {
     uint8_t raw_count;
 };
 
-static void message_init(Message* m);
-static void message_fill(Message* m, uint16_t w);
-static void fill_wSOM(Message* m, uint16_t w);
-static void fill_wTSW(Message* m, uint16_t w);
-static void fill_wRDA(Message* m, uint16_t w);
-static void fill_wEOM(Message* m, uint16_t w);
-static void fill_wBOM(Message* m, uint16_t w);
-static void fill_wEPM(Message* m, uint16_t w);
-static void fill_wEXD(Message* m, uint16_t w);
-static void fill_wINF(Message* m, uint16_t w);
-static void fill_wCON(Message* m, uint16_t w);
+static void message_init(Message *m);
+static void message_fill(Message *m, uint16_t w);
+static void fill_wSOM(Message *m, uint16_t w);
+static void fill_wTSW(Message *m, uint16_t w);
+static void fill_wRDA(Message *m, uint16_t w);
+static void fill_wEOM(Message *m, uint16_t w);
+static void fill_wBOM(Message *m, uint16_t w);
+static void fill_wEPM(Message *m, uint16_t w);
+static void fill_wEXD(Message *m, uint16_t w);
+static void fill_wINF(Message *m, uint16_t w);
+static void fill_wCON(Message *m, uint16_t w);
 
 /* word types/preambles */
 struct _wordtype {
     uint16_t value;
     uint16_t mask;
     uint8_t valid;
-    void (*fill)(Message* m, uint16_t w);
+    void (*fill)(Message *m, uint16_t w);
 } Wordtype;
 
 static int word_is_type(uint16_t w, Wordtype t);
-static Wordtype* word_get_type(uint16_t w);
+static Wordtype *word_get_type(uint16_t w);
 static int word_is_ignore(uint16_t w);
 static int word_is_start(uint16_t w);
 static int word_is_end(uint16_t w);
