@@ -22,7 +22,7 @@ void message_init(Message *m)
 {
     if (!m) return;
     ptr_set_null(m->samples);
-    ptr_set_null(m->raw_count);
+    ptr_set_null(m->raw_buf);
     m->raw_count = 0;
     m->valid = 0;
 }
@@ -49,8 +49,8 @@ const Wordtype *word_get_type(uint16_t w)
     static const Wordtype *t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM,
                                    &wEPM, &wEXD, &wINF, &wCON};
     int i;
-    for (i=0, i<9, i++) {
-        if (word_is_type(w, t[i])) { return t[i] };
+    for (i=0; i<9; i++) {
+        if (word_is_type(w, t[i])) { return t[i]; };
     }
     return NULL;
 }
@@ -187,7 +187,7 @@ size_t message_read_from_buffer(Message *m,
 
 int message_is_hit(Message *m)
 {
-    return ((m->valid == (wSOM.valid | wTSM.valid |
+    return ((m->valid == (wSOM.valid | wTSW.valid |
                           wRDA.valid | wEOM.valid)) ||
             ((m->valid == wINF.valid) &&
              (m->info_type == iDIS || m->info_type == iMSB)));
@@ -210,7 +210,7 @@ int message_is_info(Message *m)
     return ((m->valid == wINF.valid) &&
             (m->info_type == iNGT ||
              m->info_type == iNRT ||
-             m->info_type == iNBE);
+             m->info_type == iNBE));
 }
 
 int message_is_complete(Message *m)

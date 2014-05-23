@@ -33,7 +33,7 @@ static void fill_wINF(Message *m, uint16_t w);
 static void fill_wCON(Message *m, uint16_t w);
 
 /* word types/preambles */
-struct _wordtype {
+typedef struct _wordtype {
     uint16_t value;
     uint16_t mask;
     uint8_t valid;
