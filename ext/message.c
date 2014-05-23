@@ -76,13 +76,10 @@ int word_is_start(uint16_t w)
 
 int word_is_end(uint16_t w)
 {
-    if (word_is_type(w, &wINF)) {
-        return 1;
-    } else {
-        return (word_is_type(w, &wEOM) ||
-                word_is_type(w, &wBOM) ||
-                word_is_type(w, &wEPM));
-    }
+    return (word_is_type(w, &wEOM) ||
+            word_is_type(w, &wBOM) ||
+            word_is_type(w, &wEPM) ||
+            word_is_type(w, &wINF));
 }
 
 /*-----------------------------------------------------------------*/
