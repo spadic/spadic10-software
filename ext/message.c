@@ -150,6 +150,8 @@ Message *message_new(void)
 {
     Message *m;
     m = malloc(sizeof *m);
+    m->samples = NULL;
+    m->raw_buf = NULL;
     message_init(m);
     return m;
 }
@@ -177,7 +179,7 @@ size_t message_read_from_buffer(Message *m,
 /* 4 */ message_fill(m, w);
 /* 5 */ if (word_is_end(w)) { break; }
     }
-    return n;
+    return n+1;
 }
 
 /*-----------------------------------------------------------------*/
