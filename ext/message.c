@@ -30,7 +30,7 @@ void message_init(Message *m)
 void message_fill(Message *m, uint16_t w)
 {
     if (!m) return;
-    Wordtype *t = word_get_type(w);
+    const Wordtype *t = word_get_type(w);
     if (t != NULL) {
         (t->fill)(m, w);
         m->valid |= t->valid;
@@ -39,15 +39,15 @@ void message_fill(Message *m, uint16_t w)
 
 /*-----------------------------------------------------------------*/
 
-int word_is_type(uint16_t w, Wordtype *t)
+int word_is_type(uint16_t w, const Wordtype *t)
 {
     return (w & t->mask) == t->value;
 }
 
-Wordtype *word_get_type(uint16_t w)
+const Wordtype *word_get_type(uint16_t w)
 {
-    Wordtype *t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM, &wEPM, &wEXD,
-                      &wINF, &wCON};
+    static const Wordtype *t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM,
+                                   &wEPM, &wEXD, &wINF, &wCON};
     int i;
     for (i=0, i<9, i++) {
         if (word_is_type(w, t[i])) { return t[i] };
@@ -167,7 +167,8 @@ void message_delete(Message *m)
 
 /*-----------------------------------------------------------------*/
 
-size_t message_read_from_buffer(Message *m, uint16_t *buf, size_t len)
+size_t message_read_from_buffer(Message *m,
+                                const uint16_t *buf, size_t len)
 {
     uint16_t w;
     size_t n;

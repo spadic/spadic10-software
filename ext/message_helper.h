@@ -40,8 +40,8 @@ struct _wordtype {
     void (*fill)(Message *m, uint16_t w);
 } Wordtype;
 
-static int word_is_type(uint16_t w, Wordtype t);
-static Wordtype *word_get_type(uint16_t w);
+static int word_is_type(uint16_t w, const Wordtype *t);
+static const Wordtype *word_get_type(uint16_t w);
 static int word_is_ignore(uint16_t w);
 static int word_is_start(uint16_t w);
 static int word_is_end(uint16_t w);
