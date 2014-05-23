@@ -7,6 +7,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+/* create and destroy message objects */
 typedef struct _message Message;
 Message *message_new(void);
 void message_delete(Message *m);
@@ -47,7 +48,6 @@ size_t message_read_from_buffer(Message *m,
  *   ignored, and
  * - cases b-d can be handled by passing the same Message object to
  *   successive calls of this function.
- *
  */
 
 /* query message type and completeness */
