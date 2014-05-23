@@ -212,12 +212,20 @@ int message_is_info(Message *m)
              m->info_type == iNBE));
 }
 
-int message_is_complete(Message *m)
+int message_is_valid(Message *m)
 {
     return (message_is_hit(m) ||
             message_is_buffer_overflow(m) ||
             message_is_epoch_marker(m) ||
             message_is_info(m));
+}
+
+int message_is_complete(Message *m)
+{
+    return ((m->valid & wEOM.valid) ||
+            (m->valid & wBOM.valid) ||
+            (m->valid & wEPM.valid) ||
+            (m->valid & wINF.valid));
 }
 
 /*==== test/temp/dummy/wrap =======================================*/

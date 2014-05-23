@@ -55,6 +55,7 @@ int message_is_hit(Message *m);
 int message_is_buffer_overflow(Message *m);
 int message_is_epoch_marker(Message *m);
 int message_is_info(Message *m);
+int message_is_valid(Message *m);
 int message_is_complete(Message *m);
 
 /* access message data */
