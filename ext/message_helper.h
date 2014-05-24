@@ -1,6 +1,7 @@
 static void ptr_set_null(void *p);
 
 /* Message */
+#define MAX_RAW_COUNT 20 /* up to 20 message words contain raw data */
 struct _message {
     uint8_t group_id;
     uint8_t channel_id;
@@ -15,8 +16,7 @@ struct _message {
 
     uint8_t valid;
 
-    /* up to 20 message words contain raw data */
-    uint16_t (*raw_buf)[20];
+    uint16_t (*raw_buf)[MAX_RAW_COUNT];
     uint8_t raw_count;
 };
 
