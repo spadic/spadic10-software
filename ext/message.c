@@ -8,10 +8,8 @@
 
 void ptr_set_null(void *p)
 {
-    if (p != NULL) {
-        free(p);
-        p = NULL;
-    }
+    free(p);
+    p = NULL;
 }
 
 void message_init(Message *m)
