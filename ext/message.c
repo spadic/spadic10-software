@@ -25,7 +25,7 @@ void message_fill(Message *m, uint16_t w)
 {
     if (!m) return;
     const Wordtype *t = word_get_type(w);
-    if (t != NULL) {
+    if (t) {
         (t->fill)(m, w);
         m->valid |= t->valid;
     }
@@ -144,16 +144,20 @@ Message *message_new(void)
 {
     Message *m;
     m = malloc(sizeof *m);
-    m->samples = NULL;
-    m->raw_buf = NULL;
-    message_init(m);
+    if (m) {
+        m->samples = NULL;
+        m->raw_buf = NULL;
+        message_init(m);
+    }
     return m;
 }
 
 void message_delete(Message *m)
 {
-    free(m->samples);
-    free(m->raw_buf);
+    if (m) {
+        free(m->samples);
+        free(m->raw_buf);
+    }
     free(m);
 }
 

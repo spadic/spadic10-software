@@ -5,6 +5,8 @@
 size_t test_message_read(uint16_t *buf, size_t len)
 {
     Message *m = message_new();
+    if (!m) { return 0; }
+
     int count = 0;
     uint16_t *pos = buf;
     ptrdiff_t left = len;
