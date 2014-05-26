@@ -14,7 +14,7 @@ def data_from_string(s):
 
 def read_messages(data):
     n = len(data)
-    t = ctypes.c_ushort*n
+    t = ctypes.c_uint16*n
     w = t(*data)
     count = lib.test_message_read(w, n)
     print "result:", count

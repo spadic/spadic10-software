@@ -16,13 +16,12 @@ size_t test_message_read(uint16_t *buf, size_t len)
         n = message_read_from_buffer(m, pos, left);
         pos += n;
         left -= n;
-        if (message_is_valid(m)) {
-            count ++;
-        }
         printf("n: %d  pos: %d  left: %d\n", n, pos-buf, left);
         getchar();
+        count ++;
     }
 
+    message_delete(m);
     return count;
 }
 

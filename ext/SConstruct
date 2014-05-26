@@ -1,4 +1,7 @@
 # ex: syntax=python
 
-m = SharedLibrary(['message.c'])
-SharedLibrary(['test_message.c', m])
+libmessage = SharedLibrary(['message.c'])
+libtestmessage = SharedLibrary(['test_message.c', libmessage])
+
+cpp_env = Environment(CCFLAGS=['-std=c++11'])
+cpp_env.Program(['test_message.cpp', libtestmessage, libmessage])
