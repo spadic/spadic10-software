@@ -6,17 +6,13 @@
 
 /*==== private functions ==========================================*/
 
-void ptr_set_null(void *p)
-{
-    free(p);
-    p = NULL;
-}
-
 void message_init(Message *m)
 {
     if (!m) return;
-    ptr_set_null(m->samples);
-    ptr_set_null(m->raw_buf);
+    free(m->samples);
+    free(m->raw_buf);
+    m->samples = NULL;
+    m->raw_buf = NULL;
     m->raw_count = 0;
     m->valid = 0;
 }

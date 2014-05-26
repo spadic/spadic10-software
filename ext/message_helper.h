@@ -1,5 +1,3 @@
-static void ptr_set_null(void *p);
-
 /* Message */
 #define MAX_RAW_COUNT 20 /* up to 20 message words contain raw data */
 struct _message {
