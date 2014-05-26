@@ -100,6 +100,13 @@ static void fill_wRDA(Message *m, uint16_t w)
     (*m->raw_buf)[m->raw_count++] = w & 0x0FFF;
 }
 
+static void fill_wCON(Message *m, uint16_t w)
+{
+    if (!m->raw_buf) { return; }
+    if (m->raw_count >= MAX_RAW_COUNT) { return; }
+    (*m->raw_buf)[m->raw_count++] = w & 0x7FFF;
+}
+
 static void fill_wEOM(Message *m, uint16_t w)
 {
     m->num_samples = (w & 0x0FC0) >> 6;
@@ -130,13 +137,6 @@ static void fill_wINF(Message *m, uint16_t w)
     } else if (t == iSYN) {
         m->epoch_count = (w & 0x00FF);
     }
-}
-
-static void fill_wCON(Message *m, uint16_t w)
-{
-    if (!m->raw_buf) { return; }
-    if (m->raw_count >= MAX_RAW_COUNT) { return; }
-    (*m->raw_buf)[m->raw_count++] = w & 0x7FFF;
 }
 
 /*==== public functions ===========================================*/
