@@ -184,10 +184,15 @@ size_t message_read_from_buffer(Message *m,
 
 int message_is_hit(const Message *m)
 {
-    return ((m->valid == (wSOM.valid | wTSW.valid |
-                          wRDA.valid | wEOM.valid)) ||
-            ((m->valid == wINF.valid) &&
-             (m->info_type == iDIS || m->info_type == iMSB)));
+    return m->valid == (wSOM.valid | wTSW.valid |
+                        wRDA.valid | wEOM.valid);
+}
+
+int message_is_hit_aborted(const Message *m)
+{
+    /* TODO: encode available fields in the return value */
+    return (m->valid == wINF.valid) &&
+           (m->info_type == iDIS || m->info_type == iMSB);
 }
 
 int message_is_buffer_overflow(const Message *m)
@@ -197,9 +202,13 @@ int message_is_buffer_overflow(const Message *m)
 
 int message_is_epoch_marker(const Message *m)
 {
-    return ((m->valid == (wSOM.valid | wEPM.valid)) ||
-            ((m->valid == (wSOM.valid | wINF.valid)) &&
-             (m->info_type == iSYN)));
+    return m->valid == (wSOM.valid | wEPM.valid);
+}
+
+int message_is_epoch_out_of_sync(const Message *m)
+{
+    return (m->valid == (wSOM.valid | wINF.valid)) &&
+           (m->info_type == iSYN);
 }
 
 int message_is_info(const Message *m)
@@ -213,8 +222,10 @@ int message_is_info(const Message *m)
 int message_is_valid(const Message *m)
 {
     return (message_is_hit(m) ||
+            message_is_hit_aborted(m) ||
             message_is_buffer_overflow(m) ||
             message_is_epoch_marker(m) ||
+            message_is_epoch_out_of_sync(m) ||
             message_is_info(m));
 }
 

@@ -52,8 +52,10 @@ size_t message_read_from_buffer(Message *m,
 
 /* query message type and completeness */
 int message_is_hit(const Message *m);
+int message_is_hit_aborted(const Message *m);
 int message_is_buffer_overflow(const Message *m);
 int message_is_epoch_marker(const Message *m);
+int message_is_epoch_out_of_sync(const Message *m);
 int message_is_info(const Message *m);
 int message_is_valid(const Message *m);
 int message_is_complete(const Message *m);
