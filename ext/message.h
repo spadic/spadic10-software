@@ -12,6 +12,11 @@ extern "C" {
  * and to access the message content.
  */
 
+/**
+ * \mainpage
+ * You want to look at message.h.
+ */
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -36,7 +41,7 @@ void message_delete(Message *m);
 size_t message_read_from_buffer(Message *m,
                                 const uint16_t *buf, size_t len);
 /**<
- * Read words from `buf` and fill message `m`, if possible.
+ * Read words from `buf` and fill message `m`.
  *
  * The function consumes words from the buffer until either an
  * end-of-message word is encountered or the end of the buffer is reached
