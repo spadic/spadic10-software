@@ -97,6 +97,18 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 
 /** \name Query message type and status */
 /**@{*/
+int message_is_complete(const Message *m);
+/**<
+ * \return Non-zero if `m` is a complete message.
+ *
+ * A message is considered "complete" when both the start and the end of
+ * the message have been encountered. Use this function to determine
+ * whether message_read_from_buffer() can further fill a given message
+ * object.
+ *
+ * Note that this is different from message_is_valid(): a message can be
+ * complete and not valid, but a valid message is always complete.
+ */
 int message_is_hit(const Message *m);
 /**<
  * \return Non-zero if `m` is a regular hit message.
@@ -157,23 +169,12 @@ int message_is_valid(const Message *m);
  * \return Non-zero if `m` is a valid message of any type.
  *
  * Valid messages are of one of the following types:
- * - hit message (normal or aborted)
+ * - hit message, normal or aborted
  *   (message_is_hit(), message_is_hit_aborted())
- * - buffer overflow message
- * - epoch marker (normal or "out of sync")
- * - info message
- */
-int message_is_complete(const Message *m);
-/**<
- * \return Non-zero if `m` is a complete message.
- *
- * A message is considered "complete" when both the start and the end of
- * the message have been encountered. Use this function to determine
- * whether message_read_from_buffer() can further fill a given message
- * object.
- *
- * Note that this is different from message_is_valid(): a message can be
- * complete and not valid, but a valid message is always complete.
+ * - buffer overflow message (message_is_buffer_overflow())
+ * - epoch marker, normal or "out of sync"
+ *   (message_is_epoch_marker(), message_is_epoch_out_of_sync())
+ * - info message (message_is_info())
  */
 /**@}*/
 

@@ -162,8 +162,6 @@ void message_delete(Message *m)
     free(m);
 }
 
-/*-----------------------------------------------------------------*/
-
 size_t message_read_from_buffer(Message *m,
                                 const uint16_t *buf, size_t len)
 {
@@ -181,6 +179,14 @@ size_t message_read_from_buffer(Message *m,
 }
 
 /*-----------------------------------------------------------------*/
+
+int message_is_complete(const Message *m)
+{
+    return ((m->valid & wEOM.valid) ||
+            (m->valid & wBOM.valid) ||
+            (m->valid & wEPM.valid) ||
+            (m->valid & wINF.valid));
+}
 
 int message_is_hit(const Message *m)
 {
@@ -227,14 +233,6 @@ int message_is_valid(const Message *m)
             message_is_epoch_marker(m) ||
             message_is_epoch_out_of_sync(m) ||
             message_is_info(m));
-}
-
-int message_is_complete(const Message *m)
-{
-    return ((m->valid & wEOM.valid) ||
-            (m->valid & wBOM.valid) ||
-            (m->valid & wEPM.valid) ||
-            (m->valid & wINF.valid));
 }
 
 /*-----------------------------------------------------------------*/
