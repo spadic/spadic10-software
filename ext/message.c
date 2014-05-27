@@ -197,7 +197,7 @@ int message_is_hit_aborted(const Message *m)
 
 int message_is_buffer_overflow(const Message *m)
 {
-    return (m->valid == (wSOM.valid | wTSW.valid | wBOM.valid));
+    return m->valid == (wSOM.valid | wTSW.valid | wBOM.valid);
 }
 
 int message_is_epoch_marker(const Message *m)
@@ -213,10 +213,10 @@ int message_is_epoch_out_of_sync(const Message *m)
 
 int message_is_info(const Message *m)
 {
-    return ((m->valid == wINF.valid) &&
-            (m->info_type == iNGT ||
-             m->info_type == iNRT ||
-             m->info_type == iNBE));
+    return (m->valid == wINF.valid) &&
+           (m->info_type == iNGT ||
+            m->info_type == iNRT ||
+            m->info_type == iNBE);
 }
 
 int message_is_valid(const Message *m)
