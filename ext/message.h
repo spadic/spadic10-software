@@ -97,7 +97,6 @@ size_t message_read_from_buffer(Message *m,
 /* query message type and completeness */
 int message_is_hit(const Message *m);
 /**<
- * Test if `m` is a regular hit message.
  * \return Non-zero if `m` is a regular hit message.
  *
  * Indicates that the following data is available:
@@ -111,7 +110,6 @@ int message_is_hit(const Message *m);
  */
 int message_is_hit_aborted(const Message *m);
 /**<
- * Test if `m` is an aborted hit message.
  * \return Non-zero if `m` is an aborted hit message.
  *
  * The available data fields are encoded in the returned integer
@@ -121,7 +119,6 @@ int message_is_hit_aborted(const Message *m);
  */
 int message_is_buffer_overflow(const Message *m);
 /**<
- * Test if `m` is a buffer overflow message.
  * \return Non-zero if `m` is a buffer overflow message.
  *
  * Indicates that the following data is available:
@@ -132,7 +129,6 @@ int message_is_buffer_overflow(const Message *m);
  */
 int message_is_epoch_marker(const Message *m);
 /**<
- * Test if `m` is an epoch marker.
  * \return Non-zero if `m` is an epoch marker.
  *
  * Indicates that the following data is available:
@@ -141,8 +137,7 @@ int message_is_epoch_marker(const Message *m);
  */
 int message_is_epoch_out_of_sync(const Message *m);
 /**<
- * Test if `m` is an "out of sync" epoch marker.
- * \return Non-zero if `m` is an epoch marker.
+ * \return Non-zero if `m` is an "out of sync" epoch marker.
  *
  * Indicates that the following data is available:
  * - group ID (message_get_group_id())
@@ -150,7 +145,6 @@ int message_is_epoch_out_of_sync(const Message *m);
  */
 int message_is_info(const Message *m);
 /**<
- * Test if `m` is an info message.
  * \return Non-zero if `m` is an info message
  *
  * Indicates that the info type (`NGT`, `NRT`, or `NBE`) is available
@@ -158,8 +152,7 @@ int message_is_info(const Message *m);
  */
 int message_is_valid(const Message *m);
 /**<
- * Test if `m` is a valid message of any type.
- * \return Non-zero if `m` is a valid message.
+ * \return Non-zero if `m` is a valid message of any type.
  *
  * Valid messages are of one of the following types:
  * - hit message (normal or aborted)
