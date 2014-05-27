@@ -4,17 +4,38 @@
 extern "C" {
 #endif
 
+/**
+ * \file
+ * SPADIC 1.0 Message Library
+ *
+ * Provides functions to extract SPADIC messages from captured raw data
+ * and to access the message content.
+ */
+
 #include <stddef.h>
 #include <stdint.h>
 
 /* create and destroy message objects */
 typedef struct _message Message;
+/**<
+ * Represents SPADIC messages.
+ */
+
 Message *message_new(void);
+/**<
+ * Create and initialize a new message object.
+ * \return Pointer to created message object, `NULL` if unsuccessful.
+ */
+
 void message_delete(Message *m);
+/**<
+ * Destroy a message object.
+ * Nothing is done if `m` is `NULL`.
+ */
 
 size_t message_read_from_buffer(Message *m,
                                 const uint16_t *buf, size_t len);
-/*
+/**<
  * Read words from `buf` and fill message `m`, if possible.
  *
  * The function consumes words from the buffer until either an
@@ -25,18 +46,20 @@ size_t message_read_from_buffer(Message *m,
  * suitable value to be passed as the `buf` argument for repeated calls of
  * this function.
  *
- * Different possible cases:
- * key:
- *     ( = start of message
- *     ) = end of message
- *     x = any word except end of message
- *     . = any word except start of message or end of message
- *     | = end of buffer reached
+ * Four different cases (`a`--`d`) regarding the occurence of words
+ * starting or ending a message are possible:
  *
- * a:  xxx(....)  normal case
- * b:  xxx(..|    missing end of message
- * c:  ........)  missing start of message
- * d:  ......|    missing start and end of message
+ *     key:
+ *         ( = start of message
+ *         ) = end of message
+ *         x = any word except end of message
+ *         . = any word except start of message or end of message
+ *         | = end of buffer reached
+ *
+ *     a:  xxx(....)  normal case
+ *     b:  xxx(..|    missing end of message
+ *     c:  ........)  missing start of message
+ *     d:  ......|    missing start and end of message
  *
  * It is not guaranteed that a complete message was contained in the
  * consumed words (cases b-d), this can be checked afterwards using
@@ -48,6 +71,25 @@ size_t message_read_from_buffer(Message *m,
  *   ignored, and
  * - cases b-d can be handled by passing the same Message object to
  *   successive calls of this function.
+ *
+ * Reading multiple messages from a buffer could then look something like
+ * this:
+ *
+ * \code{.c}
+ * uint16_t *pos = buf;
+ * ptrdiff_t left = len;
+ * Message *m = message_new();
+ *
+ * size_t n;
+ * while (left > 0) {
+ *     n = message_read_from_buffer(m, pos, left);
+ *     pos += n;
+ *     left -= n;
+ *     if (message_is_complete(m)) {
+ *         do_something_with(m);
+ *     }
+ * }
+ * \endcode
  */
 
 /* query message type and completeness */
