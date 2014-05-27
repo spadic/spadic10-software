@@ -1,0 +1,13 @@
+.memname {
+    font-family: monospace;
+}
+
+.memItemLeft, .memItemRight,
+.memTemplItemLeft, .memTemplItemRight, .memTemplParams {
+    font-family: monospace;
+}
+
+a.el {
+    font-family: monospace;
+    font-weight: normal;
+}
