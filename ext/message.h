@@ -25,19 +25,16 @@ typedef struct _message Message;
 /**<
  * Represents SPADIC messages.
  */
-
 Message *message_new(void);
 /**<
  * Create and initialize a new message object.
  * \return Pointer to created message object, `NULL` if unsuccessful.
  */
-
 void message_delete(Message *m);
 /**<
  * Destroy a message object.
  * Nothing is done if `m` is `NULL`.
  */
-
 size_t message_read_from_buffer(Message *m,
                                 const uint16_t *buf, size_t len);
 /**<
@@ -99,12 +96,78 @@ size_t message_read_from_buffer(Message *m,
 
 /* query message type and completeness */
 int message_is_hit(const Message *m);
+/**<
+ * Test if `m` is a regular hit message.
+ * \return Non-zero if `m` is a regular hit message.
+ *
+ * Indicates that the following data is available:
+ * - group ID (message_get_group_id())
+ * - channel ID (message_get_channel())
+ * - timestamp (message_get_timestamp())
+ * - number of samples (message_get_num_samples()),
+ *   and the samples themselves (message_get_samples())
+ * - hit type (message_get_hit_type())
+ * - stop type (message_get_stop_type())
+ */
 int message_is_hit_aborted(const Message *m);
+/**<
+ * Test if `m` is an aborted hit message.
+ * \return Non-zero if `m` is an aborted hit message.
+ *
+ * The available data fields are encoded in the returned integer
+ * (potentially everything in a normal hit message). The abort reason
+ * (channel disabled or data corruption in message builder) is available
+ * as the info type (message_get_info_type())
+ */
 int message_is_buffer_overflow(const Message *m);
+/**<
+ * Test if `m` is a buffer overflow message.
+ * \return Non-zero if `m` is a buffer overflow message.
+ *
+ * Indicates that the following data is available:
+ * - group ID (message_get_group_id())
+ * - channel ID (message_get_channel())
+ * - timestamp (message_get_timestamp())
+ * - number of lost hits (message_get_buffer_overflow_count()),
+ */
 int message_is_epoch_marker(const Message *m);
+/**<
+ * Test if `m` is an epoch marker.
+ * \return Non-zero if `m` is an epoch marker.
+ *
+ * Indicates that the following data is available:
+ * - group ID (message_get_group_id())
+ * - epoch count (message_get_epoch_count())
+ */
 int message_is_epoch_out_of_sync(const Message *m);
+/**<
+ * Test if `m` is an "out of sync" epoch marker.
+ * \return Non-zero if `m` is an epoch marker.
+ *
+ * Indicates that the following data is available:
+ * - group ID (message_get_group_id())
+ * - least significant 8 bits of epoch count (message_get_epoch_count())
+ */
 int message_is_info(const Message *m);
+/**<
+ * Test if `m` is an info message.
+ * \return Non-zero if `m` is an info message
+ *
+ * Indicates that the info type (`NGT`, `NRT`, or `NBE`) is available
+ * (message_get_info_type()).
+ */
 int message_is_valid(const Message *m);
+/**<
+ * Test if `m` is a valid message of any type.
+ * \return Non-zero if `m` is a valid message.
+ *
+ * Valid messages are of one of the following types:
+ * - hit message (normal or aborted)
+ *   (message_is_hit(), message_is_hit_aborted())
+ * - buffer overflow message
+ * - epoch marker (normal or "out of sync")
+ * - info message
+ */
 int message_is_complete(const Message *m);
 
 /* access message data */
