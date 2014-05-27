@@ -95,7 +95,12 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  */
 /**@}*/
 
-/** \name Query message type and status */
+/**
+ * All the following functions assume that `m` is a valid (non-`NULL`)
+ * pointer to a message object obtained from message_new().
+ */
+
+/** \name Query message status and type */
 /**@{*/
 int message_is_complete(const Message *m);
 /**<
