@@ -1,6 +1,6 @@
 /* Message */
 #define MAX_RAW_COUNT 20 /* up to 20 message words contain raw data */
-struct _message {
+struct message {
     uint8_t group_id;
     uint8_t channel_id;
     uint16_t timestamp;
@@ -31,7 +31,7 @@ static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
 
 /* word types/preambles */
-typedef struct _wordtype {
+typedef struct wordtype {
     uint16_t value;
     uint16_t mask;
     uint8_t valid;

@@ -22,7 +22,7 @@ extern "C" {
 
 /** \name Create, fill and destroy message objects */
 /**@{*/
-typedef struct _message Message;
+typedef struct message Message;
 /**<
  * Represents SPADIC messages.
  */
