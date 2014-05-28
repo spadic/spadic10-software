@@ -138,6 +138,38 @@ static void fill_wINF(Message *m, uint16_t w)
     }
 }
 
+/*-----------------------------------------------------------------*/
+
+static void unpack_raw(Message *m)
+{
+    if (!m->raw_buf || m->raw_count == 0) return;
+
+    /* allocate space for samples */
+    int16_t *s;
+    if (!(s = malloc(MAX_SAMPLES * sizeof *s))) return;
+
+    /* set up working area */
+    uint16_t w;
+    uint16_t mask = 0x01FF;
+    uint32_t r = 0;
+    int pos = 0;
+    size_t ns = 0;
+
+    /* process raw data */
+    int i = 0;
+    while (i < m->raw_count && ns < MAX_SAMPLES) {
+        w = (*m->raw_buf)[i++];
+        /* TODO */
+        ns++;
+    }
+
+    /* clean up */
+    m->num_samples = ns;
+    m->samples = realloc(s, ns);
+    free(m->raw_buf);
+    m->raw_buf = NULL;
+}
+
 /*==== public functions ===========================================*/
 
 Message *message_new(void)
@@ -251,13 +283,13 @@ uint16_t message_get_timestamp(const Message *m)
 
 int16_t *message_get_samples(const Message *m)
 {
-    if (!m->samples) { unpack_raw(m); }
+    if (!m->samples) { unpack_raw((Message *)m); } /* strip const */
     return m->samples;
 }
 
 uint8_t message_get_num_samples(const Message *m)
 {
-    if (!m->samples) { unpack_raw(m); }
+    if (!m->samples) { unpack_raw((Message *)m); }
     return m->num_samples;
 }
 

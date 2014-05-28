@@ -1,5 +1,6 @@
 /* Message */
 #define MAX_RAW_COUNT 20 /* up to 20 message words contain raw data */
+#define MAX_SAMPLES 32 /* up to 32 samples inside raw data */
 struct message {
     uint8_t group_id;
     uint8_t channel_id;
@@ -29,7 +30,7 @@ static void fill_wBOM(Message *m, uint16_t w);
 static void fill_wEPM(Message *m, uint16_t w);
 static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
-static void unpack_raw(const Message *m);
+static void unpack_raw(Message *m);
 
 /* word types/preambles */
 typedef struct wordtype {
