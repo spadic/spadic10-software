@@ -1,6 +1,5 @@
 /* Message */
-#define MAX_RAW_COUNT 20 /* up to 20 message words contain raw data */
-#define MAX_SAMPLES 32 /* up to 32 samples inside raw data */
+#define MAX_RAW_COUNT 20 /* number of words needed to hold 32 samples */
 struct message {
     uint8_t group_id;
     uint8_t channel_id;

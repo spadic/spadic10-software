@@ -145,6 +145,7 @@ static void unpack_raw(Message *m)
 {
     if (!m->raw_buf) { return; }
     if (m->raw_count == 0) { return; }
+    if (!(m->valid & wEOM.valid)) { return; } /* need num_samples */
 
     /* allocate space for samples */
     int16_t *s;
@@ -159,15 +160,17 @@ static void unpack_raw(Message *m)
 
     /* process raw data */
     int i = 0;
-    while (i < m->raw_count && ns < MAX_SAMPLES) {
+    while (i < m->raw_count) {
         w = (*m->raw_buf)[i++];
         /* TODO */
         ns++;
+        /* inner loop {
+            if (ns >= m->num_samples) { break; }
+        } */
     }
 
     /* clean up */
-    m->num_samples = ns;
-    m->samples = realloc(s, ns);
+    m->samples = s;
     free(m->raw_buf);
     m->raw_buf = NULL;
 }
