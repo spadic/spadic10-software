@@ -29,6 +29,7 @@ static void fill_wBOM(Message *m, uint16_t w);
 static void fill_wEPM(Message *m, uint16_t w);
 static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
+static void unpack_raw(const Message *m);
 
 /* word types/preambles */
 typedef struct wordtype {

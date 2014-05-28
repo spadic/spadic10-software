@@ -195,7 +195,6 @@ int message_is_hit(const Message *m)
 
 int message_is_hit_aborted(const Message *m)
 {
-    /* TODO: encode available fields in the return value */
     return (m->valid == wINF.valid) &&
            (m->info_type == iDIS || m->info_type == iMSB);
 }
@@ -238,51 +237,53 @@ int message_is_valid(const Message *m)
 
 uint8_t message_get_group_id(const Message *m)
 {
-    /* TODO */
+    return m->group_id;
 }
 
 uint8_t message_get_channel_id(const Message *m)
 {
-    /* TODO */
+    return m->channel_id;
 }
 
 uint16_t message_get_timestamp(const Message *m)
 {
-    /* TODO */
+    return m->timestamp;
 }
 
 int16_t *message_get_samples(const Message *m)
 {
-    /* TODO */
+    if (!m->samples) { unpack_raw(m); }
+    return m->samples;
 }
 
 uint8_t message_get_num_samples(const Message *m)
 {
-    /* TODO */
+    if (!m->samples) { unpack_raw(m); }
+    return m->num_samples;
 }
 
 uint8_t message_get_hit_type(const Message *m)
 {
-    /* TODO */
+    return m->hit_type;
 }
 
 uint8_t message_get_stop_type(const Message *m)
 {
-    /* TODO */
+    return m->stop_type;
 }
 
 uint8_t message_get_buffer_overflow_count(const Message *m)
 {
-    /* TODO */
+    return m->buffer_overflow_count;
 }
 
 uint16_t message_get_epoch_count(const Message *m)
 {
-    /* TODO */
+    return m->epoch_count;
 }
 
 uint8_t message_get_info_type(const Message *m)
 {
-    /* TODO */
+    return m->info_type;
 }
 
