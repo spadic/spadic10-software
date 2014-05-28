@@ -23,9 +23,6 @@ extern "C" {
 /** \name Create, fill and destroy message objects */
 /**@{*/
 typedef struct message Message;
-/**<
- * Represents SPADIC messages.
- */
 Message *message_new(void);
 /**<
  * Create and initialize a new message object.
@@ -40,13 +37,13 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 /**<
  * Read words from `buf` and fill message `m`.
  *
+ * \return The number `n` of consumed words, so that `buf+n` is a suitable
+ * value to be passed as the `buf` argument for repeated calls of this
+ * function.
+ *
  * The function consumes words from the buffer until either an
  * end-of-message word is encountered or the end of the buffer is reached
  * (i.e. `len` words have been read).
- *
- * The number `n` of consumed words is returned, so that `buf+n` is a
- * suitable value to be passed as the `buf` argument for repeated calls of
- * this function.
  *
  * Four different cases (`a`--`d`) regarding the occurence of words
  * starting or ending a message are possible:
@@ -77,7 +74,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  * Reading multiple messages from a buffer could then look something like
  * this:
  *
- * \code{.c}
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.c}
  * uint16_t *pos = buf;
  * ptrdiff_t left = len;
  * Message *m = message_new();
@@ -91,7 +88,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  *         do_something_with(m);
  *     }
  * }
- * \endcode
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 /**@}*/
 
@@ -143,7 +140,7 @@ int message_is_buffer_overflow(const Message *m);
  * - group ID (message_get_group_id())
  * - channel ID (message_get_channel_id())
  * - timestamp (message_get_timestamp())
- * - number of lost hits (message_get_buffer_overflow_count()),
+ * - number of lost hits (message_get_buffer_overflow_count())
  */
 int message_is_epoch_marker(const Message *m);
 /**<
@@ -197,9 +194,9 @@ int16_t *message_get_samples(const Message *m);
  * \return Pointer to a memory location containing the samples, if
  * available, `NULL` otherwise.
  *
- * Determine the number of available samples using
- * message_get_num_samples(). The memory containing the samples is
- * reclaimed when `m` is destroyed using message_delete().
+ * The number of available samples must be determined using
+ * message_get_num_samples(). The memory containing the samples will be
+ * released when `m` is destroyed using message_delete().
  */
 uint8_t message_get_num_samples(const Message *m);
 /**< \return The number of samples, if available, undefined otherwise. */
