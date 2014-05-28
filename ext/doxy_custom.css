@@ -11,3 +11,8 @@ a.el {
     font-family: monospace;
     font-weight: normal;
 }
+
+span.lineno {
+    color: #A0A0A0;
+    border-right: 0px;
+}
