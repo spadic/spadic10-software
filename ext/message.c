@@ -8,7 +8,7 @@
 
 void message_init(Message *m)
 {
-    if (!m) return;
+    if (!m) { return; }
     free(m->samples);
     free(m->raw_buf);
     m->samples = NULL;
@@ -19,7 +19,7 @@ void message_init(Message *m)
 
 void message_fill(Message *m, uint16_t w)
 {
-    if (!m) return;
+    if (!m) { return; }
     const Wordtype *t = word_get_type(w);
     if (t) {
         (t->fill)(m, w);
@@ -40,7 +40,7 @@ const Wordtype *word_get_type(uint16_t w)
                                    &wEPM, &wEXD, &wINF, &wCON};
     int i;
     for (i=0; i<9; i++) {
-        if (word_is_type(w, t[i])) { return t[i]; };
+        if (word_is_type(w, t[i])) { return t[i]; }
     }
     return NULL;
 }
@@ -95,14 +95,15 @@ static void fill_wTSW(Message *m, uint16_t w)
 static void fill_wRDA(Message *m, uint16_t w)
 {
     m->raw_buf = malloc(sizeof *m->raw_buf);
-    if (!m->raw_buf) return;
+    if (!m->raw_buf) { return; }
     m->raw_count = 0;
     (*m->raw_buf)[m->raw_count++] = w & 0x0FFF;
 }
 
 static void fill_wCON(Message *m, uint16_t w)
 {
-    if (!m->raw_buf || m->raw_count >= MAX_RAW_COUNT) return;
+    if (!m->raw_buf) { return; }
+    if (m->raw_count >= MAX_RAW_COUNT) { return; }
     (*m->raw_buf)[m->raw_count++] = w & 0x7FFF;
 }
 
@@ -142,11 +143,12 @@ static void fill_wINF(Message *m, uint16_t w)
 
 static void unpack_raw(Message *m)
 {
-    if (!m->raw_buf || m->raw_count == 0) return;
+    if (!m->raw_buf) { return; }
+    if (m->raw_count == 0) { return; }
 
     /* allocate space for samples */
     int16_t *s;
-    if (!(s = malloc(MAX_SAMPLES * sizeof *s))) return;
+    if (!(s = malloc(m->num_samples * sizeof *s))) { return; }
 
     /* set up working area */
     uint16_t w;
