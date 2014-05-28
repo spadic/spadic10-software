@@ -131,10 +131,9 @@ int message_is_hit_aborted(const Message *m);
 /**<
  * \return Non-zero if `m` is an aborted hit message.
  *
- * The available data fields are encoded in the returned integer
- * (potentially everything in a normal hit message). The abort reason
- * (channel disabled or data corruption in message builder) is available
- * as the info type (message_get_info_type())
+ * Indicates that the following data is available:
+ * - channel ID (message_get_channel_id())
+ * - info type (message_get_info_type()), can be `DIS` or `MSB`
  */
 int message_is_buffer_overflow(const Message *m);
 /**<
@@ -161,13 +160,15 @@ int message_is_epoch_out_of_sync(const Message *m);
  * Indicates that the following data is available:
  * - group ID (message_get_group_id())
  * - least significant 8 bits of epoch count (message_get_epoch_count())
+ * - info type (can only be `SYN`, so no need to check it)
  */
 int message_is_info(const Message *m);
 /**<
  * \return Non-zero if `m` is an info message
  *
- * Indicates that the info type (`NGT`, `NRT`, or `NBE`) is available
- * (message_get_info_type()).
+ * Indicates that the following data is available:
+ * - info type (message_get_info_type()), can be `NGT`, `NRT`, or `NBE`
+ * - channel ID (message_get_channel_id()), if the info type is `NGT` or `NBE`
  */
 int message_is_valid(const Message *m);
 /**<
