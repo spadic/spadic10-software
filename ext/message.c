@@ -161,8 +161,7 @@ void message_delete(Message *m)
     free(m);
 }
 
-size_t message_read_from_buffer(Message *m,
-                                const uint16_t *buf, size_t len)
+size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
 {
     uint16_t w;
     size_t n = 0;
