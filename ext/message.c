@@ -144,8 +144,8 @@ static void fill_wINF(Message *m, uint16_t w)
 static void unpack_raw(Message *m)
 {
     if (!m->raw_buf) { return; }
-    if (m->raw_count == 0) { return; }
     if (!(m->valid & wEOM.valid)) { return; } /* need num_samples */
+    if (m->raw_count < min_raw_count(m->num_samples)) { return; }
 
     /* allocate space for samples */
     int16_t *s;
@@ -173,6 +173,15 @@ static void unpack_raw(Message *m)
     m->samples = s;
     free(m->raw_buf);
     m->raw_buf = NULL;
+}
+
+static size_t min_raw_count(size_t num_samples)
+{
+    if (num_samples == 0) { return 0; }
+    size_t bits = 9 * num_samples + 3;
+    size_t n = bits/15;
+    if (15*n < bits) { n++; }
+    return n; /* ceil(bits/15) */
 }
 
 /*==== public functions ===========================================*/
