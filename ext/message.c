@@ -94,17 +94,17 @@ static void fill_wTSW(Message *m, uint16_t w)
 
 static void fill_wRDA(Message *m, uint16_t w)
 {
-    m->raw_buf = malloc(sizeof *m->raw_buf);
+    m->raw_buf = malloc(MAX_RAW_COUNT * sizeof *m->raw_buf);
     if (!m->raw_buf) { return; }
     m->raw_count = 0;
-    (*m->raw_buf)[m->raw_count++] = w & 0x0FFF;
+    m->raw_buf[m->raw_count++] = w & 0x0FFF;
 }
 
 static void fill_wCON(Message *m, uint16_t w)
 {
     if (!m->raw_buf) { return; }
     if (m->raw_count >= MAX_RAW_COUNT) { return; }
-    (*m->raw_buf)[m->raw_count++] = w & 0x7FFF;
+    m->raw_buf[m->raw_count++] = w & 0x7FFF;
 }
 
 static void fill_wEOM(Message *m, uint16_t w)

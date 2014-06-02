@@ -14,7 +14,7 @@ struct message {
 
     uint8_t valid;
 
-    uint16_t (*raw_buf)[MAX_RAW_COUNT];
+    uint16_t *raw_buf;
     uint8_t raw_count;
 };
 
