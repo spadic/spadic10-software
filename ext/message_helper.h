@@ -29,8 +29,9 @@ static void fill_wBOM(Message *m, uint16_t w);
 static void fill_wEPM(Message *m, uint16_t w);
 static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
-static void unpack_raw(Message *m);
+static void fill_raw(Message *m);
 static size_t min_raw_count(size_t num_samples);
+static void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns);
 
 /* word types/preambles */
 typedef struct wordtype {
