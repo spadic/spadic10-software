@@ -20,6 +20,7 @@ struct message {
 
 static void message_reset(Message *m);
 static void message_fill(Message *m, uint16_t w);
+
 static void fill_wSOM(Message *m, uint16_t w);
 static void fill_wTSW(Message *m, uint16_t w);
 static void fill_wRDA(Message *m, uint16_t w);
@@ -29,6 +30,7 @@ static void fill_wBOM(Message *m, uint16_t w);
 static void fill_wEPM(Message *m, uint16_t w);
 static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
+
 static void fill_raw(Message *m);
 static size_t min_raw_count(size_t num_samples);
 static void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns);
@@ -41,11 +43,12 @@ typedef struct wordtype {
     void (*fill)(Message *m, uint16_t w);
 } Wordtype;
 
-static int word_is_type(uint16_t w, const Wordtype *t);
 static const Wordtype *word_get_type(uint16_t w);
+static int word_is_type(uint16_t w, const Wordtype *t);
 static int word_is_ignore(uint16_t w);
 static int word_is_start(uint16_t w);
 static int word_is_end(uint16_t w);
+static uint8_t word_get_info_type(uint16_t w);
 
 static const Wordtype wSOM = {0x8000, 0xF000, 1<<0, fill_wSOM};
 static const Wordtype wTSW = {0x9000, 0xF000, 1<<1, fill_wTSW};
@@ -70,8 +73,6 @@ static const uint8_t sXX2 = 0x7;
 */
 
 /* info types */
-static uint8_t word_get_info_type(uint16_t w);
-
 static const uint8_t iDIS = 0x0;
 static const uint8_t iNGT = 0x1;
 static const uint8_t iNRT = 0x2;

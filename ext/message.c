@@ -4,7 +4,28 @@
 /* move here again when cleaned up */
 #include "message_helper.h"
 
-/*==== private functions ==========================================*/
+/*==== create, fill, destroy message objects ======================*/
+
+Message *message_new(void)
+{
+    Message *m;
+    m = malloc(sizeof *m);
+    message_init(m);
+    return m;
+}
+
+size_t message_size(void)
+{
+    return sizeof (Message);
+}
+
+void message_init(Message *m)
+{
+    if (!m) { return; }
+    m->samples = NULL;
+    m->raw_buf = NULL;
+    message_reset(m);
+}
 
 void message_reset(Message *m)
 {
@@ -15,6 +36,30 @@ void message_reset(Message *m)
     m->raw_buf = NULL;
     m->raw_count = 0;
     m->valid = 0;
+}
+
+void message_delete(Message *m)
+{
+    if (m) {
+        free(m->samples);
+        free(m->raw_buf);
+    }
+    free(m);
+}
+
+size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
+{
+    uint16_t w;
+    size_t n = 0;
+
+    while (n<len) {
+        w = buf[n++];
+        if (word_is_ignore(w)) { continue; }
+        if (word_is_start(w)) { message_reset(m); }
+        message_fill(m, w);
+        if (word_is_end(w)) { break; }
+    }
+    return n;
 }
 
 void message_fill(Message *m, uint16_t w)
@@ -29,55 +74,6 @@ void message_fill(Message *m, uint16_t w)
 
 /*-----------------------------------------------------------------*/
 
-int word_is_type(uint16_t w, const Wordtype *t)
-{
-    return (w & t->mask) == t->value;
-}
-
-const Wordtype *word_get_type(uint16_t w)
-{
-    static const Wordtype *t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM,
-                                   &wEPM, &wEXD, &wINF, &wCON};
-    int i;
-    for (i=0; i<9; i++) {
-        if (word_is_type(w, t[i])) { return t[i]; }
-    }
-    return NULL;
-}
-
-int word_is_ignore(uint16_t w)
-{
-    if (!word_is_type(w, &wINF)) { return 0; }
-    else { return word_get_info_type(w) == iNOP; }
-}
-
-int word_is_start(uint16_t w)
-{
-    if (word_is_type(w, &wSOM)) {
-        return 1;
-    } else if (!word_is_type(w, &wINF)) {
-        return 0;
-    } else {
-        return (word_get_info_type(w) == iNGT ||
-                word_get_info_type(w) == iNRT ||
-                word_get_info_type(w) == iNBE);
-    }
-}
-
-int word_is_end(uint16_t w)
-{
-    return (word_is_type(w, &wEOM) ||
-            word_is_type(w, &wBOM) ||
-            word_is_type(w, &wEPM) ||
-            word_is_type(w, &wINF));
-}
-
-/*-----------------------------------------------------------------*/
-
-uint8_t word_get_info_type(uint16_t w)
-{
-    return (w & 0x0F00) >> 8;
-}
 
 /* m != NULL must be checked outside of all fill_wXXX functions */
 
@@ -171,54 +167,58 @@ size_t min_raw_count(size_t num_samples)
     return n; /* ceil(bits/15) */
 }
 
-/*==== public functions ===========================================*/
-
-Message *message_new(void)
-{
-    Message *m;
-    m = malloc(sizeof *m);
-    message_init(m);
-    return m;
-}
-
-size_t message_size(void)
-{
-    return sizeof (Message);
-}
-
-void message_init(Message *m)
-{
-    if (!m) { return; }
-    m->samples = NULL;
-    m->raw_buf = NULL;
-    message_reset(m);
-}
-
-void message_delete(Message *m)
-{
-    if (m) {
-        free(m->samples);
-        free(m->raw_buf);
-    }
-    free(m);
-}
-
-size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
-{
-    uint16_t w;
-    size_t n = 0;
-
-    while (n<len) {
-        w = buf[n++];
-        if (word_is_ignore(w)) { continue; }
-        if (word_is_start(w)) { message_reset(m); }
-        message_fill(m, w);
-        if (word_is_end(w)) { break; }
-    }
-    return n;
-}
 
 /*-----------------------------------------------------------------*/
+
+const Wordtype *word_get_type(uint16_t w)
+{
+    static const Wordtype *t[9] = {&wSOM, &wTSW, &wRDA, &wEOM, &wBOM,
+                                   &wEPM, &wEXD, &wINF, &wCON};
+    int i;
+    for (i=0; i<9; i++) {
+        if (word_is_type(w, t[i])) { return t[i]; }
+    }
+    return NULL;
+}
+
+int word_is_type(uint16_t w, const Wordtype *t)
+{
+    return (w & t->mask) == t->value;
+}
+
+int word_is_ignore(uint16_t w)
+{
+    if (!word_is_type(w, &wINF)) { return 0; }
+    else { return word_get_info_type(w) == iNOP; }
+}
+
+int word_is_start(uint16_t w)
+{
+    if (word_is_type(w, &wSOM)) {
+        return 1;
+    } else if (!word_is_type(w, &wINF)) {
+        return 0;
+    } else {
+        return (word_get_info_type(w) == iNGT ||
+                word_get_info_type(w) == iNRT ||
+                word_get_info_type(w) == iNBE);
+    }
+}
+
+int word_is_end(uint16_t w)
+{
+    return (word_is_type(w, &wEOM) ||
+            word_is_type(w, &wBOM) ||
+            word_is_type(w, &wEPM) ||
+            word_is_type(w, &wINF));
+}
+
+uint8_t word_get_info_type(uint16_t w)
+{
+    return (w & 0x0F00) >> 8;
+}
+
+/*==== message status query & data access =========================*/
 
 int message_is_complete(const Message *m)
 {
