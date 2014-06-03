@@ -1,14 +1,12 @@
 /**
  * \file
- * SPADIC 1.0 Message Library
+ *
+ * \mainpage
  * \author Michael Krieger
  *
  * Provides functions to extract SPADIC messages from captured raw data
  * and to access the message content.
- */
 
-/**
- * \mainpage
  * You want to look at message.h.
  */
 
