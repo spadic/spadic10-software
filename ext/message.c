@@ -81,18 +81,18 @@ uint8_t word_get_info_type(uint16_t w)
 
 /* m != NULL must be checked outside of all fill_wXXX functions */
 
-static void fill_wSOM(Message *m, uint16_t w)
+void fill_wSOM(Message *m, uint16_t w)
 {
     m->group_id = (w & 0x0FF0) >> 4;
     m->channel_id = (w & 0x000F);
 }
 
-static void fill_wTSW(Message *m, uint16_t w)
+void fill_wTSW(Message *m, uint16_t w)
 {
     m->timestamp = (w & 0xFFF);
 }
 
-static void fill_wRDA(Message *m, uint16_t w)
+void fill_wRDA(Message *m, uint16_t w)
 {
     m->raw_buf = malloc(MAX_RAW_COUNT * sizeof *m->raw_buf);
     if (!m->raw_buf) { return; }
@@ -100,35 +100,35 @@ static void fill_wRDA(Message *m, uint16_t w)
     m->raw_buf[m->raw_count++] = w & 0x0FFF;
 }
 
-static void fill_wCON(Message *m, uint16_t w)
+void fill_wCON(Message *m, uint16_t w)
 {
     if (!m->raw_buf) { return; }
     if (m->raw_count >= MAX_RAW_COUNT) { return; }
     m->raw_buf[m->raw_count++] = w & 0x7FFF;
 }
 
-static void fill_wEOM(Message *m, uint16_t w)
+void fill_wEOM(Message *m, uint16_t w)
 {
     m->num_samples = (w & 0x0FC0) >> 6;
     m->hit_type = (w & 0x0030) >> 4;
     m->stop_type = (w & 0x0007);
 }
 
-static void fill_wBOM(Message *m, uint16_t w)
+void fill_wBOM(Message *m, uint16_t w)
 {
     m->buffer_overflow_count = (w & 0x00FF);
 }
 
-static void fill_wEPM(Message *m, uint16_t w)
+void fill_wEPM(Message *m, uint16_t w)
 {
     m->epoch_count = (w & 0x0FFF);
 }
 
-static void fill_wEXD(Message *m, uint16_t w)
+void fill_wEXD(Message *m, uint16_t w)
 { /* not implemented in SPADIC 1.0 */
 }
 
-static void fill_wINF(Message *m, uint16_t w)
+void fill_wINF(Message *m, uint16_t w)
 {
     uint8_t t = word_get_info_type(w);
     m->info_type = t;
@@ -141,7 +141,7 @@ static void fill_wINF(Message *m, uint16_t w)
 
 /*-----------------------------------------------------------------*/
 
-static void fill_raw(Message *m)
+void fill_raw(Message *m)
 {
     if (!m->raw_buf) { return; }
     if (!(m->valid & wEOM.valid)) { return; } /* need num_samples */
@@ -157,12 +157,12 @@ static void fill_raw(Message *m)
     m->raw_buf = NULL;
 }
 
-static void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
+void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
 {
     /* TODO */
 }
 
-static size_t min_raw_count(size_t num_samples)
+size_t min_raw_count(size_t num_samples)
 {
     if (num_samples == 0) { return 0; }
     size_t bits = 9 * num_samples + 3;
