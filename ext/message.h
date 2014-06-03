@@ -28,6 +28,13 @@ Message *message_new(void);
  * Create and initialize a new message object.
  * \return Pointer to created message object, `NULL` if unsuccessful.
  */
+void message_init(Message *m);
+/**<
+ * Initialize a newly allocated message object. Nothing is done if `m` is
+ * `NULL`.
+ * \note You only need this if you want to allocate memory for message
+ * objects yourself. If you use message_new(), you don't need this.
+ */
 void message_delete(Message *m);
 /**<
  * Destroy a message object.

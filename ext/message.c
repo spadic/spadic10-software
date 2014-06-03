@@ -177,12 +177,16 @@ Message *message_new(void)
 {
     Message *m;
     m = malloc(sizeof *m);
-    if (m) {
-        m->samples = NULL;
-        m->raw_buf = NULL;
-        message_reset(m);
-    }
+    message_init(m);
     return m;
+}
+
+void message_init(Message *m)
+{
+    if (!m) { return; }
+    m->samples = NULL;
+    m->raw_buf = NULL;
+    message_reset(m);
 }
 
 void message_delete(Message *m)
