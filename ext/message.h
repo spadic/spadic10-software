@@ -93,11 +93,11 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 /**@}*/
 
 /**
- * All the following functions assume that `m` is a valid (non-`NULL`)
+ * \name Query message status and type
+ * All functions in this section assume that `m` is a valid (non-`NULL`)
  * pointer to a message object obtained from message_new().
  */
 
-/** \name Query message status and type */
 /**@{*/
 int message_is_complete(const Message *m);
 /**<
@@ -178,10 +178,19 @@ int message_is_valid(const Message *m);
  * - epoch marker, normal or "out of sync"
  *   (message_is_epoch_marker(), message_is_epoch_out_of_sync())
  * - info message (message_is_info())
+ *
+ * A "valid" message is always "complete" (message_is_complete()).  If a
+ * message is complete, but not valid, there are either words missing that
+ * are required for a particular message type or there are additional
+ * words making the message type ambiguous.
  */
 /**@}*/
 
-/** \name Access message data */
+/**
+ * \name Access message data
+ * All functions in this section assume that `m` is a valid (non-`NULL`)
+ * pointer to a message object obtained from message_new().
+ */
 /**@{*/
 uint8_t message_get_group_id(const Message *m);
 /**< \return The group ID, if available, undefined otherwise. */
@@ -196,7 +205,7 @@ int16_t *message_get_samples(const Message *m);
  *
  * The number of available samples must be determined using
  * message_get_num_samples(). The memory containing the samples will be
- * released when `m` is destroyed using message_delete().
+ * released when `m` is destroyed by message_delete().
  */
 uint8_t message_get_num_samples(const Message *m);
 /**< \return The number of samples, if available, undefined otherwise. */
