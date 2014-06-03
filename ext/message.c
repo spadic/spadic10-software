@@ -74,8 +74,11 @@ void message_fill(Message *m, uint16_t w)
 
 /*-----------------------------------------------------------------*/
 
-
-/* m != NULL must be checked outside of all fill_wXXX functions */
+/*
+ * m != NULL must be checked outside before calling fill_wXXX().
+ * This is done in message_fill(), it should be the only place where
+ * these functions are called (as the (*fill) member of each Wordtype).
+ */
 
 void fill_wSOM(Message *m, uint16_t w)
 {

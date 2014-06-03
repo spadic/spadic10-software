@@ -109,8 +109,9 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 
 /**@{
  * \name Query message status and type
- * All functions in this section assume that `m` is a valid (non-`NULL`)
- * pointer to a message object obtained from message_new().
+ * All functions in this section assume that `m` is a pointer to a
+ * properly allocated and initialized message object (e.g. obtained from
+ * message_new()).
  */
 int message_is_complete(const Message *m);
 /**<
@@ -204,8 +205,9 @@ int message_is_valid(const Message *m);
 
 /**@{
  * \name Access message data
- * All functions in this section assume that `m` is a valid (non-`NULL`)
- * pointer to a message object obtained from message_new().
+ * All functions in this section assume that `m` is a pointer to a
+ * properly allocated and initialized message object (e.g. obtained from
+ * message_new()).
  */
 uint8_t message_get_group_id(const Message *m);
 /**< \return The group ID, if available, undefined otherwise. */
