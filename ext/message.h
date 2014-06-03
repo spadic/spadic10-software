@@ -1,12 +1,7 @@
-#ifndef SPADIC_MESSAGE_H
-#define SPADIC_MESSAGE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * \file
  * SPADIC 1.0 Message Library
+ * \author Michael Krieger
  *
  * Provides functions to extract SPADIC messages from captured raw data
  * and to access the message content.
@@ -17,15 +12,22 @@ extern "C" {
  * You want to look at message.h.
  */
 
+#ifndef SPADIC_MESSAGE_H
+#define SPADIC_MESSAGE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
-/** \name Create, fill and destroy message objects */
-/**@{*/
+/**@{
+ * \name Create, fill and destroy message objects
+ */
 typedef struct message Message;
 Message *message_new(void);
 /**<
- * Create and initialize a new message object.
+ * Allocate and initialize a new message object.
  * \return Pointer to created message object, `NULL` if unsuccessful.
  */
 size_t message_size(void);
@@ -105,13 +107,11 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  */
 /**@}*/
 
-/**
+/**@{
  * \name Query message status and type
  * All functions in this section assume that `m` is a valid (non-`NULL`)
  * pointer to a message object obtained from message_new().
  */
-
-/**@{*/
 int message_is_complete(const Message *m);
 /**<
  * \return Non-zero if `m` is a complete message.
@@ -202,12 +202,11 @@ int message_is_valid(const Message *m);
  */
 /**@}*/
 
-/**
+/**@{
  * \name Access message data
  * All functions in this section assume that `m` is a valid (non-`NULL`)
  * pointer to a message object obtained from message_new().
  */
-/**@{*/
 uint8_t message_get_group_id(const Message *m);
 /**< \return The group ID, if available, undefined otherwise. */
 uint8_t message_get_channel_id(const Message *m);
