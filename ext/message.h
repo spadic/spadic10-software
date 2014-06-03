@@ -56,6 +56,9 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  * value to be passed as the `buf` argument for repeated calls of this
  * function.
  *
+ * Nothing is done if `m` is `NULL`. The return value `n` is 0 in this
+ * case, beware of infinite loops...
+ *
  * The function consumes words from the buffer until either an
  * end-of-message word is encountered or the end of the buffer is reached
  * (i.e. `len` words have been read).

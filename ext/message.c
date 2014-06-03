@@ -29,7 +29,6 @@ void message_init(Message *m)
 
 void message_reset(Message *m)
 {
-    if (!m) { return; }
     free(m->samples);
     free(m->raw_buf);
     m->samples = NULL;
@@ -49,9 +48,9 @@ void message_delete(Message *m)
 
 size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
 {
+    if (!m) { return 0; }
     uint16_t w;
     size_t n = 0;
-
     while (n<len) {
         w = buf[n++];
         if (word_is_ignore(w)) { continue; }
@@ -64,7 +63,6 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
 
 void message_fill(Message *m, uint16_t w)
 {
-    if (!m) { return; }
     const Wordtype *t = word_get_type(w);
     if (t) {
         (t->fill)(m, w);
@@ -75,9 +73,9 @@ void message_fill(Message *m, uint16_t w)
 /*-----------------------------------------------------------------*/
 
 /*
- * m != NULL must be checked outside before calling fill_wXXX().
- * This is done in message_fill(), it should be the only place where
- * these functions are called (as the (*fill) member of each Wordtype).
+ * These functions are called from message_fill() as the (*fill) member of
+ * each Wordtype. There is no need to check m != NULL here, because
+ * message_fill() would not have been called otherwise.
  */
 
 void fill_wSOM(Message *m, uint16_t w)
@@ -142,6 +140,7 @@ void fill_wINF(Message *m, uint16_t w)
 
 void fill_raw(Message *m)
 {
+    if (!m) { return; }
     if (!m->raw_buf) { return; }
     if (!(m->valid & wEOM.valid)) { return; } /* need num_samples */
     if (m->raw_count < min_raw_count(m->num_samples)) { return; }
