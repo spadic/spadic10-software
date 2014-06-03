@@ -28,6 +28,12 @@ Message *message_new(void);
  * Create and initialize a new message object.
  * \return Pointer to created message object, `NULL` if unsuccessful.
  */
+size_t message_size(void);
+/**<
+ * \return The allocation size for one message object.
+ * \note You only need this if you want to allocate memory for message
+ * objects yourself. If you use message_new(), you don't need this.
+ */
 void message_init(Message *m);
 /**<
  * Initialize a newly allocated message object. Nothing is done if `m` is

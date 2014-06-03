@@ -181,6 +181,11 @@ Message *message_new(void)
     return m;
 }
 
+size_t message_size(void)
+{
+    return sizeof (Message);
+}
+
 void message_init(Message *m)
 {
     if (!m) { return; }
