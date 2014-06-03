@@ -18,7 +18,7 @@ struct message {
     uint8_t raw_count;
 };
 
-static void message_init(Message *m);
+static void message_reset(Message *m);
 static void message_fill(Message *m, uint16_t w);
 static void fill_wSOM(Message *m, uint16_t w);
 static void fill_wTSW(Message *m, uint16_t w);

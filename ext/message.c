@@ -6,7 +6,7 @@
 
 /*==== private functions ==========================================*/
 
-void message_init(Message *m)
+void message_reset(Message *m)
 {
     if (!m) { return; }
     free(m->samples);
@@ -180,7 +180,7 @@ Message *message_new(void)
     if (m) {
         m->samples = NULL;
         m->raw_buf = NULL;
-        message_init(m);
+        message_reset(m);
     }
     return m;
 }
@@ -202,7 +202,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
     while (n<len) {
         w = buf[n++];
         if (word_is_ignore(w)) { continue; }
-        if (word_is_start(w)) { message_init(m); }
+        if (word_is_start(w)) { message_reset(m); }
         message_fill(m, w);
         if (word_is_end(w)) { break; }
     }
