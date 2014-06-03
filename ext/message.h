@@ -119,10 +119,13 @@ int message_is_hit(const Message *m);
  * - group ID (message_get_group_id())
  * - channel ID (message_get_channel_id())
  * - timestamp (message_get_timestamp())
- * - number of samples (message_get_num_samples()),
- *   and the samples themselves (message_get_samples())
+ * - number of samples (message_get_num_samples())
  * - hit type (message_get_hit_type())
  * - stop type (message_get_stop_type())
+ *
+ * Does not guarantee that the actual samples (message_get_samples()) are
+ * available (although they normally should be), this function only checks
+ * the metadata listed above.
  */
 int message_is_hit_aborted(const Message *m);
 /**<
