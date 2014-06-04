@@ -172,17 +172,17 @@ void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples)
     uint16_t x;
     uint32_t r = 0;
     size_t n = 0;
-    int pos = -12;
 
-    for (; ; r += *raw++) {
+    int pos;
+    for (pos = -12; ; pos += 15) {
         for (; pos >= 0; pos -= 9) {
             x = (r >> pos) & mask;
             samples[n++] = (x >= 0x100 ? x-0x200 : x); /* 2's complement */
             if (n >= num_samples) { return; }
             r &= ~(mask << pos);
         }
-        pos += 15;
         r <<= 15;
+        r += *raw++;
     }
 }
 
