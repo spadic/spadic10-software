@@ -246,6 +246,16 @@ int message_is_complete(const Message *m)
             (m->valid & wINF.valid));
 }
 
+int message_is_valid(const Message *m)
+{
+    return (message_is_hit(m) ||
+            message_is_hit_aborted(m) ||
+            message_is_buffer_overflow(m) ||
+            message_is_epoch_marker(m) ||
+            message_is_epoch_out_of_sync(m) ||
+            message_is_info(m));
+}
+
 int message_is_hit(const Message *m)
 {
     return m->valid == (wSOM.valid | wTSW.valid |
@@ -280,16 +290,6 @@ int message_is_info(const Message *m)
            (m->info_type == iNGT ||
             m->info_type == iNRT ||
             m->info_type == iNBE);
-}
-
-int message_is_valid(const Message *m)
-{
-    return (message_is_hit(m) ||
-            message_is_hit_aborted(m) ||
-            message_is_buffer_overflow(m) ||
-            message_is_epoch_marker(m) ||
-            message_is_epoch_out_of_sync(m) ||
-            message_is_info(m));
 }
 
 /*-----------------------------------------------------------------*/

@@ -129,6 +129,23 @@ int message_is_complete(const Message *m);
  * Note that this is different from message_is_valid(): a message can be
  * complete and not valid, but a valid message is always complete.
  */
+int message_is_valid(const Message *m);
+/**<
+ * \return Non-zero if `m` is a valid message of any type.
+ *
+ * Valid messages are of one of the following types:
+ * - hit message, normal or aborted
+ *   (message_is_hit(), message_is_hit_aborted())
+ * - buffer overflow message (message_is_buffer_overflow())
+ * - epoch marker, normal or "out of sync"
+ *   (message_is_epoch_marker(), message_is_epoch_out_of_sync())
+ * - info message (message_is_info())
+ *
+ * A "valid" message is always "complete" (message_is_complete()).  If a
+ * message is complete, but not valid, there are either words missing that
+ * are required for a particular message type or there are additional
+ * words making the message type ambiguous.
+ */
 int message_is_hit(const Message *m);
 /**<
  * \return Non-zero if `m` is a regular hit message.
@@ -187,23 +204,6 @@ int message_is_info(const Message *m);
  * Indicates that the following data is available:
  * - info type (message_get_info_type()), can be `NGT`, `NRT`, or `NBE`
  * - channel ID (message_get_channel_id()), if the info type is `NGT` or `NBE`
- */
-int message_is_valid(const Message *m);
-/**<
- * \return Non-zero if `m` is a valid message of any type.
- *
- * Valid messages are of one of the following types:
- * - hit message, normal or aborted
- *   (message_is_hit(), message_is_hit_aborted())
- * - buffer overflow message (message_is_buffer_overflow())
- * - epoch marker, normal or "out of sync"
- *   (message_is_epoch_marker(), message_is_epoch_out_of_sync())
- * - info message (message_is_info())
- *
- * A "valid" message is always "complete" (message_is_complete()).  If a
- * message is complete, but not valid, there are either words missing that
- * are required for a particular message type or there are additional
- * words making the message type ambiguous.
  */
 /**@}*/
 
