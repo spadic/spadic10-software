@@ -36,14 +36,17 @@ size_t message_size(void);
  */
 void message_init(Message *m);
 /**<
- * Initialize a newly allocated message object. Nothing is done if `m` is
- * `NULL`.
+ * Initialize a newly allocated message object.
+ *
+ * Nothing is done if `m` is `NULL`.
+ *
  * \note You only need this if you want to allocate memory for message
  * objects yourself. If you use message_new(), you don't need this.
  */
 void message_delete(Message *m);
 /**<
  * Destroy a message object.
+ *
  * Nothing is done if `m` is `NULL`.
  */
 size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
