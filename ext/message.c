@@ -16,7 +16,7 @@ Message *message_new(void)
 
 size_t message_size(void)
 {
-    return sizeof (Message);
+    return sizeof(Message);
 }
 
 void message_init(Message *m)
