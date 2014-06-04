@@ -143,7 +143,7 @@ void fill_raw(Message *m)
     if (!m) { return; }
     if (!m->raw_buf) { return; }
     if (!(m->valid & wEOM.valid)) { return; } /* need num_samples */
-    if (m->raw_count < min_raw_count(m->num_samples)) { return; }
+    if (m->raw_count < raw_count(m->num_samples)) { return; }
 
     int16_t *s;
     if (!(s = malloc(m->num_samples * sizeof *s))) { return; }
@@ -160,7 +160,7 @@ void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
     /* TODO */
 }
 
-size_t min_raw_count(size_t num_samples)
+size_t raw_count(size_t num_samples)
 {
     if (num_samples == 0) { return 0; }
     size_t bits = 9 * num_samples + 3;
