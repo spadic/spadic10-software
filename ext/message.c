@@ -157,11 +157,6 @@ del_raw:
     m->raw_buf = NULL;
 }
 
-void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
-{
-    /* TODO */
-}
-
 size_t raw_count(size_t num_samples)
 {
     if (num_samples == 0) { return 0; }
@@ -171,6 +166,25 @@ size_t raw_count(size_t num_samples)
     return n; /* ceil(bits/15) */
 }
 
+void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
+{
+    const uint16_t mask = 0x01FF;
+    uint16_t x;
+    uint32_t r = 0;
+    size_t n = 0;
+    int pos = -9;
+
+    for (; ; r += *raw++) {
+        for (; pos >= 0; pos -= 9) {
+            x = (r >> pos) & mask;
+            samples[n++] = (x > 0xFF ? x-0x100 : x); /* 2's complement */
+            if (n >= ns) { return; }
+            r &= (mask << pos);
+        }
+        pos += 15;
+        r <<= 15;
+    }
+}
 
 /*-----------------------------------------------------------------*/
 
