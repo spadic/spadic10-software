@@ -3,8 +3,67 @@
 #include <stdlib.h>
 #include "message.h"
 
-/* move here again when cleaned up */
-#include "message_helper.h"
+#define MAX_RAW_COUNT 20 /* number of words needed to hold 32 samples */
+
+struct message {
+    uint8_t group_id;
+    uint8_t channel_id;
+    uint16_t timestamp;
+    int16_t *samples;
+    uint8_t num_samples;
+    uint8_t hit_type;
+    uint8_t stop_type;
+    uint8_t buffer_overflow_count;
+    uint16_t epoch_count;
+    uint8_t info_type;
+
+    uint8_t valid;
+
+    uint16_t *raw_buf;
+    uint8_t raw_count;
+};
+
+static void message_reset(Message *m);
+static void message_fill(Message *m, uint16_t w);
+
+static void fill_wSOM(Message *m, uint16_t w);
+static void fill_wTSW(Message *m, uint16_t w);
+static void fill_wRDA(Message *m, uint16_t w);
+static void fill_wCON(Message *m, uint16_t w);
+static void fill_wEOM(Message *m, uint16_t w);
+static void fill_wBOM(Message *m, uint16_t w);
+static void fill_wEPM(Message *m, uint16_t w);
+static void fill_wEXD(Message *m, uint16_t w);
+static void fill_wINF(Message *m, uint16_t w);
+
+static void fill_raw(Message *m);
+static size_t raw_count(size_t num_samples);
+static void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples);
+
+/* word types/preambles */
+typedef struct wordtype {
+    uint16_t value;
+    uint16_t mask;
+    uint8_t valid;
+    void (*fill)(Message *m, uint16_t w);
+} Wordtype;
+
+static const Wordtype *word_get_type(uint16_t w);
+static int word_is_type(uint16_t w, const Wordtype *t);
+static int word_is_ignore(uint16_t w);
+static int word_is_start(uint16_t w);
+static int word_is_end(uint16_t w);
+static uint8_t word_get_info_type(uint16_t w);
+
+static const Wordtype wSOM = {0x8000, 0xF000, 1<<0, fill_wSOM};
+static const Wordtype wTSW = {0x9000, 0xF000, 1<<1, fill_wTSW};
+static const Wordtype wRDA = {0xA000, 0xF000, 1<<2, fill_wRDA};
+static const Wordtype wCON = {0x0000, 0x8000,    0, fill_wCON};
+static const Wordtype wEOM = {0xB000, 0xF000, 1<<3, fill_wEOM};
+static const Wordtype wBOM = {0xC000, 0xF000, 1<<4, fill_wBOM};
+static const Wordtype wEPM = {0xD000, 0xF000, 1<<5, fill_wEPM};
+static const Wordtype wEXD = {0xE000, 0xF000,    0, fill_wEXD};
+static const Wordtype wINF = {0xF000, 0xF000, 1<<6, fill_wINF};
 
 /*==== create, fill, destroy message objects ======================*/
 
