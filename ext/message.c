@@ -166,9 +166,9 @@ size_t raw_count(size_t num_samples)
     return n; /* ceil(bits/15) */
 }
 
-void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
+void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples)
 {
-    const uint16_t mask = 0x01FF;
+    const uint16_t mask = 0x1FF;
     uint16_t x;
     uint32_t r = 0;
     size_t n = 0;
@@ -177,8 +177,8 @@ void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns)
     for (; ; r += *raw++) {
         for (; pos >= 0; pos -= 9) {
             x = (r >> pos) & mask;
-            samples[n++] = (x > 0xFF ? x-0x100 : x); /* 2's complement */
-            if (n >= ns) { return; }
+            samples[n++] = (x >= 0x100 ? x-0x200 : x); /* 2's complement */
+            if (n >= num_samples) { return; }
             r &= (mask << pos);
         }
         pos += 15;

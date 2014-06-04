@@ -33,7 +33,7 @@ static void fill_wINF(Message *m, uint16_t w);
 
 static void fill_raw(Message *m);
 static size_t raw_count(size_t num_samples);
-static void unpack_raw(uint16_t *raw, int16_t *samples, size_t ns);
+static void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples);
 
 /* word types/preambles */
 typedef struct wordtype {
