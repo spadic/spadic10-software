@@ -142,15 +142,17 @@ void fill_raw(Message *m)
 {
     if (!m) { return; }
     if (!m->raw_buf) { return; }
-    if (!(m->valid & wEOM.valid)) { return; } /* need num_samples */
-    if (m->raw_count < raw_count(m->num_samples)) { return; }
+    /* if the number of samples is not available or is too high for the
+       given number of raw data words, we discard the raw data */
+    if (!(m->valid & wEOM.valid)) { goto del_raw; }
+    if (m->raw_count < raw_count(m->num_samples)) { goto del_raw; }
 
     int16_t *s;
     if (!(s = malloc(m->num_samples * sizeof *s))) { return; }
-
     unpack_raw(m->raw_buf, s, m->num_samples);
-
     m->samples = s;
+
+del_raw:
     free(m->raw_buf);
     m->raw_buf = NULL;
 }
@@ -301,7 +303,6 @@ int16_t *message_get_samples(const Message *m)
 
 uint8_t message_get_num_samples(const Message *m)
 {
-    if (!m->samples) { fill_raw((Message *)m); }
     return m->num_samples;
 }
 
