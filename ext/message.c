@@ -86,7 +86,7 @@ void fill_wSOM(Message *m, uint16_t w)
 
 void fill_wTSW(Message *m, uint16_t w)
 {
-    m->timestamp = (w & 0xFFF);
+    m->timestamp = (w & 0x0FFF);
 }
 
 void fill_wRDA(Message *m, uint16_t w)
