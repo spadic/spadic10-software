@@ -1,13 +1,8 @@
 /**
  * \file
- *
- * \mainpage
  * \author Michael Krieger
  *
- * Provides functions to extract SPADIC messages from captured raw data
- * and to access the message content.
-
- * You want to look at message.h.
+ * This is the API for the SPADIC 1.0 Message Library.
  */
 
 #ifndef SPADIC_MESSAGE_H
@@ -73,6 +68,7 @@ enum hit_types {
  * \name Create, fill and destroy message objects
  */
 typedef struct message Message;
+
 Message *message_new(void);
 /**<
  * Allocate and initialize a new message object.

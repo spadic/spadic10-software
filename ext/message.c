@@ -1,3 +1,5 @@
+/** \author Michael Krieger */
+
 #include <stdlib.h>
 #include "message.h"
 
