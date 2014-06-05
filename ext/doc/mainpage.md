@@ -1,5 +1,3 @@
-\mainpage
-
 \author Michael Krieger
 
 This library provides functions to extract SPADIC messages from captured
