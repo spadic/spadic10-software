@@ -85,15 +85,32 @@ void message_init(Message *m);
  * Initialize a newly allocated message object.
  *
  * Nothing is done if `m` is `NULL`.
+ * This function must be used exactly once for each message object.
  *
  * \note You only need this if you want to allocate memory for message
  * objects yourself. If you use message_new(), you don't need this.
  */
+void message_reset(Message *m);
+/**<
+ * Reset a message object to its initial state.
+ *
+ * `m` must point to a properly allocated and initialized message object.
+ * If this is the case, this function can safely be used any number of
+ * times (in contrast to message_init()).
+ *
+ * Typical use case is to recycle a single message object across multiple
+ * calls to message_read_from_buffer() as an alternative to allocating a
+ * new message object each time (if the older messages are not needed any
+ * longer).
+ */
 void message_delete(Message *m);
 /**<
- * Destroy a message object.
+ * Clean up and deallocate a message object.
  *
  * Nothing is done if `m` is `NULL`.
+ *
+ * \note You must also use this if you have allocated the message object
+ * yourself.
  */
 size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 /**<

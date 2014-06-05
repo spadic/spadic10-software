@@ -23,9 +23,7 @@ struct message {
     uint8_t raw_count;
 };
 
-static void message_reset(Message *m);
 static void message_fill(Message *m, uint16_t w);
-
 static void fill_wSOM(Message *m, uint16_t w);
 static void fill_wTSW(Message *m, uint16_t w);
 static void fill_wRDA(Message *m, uint16_t w);
@@ -35,7 +33,6 @@ static void fill_wBOM(Message *m, uint16_t w);
 static void fill_wEPM(Message *m, uint16_t w);
 static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
-
 static void fill_raw(Message *m);
 static size_t raw_count(size_t num_samples);
 static void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples);

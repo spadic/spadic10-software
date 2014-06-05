@@ -83,6 +83,7 @@ int main(void)
         if (message_is_hit(m)) {
             printf("\nmessage is hit\n");
             print_hit_message(m);
+            message_reset(m);
         }
     }
     return 0;
