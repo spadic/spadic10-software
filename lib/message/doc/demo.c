@@ -86,5 +86,6 @@ int main(void)
             message_reset(m);
         }
     }
+    message_delete(m);
     return 0;
 }

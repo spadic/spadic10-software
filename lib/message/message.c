@@ -35,7 +35,8 @@ static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
 static void fill_raw(Message *m);
 static size_t raw_count(size_t num_samples);
-static void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples);
+static void unpack_raw(const uint16_t *raw,
+                       int16_t *samples, size_t num_samples);
 
 /* word types/preambles */
 typedef struct wordtype {
@@ -227,7 +228,7 @@ size_t raw_count(size_t num_samples)
     return n; /* ceil(bits/15) */
 }
 
-void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples)
+void unpack_raw(const uint16_t *raw, int16_t *samples, size_t num_samples)
 {
     const uint16_t mask = 0x1FF;
     uint16_t v;
