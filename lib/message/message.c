@@ -149,7 +149,10 @@ void fill_wTSW(Message *m, uint16_t w)
 
 void fill_wRDA(Message *m, uint16_t w)
 {
-    m->raw_buf = malloc(MAX_RAW_COUNT * sizeof *m->raw_buf);
+    /* m->raw_buf should normally be NULL, but could already have been
+       allocated if this is an additional RDA word somehow (falsely)
+       inserted into the data stream */
+    m->raw_buf = realloc(m->raw_buf, MAX_RAW_COUNT * sizeof *m->raw_buf);
     if (!m->raw_buf) { return; }
     m->raw_count = 0;
     m->raw_buf[m->raw_count++] = w & 0x0FFF;
