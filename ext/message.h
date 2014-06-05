@@ -159,7 +159,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 
 /**@{
  * \name Query message status and type
- * All functions in this section assume that `m` is a pointer to a
+ * All functions in this section assume that `m` points to a
  * properly allocated and initialized message object (e.g. obtained from
  * message_new()).
  */
@@ -255,7 +255,7 @@ int message_is_info(const Message *m);
 
 /**@{
  * \name Access message data
- * All functions in this section assume that `m` is a pointer to a
+ * All functions in this section assume that `m` points to a
  * properly allocated and initialized message object (e.g. obtained from
  * message_new()).
  */

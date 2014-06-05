@@ -112,7 +112,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
     if (!m) { return 0; }
     uint16_t w;
     size_t n = 0;
-    while (n<len) {
+    while (n < len) {
         w = buf[n++];
         if (word_is_ignore(w)) { continue; }
         if (word_is_start(w)) { message_reset(m); }
