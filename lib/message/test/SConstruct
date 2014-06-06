@@ -1,7 +1,9 @@
 # ex: syntax=python
 
-libmessage = SharedLibrary(['message.c'])
-libtestmessage = SharedLibrary(['test_message.c', libmessage])
+env = Environment(CPPPATH=['..'], LIB_DIR='..')
 
-cpp_env = Environment(CCFLAGS=['-std=c++11'])
+libmessage = env.SharedLibrary(['$LIB_DIR/message.c'])
+libtestmessage = env.SharedLibrary(['test_message.c', libmessage])
+
+cpp_env = env.Clone(CCFLAGS=['-std=c++11'])
 cpp_env.Program(['test_message.cpp', libtestmessage, libmessage])
