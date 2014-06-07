@@ -65,7 +65,8 @@ class Message:
         if not s:
             return None
         n = lib.message_get_num_samples(self.m)
-        return list((n * ctypes.c_int16)(s))
+        p = ctypes.POINTER(n * ctypes.c_int16)
+        return list(ctypes.cast(s, p).contents)
 
     def hit_type(self):
         return lib.message_get_hit_type(self.m)
