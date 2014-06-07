@@ -19,7 +19,10 @@ class Message:
         self.m = m
 
     def __del__(self):
-        lib.message_delete(self.m)
+        try:
+            lib.message_delete(self.m)
+        except AttributeError:
+            pass # lib was garbage collected before the last Message object
 
     def reset(self):
         lib.message_reset(self.m)
