@@ -1,6 +1,6 @@
-#==========================================================
-# pure Python wrapper around libmessage.so using ctypes
-#==========================================================
+"""
+pure Python wrapper around libmessage.so using ctypes
+"""
 
 import ctypes
 
@@ -10,6 +10,12 @@ def as_array(words, dtype=ctypes.c_uint16):
     return (len(words) * dtype)(*words)
 
 class Message:
+    """
+    Straightforward mapping of C API to Python class.
+    """
+
+    #---- create, destroy, fill ---------------------------
+
     def __init__(self):
         m = lib.message_new()
         if not m:
@@ -27,6 +33,8 @@ class Message:
 
     def read_from_buffer(self, buf):
         return lib.message_read_from_buffer(self.m, as_array(buf), len(buf))
+
+    #---- query status/type -------------------------------
 
     def is_complete(self):
         return lib.message_is_complete(self.m)
@@ -51,6 +59,8 @@ class Message:
 
     def is_info(self):
         return lib.message_is_info(self.m)
+
+    #---- access data -------------------------------------
 
     def group_id(self):
         return lib.message_get_group_id(self.m)
@@ -84,7 +94,7 @@ class Message:
     def info_type(self):
         return lib.message_get_info_type(self.m)
 
-
+    #---- now add some convenience ------------------------
 
     def as_text(self):
         return str(self.samples())
