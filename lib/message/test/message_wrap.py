@@ -84,7 +84,7 @@ class Message:
     def info_type(self):
         return lib.message_get_info_type(self.m)
 
-    def __str__(self):
+
+
+    def as_text(self):
         return str(self.samples())
-
-

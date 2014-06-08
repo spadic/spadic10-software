@@ -24,4 +24,4 @@ if __name__=='__main__':
     words = [int(x, 16) for x in sys.stdin
              if x.strip() and not x.startswith('#')]
     for (i, m) in enumerate(mi(words)):
-        print i, m
+        print i, m.as_text()
