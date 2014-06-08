@@ -46,12 +46,26 @@ class MessageNewReset(MessageNew):
         MessageNew.setUp(self)
         self.m.reset()
 
+class MessageValidReset(MessageNew):
+    """
+    Reset once valid message.
+    """
+    def setUp(self):
+        MessageNew.setUp(self)
+        self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+            0xA000,
+            0xB000
+        ])
+        self.m.reset()
+
 class MessageHitBase(MessageNew):
     """
     Test properties of a simple hit message.
     """
     def setUp(self):
-        MessageTestCase.setUp(self)
+        MessageNew.setUp(self)
         self.m.read_from_buffer([
             0x8000,
             0x9000,
