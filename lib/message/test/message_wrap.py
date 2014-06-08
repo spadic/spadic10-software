@@ -54,8 +54,8 @@ class Message:
     def is_epoch_marker(self):
         return lib.message_is_epoch_marker(self.m)
 
-    def is_epoch_out_of_syn(self):
-        return lib.message_is_epoch_out_of_syn(self.m)
+    def is_epoch_out_of_sync(self):
+        return lib.message_is_epoch_out_of_sync(self.m)
 
     def is_info(self):
         return lib.message_is_info(self.m)
