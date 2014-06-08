@@ -3,7 +3,6 @@
 env = Environment(CPPPATH=['..'], LIB_DIR='..')
 
 libmessage = env.SharedLibrary('libmessage.so', ['$LIB_DIR/message.c'])
-libtestmessage = env.SharedLibrary(['test_message.c', libmessage])
 
-cpp_env = env.Clone(CCFLAGS=['-std=c++11'])
-cpp_env.Program(['test_message.cpp', libtestmessage, libmessage])
+#cpp_env = env.Clone(CCFLAGS=['-std=c++11'])
+#cpp_env.Program(['test_message.cpp', libtestmessage, libmessage])
