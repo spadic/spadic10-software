@@ -35,7 +35,8 @@ static void fill_wEXD(Message *m, uint16_t w);
 static void fill_wINF(Message *m, uint16_t w);
 static void fill_raw(Message *m);
 static size_t raw_count(size_t num_samples);
-static void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples);
+static void unpack_raw(const uint16_t *raw,
+                       int16_t *samples, size_t num_samples);
 
 /* word types/preambles */
 typedef struct wordtype {
@@ -149,7 +150,10 @@ void fill_wTSW(Message *m, uint16_t w)
 
 void fill_wRDA(Message *m, uint16_t w)
 {
-    m->raw_buf = malloc(MAX_RAW_COUNT * sizeof *m->raw_buf);
+    /* m->raw_buf should normally be NULL, but could already have been
+       allocated if this is an additional RDA word somehow (falsely)
+       inserted into the data stream */
+    m->raw_buf = realloc(m->raw_buf, MAX_RAW_COUNT * sizeof *m->raw_buf);
     if (!m->raw_buf) { return; }
     m->raw_count = 0;
     m->raw_buf[m->raw_count++] = w & 0x0FFF;
@@ -224,7 +228,7 @@ size_t raw_count(size_t num_samples)
     return n; /* ceil(bits/15) */
 }
 
-void unpack_raw(uint16_t *raw, int16_t *samples, size_t num_samples)
+void unpack_raw(const uint16_t *raw, int16_t *samples, size_t num_samples)
 {
     const uint16_t mask = 0x1FF;
     uint16_t v;
