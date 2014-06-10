@@ -416,6 +416,6 @@ class MessageInfoNRT(MessageNew):
         self.assertEqual(self.m.info_type, 2)
 
 #--------------------------------------------------------------------
-    
+
 if  __name__=='__main__':
     unittest.main()
