@@ -136,6 +136,157 @@ class MessageHitInvalidSamples(MessageHitBase):
 
     def test_samples(self):
         self.assertIsNone(self.m.samples)
+
+#--------------------------------------------------------------------
+
+class MessageHitAbortedDisabled(MessageNew):
+    """
+    Hit message aborted because channel disabled.
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+            0xF060
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_hit_aborted(self):
+        self.assertTrue(self.m.is_hit_aborted)
+
+    def test_channel_id(self):
+        self.assertEqual(self.m.channel_id, 6)
+
+    def test_info_type(self):
+        self.assertEqual(self.m.info_type, 0)
+
+class MessageHitAbortedCorruption(MessageNew):
+    """
+    Hit message aborted because corruption in message builder.
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+            0xA000,
+            0xF460
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_hit_aborted(self):
+        self.assertTrue(self.m.is_hit_aborted)
+
+    def test_channel_id(self):
+        self.assertEqual(self.m.channel_id, 6)
+
+    def test_info_type(self):
+        self.assertEqual(self.m.info_type, 4)
+
+#--------------------------------------------------------------------
+
+class MessageBufferOverflowCount(MessageNew):
+    """
+    Buffer overflow count message.
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0x8ABC,
+            0x9DEF,
+            0xC012
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_buffer_overflow(self):
+        self.assertTrue(self.m.is_buffer_overflow)
+
+    def test_group_id(self):
+        self.assertEqual(self.m.group_id, 0xAB)
+
+    def test_channel_id(self):
+        self.assertEqual(self.m.channel_id, 0xC)
+
+    def test_timestamp(self):
+        self.assertEqual(self.m.timestamp, 0xDEF)
+
+    def test_buffer_overflow_count(self):
+        self.assertEqual(self.m.buffer_overflow_count, 0x12)
+
+#--------------------------------------------------------------------
+
+class MessageEpochMarker(MessageNew):
+    """
+    Normal epoch marker.
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0x8ABC,
+            0xDDEF,
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_epoch_marker(self):
+        self.assertTrue(self.m.is_epoch_marker)
+
+    def test_group_id(self):
+        self.assertEqual(self.m.group_id, 0xAB)
+
+    def test_epoch(self):
+        self.assertEqual(self.m.epoch_count, 0xDEF)
+
+class MessageEpochOutOfSync(MessageNew):
+    """
+    "out of sync" epoch marker.
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0x8ABC,
+            0xF6EF,
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_epoch_out_of_sync(self):
+        self.assertTrue(self.m.is_epoch_out_of_sync)
+
+    def test_group_id(self):
+        self.assertEqual(self.m.group_id, 0xAB)
+
+    def test_epoch(self):
+        self.assertEqual(self.m.epoch_count, 0xEF)
+
+    def test_info_type(self):
+        self.assertEqual(self.m.info_type, 6)
+
+#--------------------------------------------------------------------
     
 if  __name__=='__main__':
     unittest.main()
