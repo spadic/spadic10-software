@@ -326,7 +326,7 @@ int message_is_hit(const Message *m)
 
 int message_is_hit_aborted(const Message *m)
 {
-    return (m->valid == wINF.valid) &&
+    return (m->valid & wINF.valid) &&
            (m->info_type == iDIS || m->info_type == iMSB);
 }
 
