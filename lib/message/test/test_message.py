@@ -287,6 +287,80 @@ class MessageEpochOutOfSync(MessageNew):
         self.assertEqual(self.m.info_type, 6)
 
 #--------------------------------------------------------------------
+
+class MessageInfoNGT(MessageNew):
+    """
+    Info message "NGT".
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0xF1AB,
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_info(self):
+        self.assertTrue(self.m.is_info)
+
+    def test_info_type(self):
+        self.assertEqual(self.m.info_type, 1)
+
+    def test_channel_id(self):
+        self.assertEqual(self.m.channel_id, 0xA)
+
+class MessageInfoNBE(MessageNew):
+    """
+    Info message "NBE".
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0xF3AB,
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_info(self):
+        self.assertTrue(self.m.is_info)
+
+    def test_info_type(self):
+        self.assertEqual(self.m.info_type, 3)
+
+    def test_channel_id(self):
+        self.assertEqual(self.m.channel_id, 0xA)
+
+class MessageInfoNRT(MessageNew):
+    """
+    Info message "NRT".
+    """
+    def setUp(self):
+        self.m = Message()
+        self.m.read_from_buffer([
+            0xF2AB,
+        ])
+
+    def test_complete(self):
+        self.assertTrue(self.m.is_complete)
+
+    def test_valid(self):
+        self.assertTrue(self.m.is_valid)
+
+    def test_info(self):
+        self.assertTrue(self.m.is_info)
+
+    def test_info_type(self):
+        self.assertEqual(self.m.info_type, 2)
+
+#--------------------------------------------------------------------
     
 if  __name__=='__main__':
     unittest.main()
