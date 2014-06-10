@@ -45,7 +45,7 @@ class MessageNewReset(MessageNew):
     Reset must not change a new message.
     """
     def setUp(self):
-        MessageNew.setUp(self)
+        self.m = Message()
         self.m.reset()
 
 class MessageValidReset(MessageNew):
@@ -53,7 +53,7 @@ class MessageValidReset(MessageNew):
     Reset of a valid message must change it to a new one.
     """
     def setUp(self):
-        MessageNew.setUp(self)
+        self.m = Message()
         self.m.read_from_buffer([
             0x8000,
             0x9000,
@@ -69,7 +69,7 @@ class MessageHitBase(MessageNew):
     Test properties of a simple hit message.
     """
     def setUp(self):
-        MessageNew.setUp(self)
+        self.m = Message()
         self.m.read_from_buffer([
             0x8000,
             0x9000,
@@ -101,7 +101,7 @@ class MessageHitValidSamples(MessageHitBase):
     Test values contained in a hit message where the samples are valid.
     """
     def setUp(self):
-        MessageTestCase.setUp(self)
+        self.m = Message()
         self.m.read_from_buffer([
             0x8ABC,
             0x9DEF,
@@ -133,7 +133,7 @@ class MessageHitInvalidSamples(MessageHitBase):
     Hit message with fewer contained samples than indicated.
     """
     def setUp(self):
-        MessageTestCase.setUp(self)
+        self.m = Message()
         self.m.read_from_buffer([
             0x8000,
             0x9000,
