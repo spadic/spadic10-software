@@ -87,13 +87,6 @@ class MessageHitBase(MessageNew):
         self.assertTrue(self.m.is_hit)
 
     def test_samples(self):
-        pass # would fail because [] is not None
-
-class MessageHitNoSamples(MessageHitBase):
-    """
-    Message with no samples.
-    """
-    def test_samples(self):
         self.assertEqual(self.m.samples, [])
 
 class MessageHitValidSamples(MessageHitBase):
