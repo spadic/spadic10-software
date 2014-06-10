@@ -10,6 +10,8 @@ class MessageTestCase(unittest.TestCase):
 class MessageNew(MessageTestCase):
     """
     Test properties of a newly created Message.
+
+    Most other test cases inherit their tests from here.
     """
     def test_complete(self):
         self.assertFalse(self.m.is_complete)
@@ -40,7 +42,7 @@ class MessageNew(MessageTestCase):
 
 class MessageNewReset(MessageNew):
     """
-    Message after reset must have the same properties as a new one.
+    Reset must not change a new message.
     """
     def setUp(self):
         MessageNew.setUp(self)
@@ -48,7 +50,7 @@ class MessageNewReset(MessageNew):
 
 class MessageValidReset(MessageNew):
     """
-    Reset once valid message.
+    Reset of a valid message must change it to a new one.
     """
     def setUp(self):
         MessageNew.setUp(self)
@@ -59,6 +61,8 @@ class MessageValidReset(MessageNew):
             0xB000
         ])
         self.m.reset()
+
+#--------------------------------------------------------------------
 
 class MessageHitBase(MessageNew):
     """
