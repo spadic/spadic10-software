@@ -64,6 +64,61 @@ class MessageValidReset(MessageNew):
 
 #--------------------------------------------------------------------
 
+class MessageReadFromBuffer(MessageTestCase):
+    """
+    Test behaviour of read_from_buffer().
+    """
+    def setUp(self):
+        self.m = Message()
+
+    def test_empty_buffer(self):
+        n = self.m.read_from_buffer([])
+        self.assertEqual(n, 0)
+
+    def test_read_until_end(self):
+        n = self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+            0xA000,
+            0xB000,
+            0x8000,
+            0x9000,
+        ])
+        self.assertEqual(n, 4)
+
+    def test_incomplete_message(self):
+        self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+        ])
+        self.assertFalse(self.m.is_complete)
+
+    def test_reuse_message(self):
+        self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+        ])
+        self.m.read_from_buffer([
+            0xA000,
+            0xB000,
+        ])
+        self.assertTrue(self.m.is_complete)
+
+    def test_start_resets_message(self):
+        self.m.read_from_buffer([
+            0x8000,
+            0x9000,
+            0xA000,
+            0xB000,
+        ])
+        self.assertTrue(self.m.is_complete)
+        self.m.read_from_buffer([
+            0x8000,
+        ])
+        self.assertFalse(self.m.is_complete)
+
+#--------------------------------------------------------------------
+
 class MessageHitBase(MessageNew):
     """
     Test properties of a simple hit message.
