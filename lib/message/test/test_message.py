@@ -86,12 +86,29 @@ class MessageReadFromBuffer(MessageTestCase):
         ])
         self.assertEqual(n, 4)
 
+    def test_complete_message(self):
+        self.m.read_from_buffer([
+            0x9000,
+            0xA000,
+            0xB000,
+        ])
+        self.assertTrue(self.m.is_complete)
+
     def test_incomplete_message(self):
         self.m.read_from_buffer([
             0x8000,
             0x9000,
+            0xA000,
         ])
         self.assertFalse(self.m.is_complete)
+
+    def test_complete_message(self):
+        self.m.read_from_buffer([
+            0x9000,
+            0xA000,
+            0xB000,
+        ])
+        self.assertTrue(self.m.is_complete)
 
     def test_reuse_message(self):
         self.m.read_from_buffer([
@@ -102,7 +119,7 @@ class MessageReadFromBuffer(MessageTestCase):
             0xA000,
             0xB000,
         ])
-        self.assertTrue(self.m.is_complete)
+        self.assertTrue(self.m.is_valid)
 
     def test_start_resets_message(self):
         self.m.read_from_buffer([
@@ -111,11 +128,11 @@ class MessageReadFromBuffer(MessageTestCase):
             0xA000,
             0xB000,
         ])
-        self.assertTrue(self.m.is_complete)
+        self.assertTrue(self.m.is_valid)
         self.m.read_from_buffer([
             0x8000,
         ])
-        self.assertFalse(self.m.is_complete)
+        self.assertFalse(self.m.is_valid)
 
 #--------------------------------------------------------------------
 
