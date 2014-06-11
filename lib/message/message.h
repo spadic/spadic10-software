@@ -116,63 +116,26 @@ void message_delete(Message *m);
  */
 size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 /**<
- * Read words from `buf` and fill message `m`.
+ * Read up to `len` words from `buf` and fill message `m`.
  *
- * \return The number `n` of consumed words, so that `buf+n` is a suitable
- * value to be passed as the `buf` argument for repeated calls of this
- * function.
+ * Nothing is done if `m` is `NULL`.
  *
- * Nothing is done if `m` is `NULL`. The return value `n` is 0 in this
- * case, beware of infinite loops...
+ * \return The number `n` of consumed words.
  *
- * The function consumes words from the buffer until either an
- * end-of-message word is encountered or the end of the buffer is reached
- * (i.e. `len` words have been read).
+ * Words from the buffer are consumed until either
+ * - an end-of-message word is encountered (`n` &le; `len`), or
+ * - the end of the buffer is reached (`n` = `len`).
  *
- * Four different cases (`a`--`d`) regarding the occurence of words
- * starting or ending a message are possible:
- *
- *     key:
- *         ( = start of message
- *         ) = end of message
- *         x = any word except end of message
- *         . = any word except start of message or end of message
- *         | = end of buffer reached
- *
- *     a:  xxx(....)  normal case
- *     b:  xxx(..|    missing end of message
- *     c:  ........)  missing start of message
- *     d:  ......|    missing start and end of message
- *
- * It is not guaranteed that a complete message was contained in the
- * consumed words (cases b-d), this can be checked afterwards using
+ * If `n` = `len`, the two cases can be distinguished by using
  * message_is_complete().
  *
- * The passed message object `m` is reset if, and only if, a
- * start-of-message word is encountered. This means
+ * The contents of the consumed words are copied into the message object
+ * pointed to by `m`. If (and only if) a start-of-message word is
+ * encountered, the message object will be reset. This means
  * - all words before the last start-of-message word are effectively
  *   ignored, and
- * - cases b-d can be handled by passing the same Message object to
- *   successive calls of this function.
- *
- * Reading multiple messages from a buffer could then look something like
- * this:
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.c}
- * uint16_t *pos = buf;
- * ptrdiff_t left = len;
- * Message *m = message_new();
- *
- * size_t n;
- * while (left > 0) {
- *     n = message_read_from_buffer(m, pos, left);
- *     pos += n;
- *     left -= n;
- *     if (message_is_complete(m)) {
- *         do_something_with(m);
- *     }
- * }
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * - a partially filled message can be reused and possibly completed by
+ *   reading from another buffer containing the remaining words.
  */
 /**@}*/
 
