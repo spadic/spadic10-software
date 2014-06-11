@@ -110,8 +110,3 @@ class Message(object):
     @property
     def info_type(self):
         return lib.message_get_info_type(self.m)
-
-    #---- now add some convenience ------------------------
-
-    def as_text(self):
-        return str(self.samples())
