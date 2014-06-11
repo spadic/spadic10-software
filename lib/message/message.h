@@ -63,12 +63,14 @@ enum hit_types {
     hNBR = 0x2, /**< Neighbor triggered */
     hSAN = 0x3, /**< Self and neighbor triggered */
 };
+typedef struct message Message;
+/**<
+ * Data structure representing SPADIC 1.0 messages.
+ */
 
 /**@{
  * \name Create, fill and destroy message objects
  */
-typedef struct message Message;
-
 Message *message_new(void);
 /**<
  * Allocate and initialize a new message object.
