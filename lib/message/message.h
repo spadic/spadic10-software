@@ -186,10 +186,13 @@ int message_is_complete(const Message *m);
 /**<
  * \return Non-zero if `m` is a complete message.
  *
- * A message is considered "complete" when both the start and the end of
- * the message have been encountered. Use this function to determine
- * whether message_read_from_buffer() can further fill a given message
- * object.
+ * A message is considered "complete" if an end-of-message word has been
+ * encountered.
+ *
+ * Use this function to determine whether a given message object can be
+ * further filled by repeated calls of message_read_from_buffer() when
+ * `n` = `len` has been returned. If message_read_from_buffer() returns
+ * `n` < `len`, the message is complete by definition.
  *
  * Note that this is different from message_is_valid(): a message can be
  * complete and not valid, but a valid message is always complete.
