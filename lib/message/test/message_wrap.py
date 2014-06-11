@@ -110,21 +110,3 @@ class Message(object):
     @property
     def info_type(self):
         return lib.message_get_info_type(self.m)
-
-    #---- now add some convenience ------------------------
-
-    def as_text(self):
-        s = []
-        if self.is_hit:
-            s.append("hit message")
-            s.append("group ID: 0x%X  channel ID: 0x%X" % (
-                     self.group_id, self.channel_id))
-            s.append("timestamp: 0x%X" % self.timestamp)
-            if self.samples is None:
-                s.append("samples: invalid")
-            else:
-                s.append("samples (%d): %s" % (
-                         len(self.samples), str(self.samples)))
-            s.append("hit type: %d  stop type: %d" % (
-                     self.hit_type, self.stop_type))
-        return '\n'.join(s) + '\n'

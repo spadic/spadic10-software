@@ -29,6 +29,25 @@ def iter_all(buffers, message_iter):
         messages += message_iter(buf)
     return messages
 
+def as_text(message):
+    s = []
+    if message.is_hit:
+        s.append("hit message")
+        s.append("group ID: 0x%X  channel ID: 0x%X" % (
+                 message.group_id, message.channel_id))
+        s.append("timestamp: 0x%X" % message.timestamp)
+        if message.samples is None:
+            s.append("samples: invalid")
+        else:
+            s.append("samples (%d): %s" % (
+                     len(message.samples), str(message.samples)))
+        s.append("hit type: %d  stop type: %d" % (
+                 message.hit_type, message.stop_type))
+        return '\n'.join(s) + '\n'
+
+    else:
+        return "other message\n"
+
 if __name__=='__main__':
     import sys
     mi = MessageIterator()
@@ -45,4 +64,4 @@ if __name__=='__main__':
         0xB0A3
     ]]
     for m in iter_all(buffers, mi):
-        print m.as_text()
+        print as_text(m)
