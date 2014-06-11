@@ -77,9 +77,6 @@ int main(void)
     size_t n = 0;
     while (n < N) {
         n += message_read_from_buffer(m, buf+n, N-n);
-        if (!message_is_complete(m)) {
-            printf("\nincomplete message\n");
-        }
         if (message_is_hit(m)) {
             printf("\nmessage is hit\n");
             print_hit_message(m);
