@@ -56,15 +56,15 @@ class MessageIterSplitSecond(MessageIterBase):
         a, (b, c) = w[0], split_at(2, w[1])
         self.words = [a + b, c]
 
-class MessageIterPrependEnd(MessageIterBase):
+class MessageIterPrepend(MessageIterBase):
     def setUp(self):
         MessageIterBase.setUp(self)
-        self.words.insert(0, [0x9000, 0xA000, 0xB000])
+        self.words.insert(0, [0x9000, 0xA000])
 
-class MessageIterAppendStart(MessageIterBase):
+class MessageIterAppend(MessageIterBase):
     def setUp(self):
         MessageIterBase.setUp(self)
-        self.words.append([0x8000, 0x9000, 0xA000])
+        self.words.append([0x9000, 0xA000])
 
 if __name__=='__main__':
     unittest.main()
