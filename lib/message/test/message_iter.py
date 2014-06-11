@@ -7,20 +7,17 @@ class MessageIterator:
         self.reset()
 
     def __call__(self, words):
-        buf = self.buf + words
+        buf = words
         m = self.m or Message()
         while buf:
             n = m.read_from_buffer(buf)
-            if not m.is_complete:
-                break
-            yield m
             buf = buf[n:]
-            m = Message()
-        self.buf = buf
+            if m.is_complete:
+                yield m
+                m = Message()
         self.m = m
 
     def reset(self):
-        self.buf = []
         self.m = None
 
 def iter_all(buffers, message_iter):
@@ -52,6 +49,10 @@ if __name__=='__main__':
     import sys
     mi = MessageIterator()
     buffers = [[
+        0x9000,
+        0xA000,
+        0xB000,
+        ], [
         0x8987,
         0x9654,
         0xA010,
@@ -61,7 +62,7 @@ if __name__=='__main__':
         0x9DEF,
         0xA020,
         0x0600,
-        0xB0A3
+        0xB0A3,
     ]]
     for m in iter_all(buffers, mi):
         print as_text(m)
