@@ -2,6 +2,8 @@
 
 from message_wrap import Message
 
+#---- implement this as C library -----------------------------------
+
 class MessageIterator:
     def __init__(self):
         self.reset()
@@ -19,6 +21,8 @@ class MessageIterator:
 
     def reset(self):
         self.m = None
+
+#--------------------------------------------------------------------
 
 def iter_all(buffers, message_iter):
     messages = []
