@@ -69,7 +69,7 @@ typedef struct message Message;
  */
 
 /**@{
- * \name Create, fill and destroy message objects
+ * \name Create, destroy and fill message objects
  */
 Message *message_new(void);
 /**<
@@ -137,17 +137,11 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  * - a partially filled message can be reused and possibly completed by
  *   reading from another buffer containing the remaining words.
  */
-/**@}*/
-
-/**@{
- * \name Query message status and type
- * All functions in this section assume that `m` points to a
- * properly allocated and initialized message object (e.g. obtained from
- * message_new()).
- */
 int message_is_complete(const Message *m);
 /**<
  * \return Non-zero if `m` is a complete message.
+ *
+ * `m` must point to a properly allocated and initialized message object.
  *
  * A message is considered "complete" if an end-of-message word has been
  * encountered.
@@ -159,6 +153,14 @@ int message_is_complete(const Message *m);
  *
  * Note that this is different from message_is_valid(): a message can be
  * complete and not valid, but a valid message is always complete.
+ */
+/**@}*/
+
+/**@{
+ * \name Query message status and type
+ * All functions in this section assume that `m` points to a
+ * properly allocated and initialized message object (e.g. obtained from
+ * message_new()).
  */
 int message_is_valid(const Message *m);
 /**<
