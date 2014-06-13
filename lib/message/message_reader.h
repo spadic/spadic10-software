@@ -9,9 +9,6 @@
 
 #ifndef SPADIC_MESSAGE_READER_H
 #define SPADIC_MESSAGE_READER_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "message.h"
 
@@ -75,7 +72,4 @@ const uint16_t *message_reader_next_depleted_buffer(MessageReader *r);
  * Nothing is done if `r` is `NULL`.
  */
 
-#ifdef __cplusplus
-}
-#endif
 #endif

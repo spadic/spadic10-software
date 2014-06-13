@@ -7,9 +7,6 @@
 
 #ifndef SPADIC_MESSAGE_H
 #define SPADIC_MESSAGE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -275,7 +272,4 @@ uint8_t message_get_info_type(const Message *m);
 /**< \return One of the #info_types, if available, undefined otherwise. */
 /**@}*/
 
-#ifdef __cplusplus
-}
-#endif
 #endif
