@@ -68,8 +68,9 @@ static const Wordtype wINF = {0xF000, 0xF000, 1<<6, fill_wINF};
 Message *message_new(void)
 {
     Message *m;
-    m = malloc(sizeof *m);
-    message_init(m);
+    if (m = malloc(sizeof *m)) {
+        message_init(m);
+    }
     return m;
 }
 
@@ -80,7 +81,6 @@ size_t message_size(void)
 
 void message_init(Message *m)
 {
-    if (!m) { return; }
     m->samples = NULL;
     m->raw_buf = NULL;
     message_reset(m);
@@ -98,16 +98,13 @@ void message_reset(Message *m)
 
 void message_delete(Message *m)
 {
-    if (m) {
-        free(m->samples);
-        free(m->raw_buf);
-    }
+    free(m->samples);
+    free(m->raw_buf);
     free(m);
 }
 
 size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len)
 {
-    if (!m) { return 0; }
     uint16_t w;
     size_t n = 0;
     while (n < len) {
@@ -133,8 +130,7 @@ void message_fill(Message *m, uint16_t w)
 
 /*
  * These functions are called from message_fill() as the (*fill) member of
- * each Wordtype. There is no need to check m != NULL here, because
- * message_fill() would not have been called otherwise.
+ * each Wordtype.
  */
 
 void fill_wSOM(Message *m, uint16_t w)
@@ -202,7 +198,6 @@ void fill_wINF(Message *m, uint16_t w)
 
 void fill_raw(Message *m)
 {
-    if (!m) { return; }
     if (!m->raw_buf) { return; }
     /* if the number of samples is not available or is too high for the
        given number of raw data words, we discard the raw data */

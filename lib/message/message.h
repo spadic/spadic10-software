@@ -3,6 +3,11 @@
  * \author Michael Krieger
  *
  * This is the API for the SPADIC 1.0 Message Library.
+ *
+ * All functions that receive a pointer `m` to a Message object assume
+ * that `m` has been properly allocated and initialized (e.g. by
+ * message_new()). One exception is message_init(), for which `m` need
+ * (and must) not be initialized.
  */
 
 #ifndef SPADIC_MESSAGE_H
@@ -83,7 +88,6 @@ void message_init(Message *m);
 /**<
  * Initialize a newly allocated message object.
  *
- * Nothing is done if `m` is `NULL`.
  * This function must be used exactly once for each message object.
  *
  * \note You only need this if you want to allocate memory for message
@@ -93,9 +97,8 @@ void message_reset(Message *m);
 /**<
  * Reset a message object to its initial state.
  *
- * `m` must point to a properly allocated and initialized message object.
- * If this is the case, this function can safely be used any number of
- * times (in contrast to message_init()).
+ * This function can be used any number of times with a single message
+ * object (in contrast to message_init()).
  *
  * Typical use case is to recycle a single message object across multiple
  * calls to message_read_from_buffer() as an alternative to allocating a
@@ -106,8 +109,6 @@ void message_delete(Message *m);
 /**<
  * Clean up and deallocate a message object.
  *
- * Nothing is done if `m` is `NULL`.
- *
  * \note You must also use this if you have allocated the message object
  * yourself.
  */
@@ -115,7 +116,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
 /**<
  * Read up to `len` words from `buf` and fill message `m`.
  *
- * Nothing is done if `m` is `NULL`.
+ * `buf` must be non-`NULL`.
  *
  * \return The number `n` of consumed words.
  *
@@ -138,8 +139,6 @@ int message_is_complete(const Message *m);
 /**<
  * \return Non-zero if `m` is a complete message.
  *
- * `m` must point to a properly allocated and initialized message object.
- *
  * A message is considered "complete" if an end-of-message word has been
  * encountered.
  *
@@ -155,9 +154,6 @@ int message_is_complete(const Message *m);
 
 /**@{
  * \name Query message status and type
- * All functions in this section assume that `m` points to a
- * properly allocated and initialized message object (e.g. obtained from
- * message_new()).
  */
 int message_is_valid(const Message *m);
 /**<
@@ -239,9 +235,6 @@ int message_is_info(const Message *m);
 
 /**@{
  * \name Access message data
- * All functions in this section assume that `m` points to a
- * properly allocated and initialized message object (e.g. obtained from
- * message_new()).
  */
 uint8_t message_get_group_id(const Message *m);
 /**< \return The group ID, if available, undefined otherwise. */
