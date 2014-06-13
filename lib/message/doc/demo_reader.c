@@ -1,35 +1,38 @@
 #include "message_reader.h"
 
-size_t get_buffer(const uint16_t **p);
-void release_buffer(const uint16_t *p);
+size_t dummy_get_buffer(const uint16_t **p);
+void dummy_release_buffer(const uint16_t *p);
 
 int main(void)
 {
-    MessageReader *reader = message_reader_new();
-    if (!reader) { return 1; }
+    MessageReader *r = message_reader_new();
+    if (!r) { return 1; }
 
     while (1) {
-        /* select next buffer */
+        /* select next buffer somehow */
         const uint16_t *buf;
-        size_t len = get_buffer(&buf);
-        if (!buf) { return 1; }
+        size_t len = dummy_get_buffer(&buf);
+        if (!buf) { break; }
 
         /* add buffer to reader */
-        message_reader_add_buffer(reader, buf, len);
+        message_reader_add_buffer(r, buf, len);
 
         /* read messages */
-        size_t N;
-        do {
-            N = message_reader_alloc(reader);
+        Message *m;
+        while (m = message_reader_get_message(r)) {
+            message_delete(m); /* or something useful */
+        }
 
-            size_t j;
-            for (j = 0; j < N; j++) {
-                Message *m = message_reader_next(reader);
-            }
-        } while (m);
-        release_buffer(buf);
+        /* two reasons: buffer empty or failed to create message */
+        if (!message_reader_is_empty(r)) { break; }
     }
 
-    message_reader_delete(reader);
+    /* clean up */
+    const uint16_t *buf;
+    while (buf = message_reader_get_depleted(r)) {
+        dummy_release_buffer(buf);
+    }
+
+    message_reader_delete(r);
     return 0;
 }
