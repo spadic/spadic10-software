@@ -6,5 +6,7 @@ libmessage = env.SharedLibrary('libmessage.so', ['$LIB_DIR/message.c'])
 libreader = env.SharedLibrary('libreader.so', ['$LIB_DIR/message.c',
                                                '$LIB_DIR/message_reader.c'])
 
+env.Program('test_buf_queue', ['test_buf_queue.c', '$LIB_DIR/message.c'])
+
 #cpp_env = env.Clone(CCFLAGS=['-std=c++11'])
 #cpp_env.Program(['test_message.cpp', libtestmessage, libmessage])

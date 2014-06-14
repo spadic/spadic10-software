@@ -4,6 +4,58 @@
 #include "message_reader.h"
 
 static void reader_init(MessageReader *r);
+struct buf_item;
+struct buf_queue;
+static void buf_queue_init(struct buf_queue *q);
+static void buf_queue_append(struct buf_queue *q, struct buf_item *b);
+static struct buf_item *buf_queue_pop(struct buf_queue *q);
+static int buf_queue_is_empty(struct buf_queue *q);
+
+struct buf_item {
+    const uint16_t *buf;
+    size_t len;
+    struct buf_item *next;
+};
+
+struct buf_queue {
+    struct buf_item *begin;
+    struct buf_item *end;
+};
+
+void buf_queue_init(struct buf_queue *q)
+{
+    q->begin = NULL;
+    q->end = NULL;
+}
+
+void buf_queue_append(struct buf_queue *q, struct buf_item *b)
+{
+    b->next = NULL;
+    struct buf_item *end = q->end;
+    if (end) {
+        end->next = b;
+    } else {
+        q->begin = b;
+    }
+    q->end = b;
+}
+
+struct buf_item *buf_queue_pop(struct buf_queue *q)
+{
+    struct buf_item *b = q->begin;
+    if (b) {
+        q->begin = b->next;
+        if (!b->next) {
+            q->end = NULL;
+        }
+    }
+    return b;
+}
+
+int buf_queue_is_empty(struct buf_queue *q)
+{
+    return !q->begin;
+}
 
 struct message_reader {
 };
