@@ -24,7 +24,7 @@ class MessageIterator:
         while True:
             m = lib.message_reader_get_message(self.r)
             if m:
-                yield m
+                yield Message(m)
                 continue
             if not lib.message_reader_is_empty(self.r):
                 raise RuntimeError("internal error in message reader")

@@ -12,6 +12,7 @@ static void buf_queue_append(struct buf_queue *q, struct buf_item *b);
 static struct buf_item *buf_queue_pop(struct buf_queue *q);
 static int buf_queue_is_empty(struct buf_queue *q);
 
+struct reader_state;
 static void reader_init(MessageReader *r);
 
 /*==== implementation ==============================================*/
@@ -64,9 +65,15 @@ int buf_queue_is_empty(struct buf_queue *q)
 
 /*------------------------------------------------------------------*/
 
+struct reader_state {
+    size_t pos;
+    Message *message;
+};
+
 struct message_reader {
     struct buf_queue buffers;
     struct buf_queue depleted;
+    struct reader_state state;
 };
 
 MessageReader *message_reader_new(void)
@@ -82,6 +89,7 @@ void reader_init(MessageReader *r)
 {
     buf_queue_init(&r->buffers);
     buf_queue_init(&r->depleted);
+    r->state = (struct reader_state){.pos=0, .message=NULL};
     message_reader_reset(r);
 }
 
@@ -107,6 +115,32 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 
 Message *message_reader_get_message(MessageReader *r)
 {
+    /* load state */
+    struct buf_item *b = r->buffers.begin;
+    if (!b) { return NULL; }
+    struct reader_state s = r->state;
+    Message *m = s.message;
+    if (!m) {
+        if (!(m = message_new())) { return NULL; }
+    }
+    const uint16_t *buf = b->buf + s.pos;
+    size_t len = b->len - s.pos;
+
+    /* read */
+    size_t n = message_read_from_buffer(m, buf, len);
+    if (n < len) {
+        s.pos += n;
+        s.message = NULL;
+    } else {
+        s.pos = 0;
+        s.message = m;
+        buf_queue_append(&r->depleted, buf_queue_pop(&r->buffers));
+        if (!message_is_complete(m)) { m = NULL; }
+    }
+
+    /* save state */
+    r->state = s;
+    return m;
 }
 
 int message_reader_is_empty(MessageReader *r)
@@ -116,6 +150,7 @@ int message_reader_is_empty(MessageReader *r)
 
 const uint16_t *message_reader_get_depleted(MessageReader *r)
 {
+    return buf_queue_pop(&r->depleted)->buf;
 }
 
 
