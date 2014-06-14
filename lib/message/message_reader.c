@@ -65,6 +65,8 @@ int buf_queue_is_empty(struct buf_queue *q)
 /*------------------------------------------------------------------*/
 
 struct message_reader {
+    struct buf_queue buffers;
+    struct buf_queue depleted;
 };
 
 MessageReader *message_reader_new(void)
@@ -78,10 +80,14 @@ MessageReader *message_reader_new(void)
 
 void reader_init(MessageReader *r)
 {
+    buf_queue_init(&r->buffers);
+    buf_queue_init(&r->depleted);
+    message_reader_reset(r);
 }
 
 void message_reader_delete(MessageReader *r)
 {
+    free(r);
 }
 
 void message_reader_reset(MessageReader *r)
@@ -90,6 +96,13 @@ void message_reader_reset(MessageReader *r)
 
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 {
+    if (!buf || !len) { return 1; }
+    struct buf_item *b;
+    if (!(b = malloc(sizeof *b))) { return 1; }
+    b->buf = buf;
+    b->len = len;
+    buf_queue_append(&r->buffers, b);
+    return 0;
 }
 
 Message *message_reader_get_message(MessageReader *r)
@@ -98,6 +111,7 @@ Message *message_reader_get_message(MessageReader *r)
 
 int message_reader_is_empty(MessageReader *r)
 {
+    return buf_queue_is_empty(&r->buffers);
 }
 
 const uint16_t *message_reader_get_depleted(MessageReader *r)
