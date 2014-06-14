@@ -132,10 +132,14 @@ Message *message_reader_get_message(MessageReader *r)
         s.pos += n;
         s.message = NULL;
     } else {
-        s.pos = 0;
-        s.message = m;
         buf_queue_append(&r->depleted, buf_queue_pop(&r->buffers));
-        if (!message_is_complete(m)) { m = NULL; }
+        s.pos = 0;
+        if (!message_is_complete(m)) {
+            s.message = m;
+            m = NULL;
+        } else {
+            s.message = NULL;
+        }
     }
 
     /* save state */
