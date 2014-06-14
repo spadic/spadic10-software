@@ -3,13 +3,18 @@
 #include <stdlib.h>
 #include "message_reader.h"
 
-static void reader_init(MessageReader *r);
+/*==== private declarations ========================================*/
+
 struct buf_item;
 struct buf_queue;
 static void buf_queue_init(struct buf_queue *q);
 static void buf_queue_append(struct buf_queue *q, struct buf_item *b);
 static struct buf_item *buf_queue_pop(struct buf_queue *q);
 static int buf_queue_is_empty(struct buf_queue *q);
+
+static void reader_init(MessageReader *r);
+
+/*==== implementation ==============================================*/
 
 struct buf_item {
     const uint16_t *buf;
@@ -56,6 +61,8 @@ int buf_queue_is_empty(struct buf_queue *q)
 {
     return !q->begin;
 }
+
+/*------------------------------------------------------------------*/
 
 struct message_reader {
 };
