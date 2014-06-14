@@ -81,8 +81,7 @@ void message_reader_reset(MessageReader *r)
 {
 }
 
-void message_reader_add_buffer(MessageReader *r,
-                               const uint16_t *buf, size_t len)
+int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 {
 }
 

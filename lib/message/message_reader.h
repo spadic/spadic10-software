@@ -33,12 +33,13 @@ void message_reader_reset(MessageReader *r);
 /**<
  * Reset a message reader to its initial state.
  */
-void message_reader_add_buffer(MessageReader *r,
-                               const uint16_t *buf, size_t len);
+int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len);
 /**<
  * Add a new buffer with `len` words to a message reader.
+ * \return Zero on success, non-zero on failure.
  *
- * Nothing is done if `buf` is NULL or `len` is zero.
+ * The state of `r` will be unmodified on failure.
+ * Will fail if `buf` is NULL or `len` is zero.
  */
 Message *message_reader_get_message(MessageReader *r);
 /**<
