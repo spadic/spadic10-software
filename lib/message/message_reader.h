@@ -20,7 +20,7 @@ typedef struct message_reader MessageReader;
 /**<
  * Context for reading SPADIC messages from buffers.
  */
-MessageReader message_reader_new(void);
+MessageReader *message_reader_new(void);
 /**<
  * Allocate and initialize a new message reader.
  * \return Pointer to created message reader, `NULL` if unsuccessful.

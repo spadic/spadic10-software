@@ -1,3 +1,54 @@
+/** \author Michael Krieger */
+
+#include <stdlib.h>
+#include "message_reader.h"
+
+static void reader_init(MessageReader *r);
+
+struct message_reader {
+};
+
+MessageReader *message_reader_new(void)
+{
+    MessageReader *r;
+    if (r = malloc(sizeof *r)) {
+        reader_init(r);
+    }
+    return r;
+}
+
+void reader_init(MessageReader *r)
+{
+}
+
+void message_reader_delete(MessageReader *r)
+{
+}
+
+void message_reader_reset(MessageReader *r)
+{
+}
+
+void message_reader_add_buffer(MessageReader *r,
+                               const uint16_t *buf, size_t len)
+{
+}
+
+Message *message_reader_get_message(MessageReader *r)
+{
+}
+
+int message_reader_is_empty(MessageReader *r)
+{
+}
+
+const uint16_t *message_reader_get_depleted(MessageReader *r)
+{
+}
+
+
+#if 0
+
 Message *message_reader_next_message(MessageReader *r)
 {
     uint16_t *buf = r->buf_current;
@@ -56,3 +107,5 @@ Message *message_reader_get_message(MessageReader *r)
         len -= n;
     }
 }
+
+#endif
