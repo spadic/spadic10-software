@@ -133,9 +133,7 @@ Message *message_reader_get_message(MessageReader *r)
     if (!b) { return NULL; }
     struct reader_state s = r->state;
     Message *m = s.message;
-    if (!m) {
-        if (!(m = message_new())) { return NULL; }
-    }
+    if (!m && !(m = message_new())) { return NULL; }
     const uint16_t *buf = b->buf + s.pos;
     size_t len = b->len - s.pos;
 
