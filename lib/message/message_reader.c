@@ -157,8 +157,6 @@ Message *message_reader_get_message(MessageReader *r)
             if (message_is_complete(m)) {
                 s.message = NULL;
                 break;
-            } else {
-                continue;
             }
         }
     }
