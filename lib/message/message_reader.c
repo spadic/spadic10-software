@@ -129,31 +129,42 @@ void reader_clear_buf_queue(struct buf_queue *q)
 Message *message_reader_get_message(MessageReader *r)
 {
     /* load state */
-    struct buf_item *b = r->buffers.begin;
-    if (!b) { return NULL; }
     struct reader_state s = r->state;
     Message *m = s.message;
     if (!m && !(m = message_new())) { return NULL; }
-    const uint16_t *buf = b->buf + s.pos;
-    size_t len = b->len - s.pos;
+    size_t pos = s.pos;
 
     /* read */
-    size_t n = message_read_from_buffer(m, buf, len);
-    if (n < len) {
-        s.pos += n;
-        s.message = NULL;
-    } else {
-        buf_queue_append(&r->depleted, buf_queue_pop(&r->buffers));
-        s.pos = 0;
-        if (!message_is_complete(m)) {
+    struct buf_item *b;
+    const uint16_t *buf;
+    size_t len;
+    while (1) {
+        if (!(b = r->buffers.begin)) {
             s.message = m;
             m = NULL;
-        } else {
+            break;
+        }
+        buf = b->buf;
+        len = b->len;
+
+        pos += message_read_from_buffer(m, buf+pos, len-pos);
+        if (pos < len) {
             s.message = NULL;
+            break;
+        } else {
+            buf_queue_append(&r->depleted, buf_queue_pop(&r->buffers));
+            pos = 0;
+            if (message_is_complete(m)) {
+                s.message = NULL;
+                break;
+            } else {
+                continue;
+            }
         }
     }
 
     /* save state */
+    s.pos = pos;
     r->state = s;
     return m;
 }
