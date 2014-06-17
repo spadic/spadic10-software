@@ -20,7 +20,9 @@ class MessageIterator:
             pass # lib was already garbage collected
 
     def __call__(self, buf):
-        lib.message_reader_add_buffer(self.r, as_array(buf), len(buf))
+        a = as_array(buf)
+        n = len(buf)
+        lib.message_reader_add_buffer(self.r, ctypes.byref(a), n)
         while True:
             m = lib.message_reader_get_message(self.r)
             if m:
