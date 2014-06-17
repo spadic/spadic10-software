@@ -31,7 +31,9 @@ class Message(object):
         lib.message_reset(self.m)
 
     def read_from_buffer(self, buf):
-        return lib.message_read_from_buffer(self.m, as_array(buf), len(buf))
+        a = as_array(buf)
+        n = len(buf)
+        return lib.message_read_from_buffer(self.m, ctypes.byref(a), n)
 
     #---- query status/type -------------------------------
 
