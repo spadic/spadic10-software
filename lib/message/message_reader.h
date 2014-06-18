@@ -28,18 +28,34 @@ MessageReader *message_reader_new(void);
 void message_reader_delete(MessageReader *r);
 /**<
  * Clean up and deallocate a message reader.
+ *
+ * References to all buffers that have been added will be lost. If they
+ * need to be deallocated, first use message_reader_get_depleted(),
+ * possibly also message_reader_reset().
  */
 void message_reader_reset(MessageReader *r);
 /**<
  * Reset a message reader to its initial state.
+ *
+ * All buffers that have been added before will be marked as 'depleted'
+ * and can be returned by message_reader_get_depleted().
  */
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len);
 /**<
  * Add a new buffer with `len` words to a message reader.
- * \return Zero on success, non-zero on failure.
+ * \return Zero if successful, non-zero otherwise.
  *
- * The state of `r` will be unmodified on failure.
- * Will fail if `buf` is NULL or `len` is zero.
+ * The message reader will be unmodified in case of failure, which
+ * includes `buf` being NULL and `len` being zero.
+ *
+ * More than one buffer can be added to a message reader. They will be
+ * consumed in the order in which they were added, keeping incomplete
+ * messages across buffers. The buffers are therefore effectively
+ * concatenated.
+ *
+ * Once all words from a buffer have been consumed using
+ * message_reader_get_message(), it is marked as 'depleted' and can be
+ * returned by message_reader_get_depleted().
  */
 Message *message_reader_get_message(MessageReader *r);
 /**<
