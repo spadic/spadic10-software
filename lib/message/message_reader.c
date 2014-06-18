@@ -110,6 +110,14 @@ void message_reader_delete(MessageReader *r)
     free(r);
 }
 
+void reader_clear_buf_queue(struct buf_queue *q)
+{
+    struct buf_item *b;
+    while (b = buf_queue_pop(q)) {
+        free(b);
+    }
+}
+
 void message_reader_reset(MessageReader *r)
 {
     struct buf_item *b;
@@ -131,14 +139,6 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
     b->len = len;
     buf_queue_append(&r->buffers, b);
     return 0;
-}
-
-void reader_clear_buf_queue(struct buf_queue *q)
-{
-    struct buf_item *b;
-    while (b = buf_queue_pop(q)) {
-        free(b);
-    }
 }
 
 Message *message_reader_get_message(MessageReader *r)
