@@ -119,9 +119,7 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 void reader_clear_buf_queue(struct buf_queue *q)
 {
     struct buf_item *b;
-    while (1) {
-        b = buf_queue_pop(q);
-        if (!b) { return; }
+    while (b = buf_queue_pop(q)) {
         free(b);
     }
 }
