@@ -1,39 +1,19 @@
 #!/usr/bin/env python
 
-import ctypes
-lib = ctypes.cdll.LoadLibrary('libreader.so')
-from message_wrap import Message, as_array
-
-#---- implement this as C library -----------------------------------
+from message_wrap import Message
+from reader_wrap import MessageReader
 
 class MessageIterator:
     def __init__(self):
-        r = lib.message_reader_new()
-        if not r:
-            raise RuntimeError("could not create MessageReader object")
-        self.r = r
-
-    def __del__(self):
-        try:
-            lib.message_reader_delete(self.r)
-        except AttributeError:
-            pass # lib was already garbage collected
+        self.r = MessageReader()
 
     def __call__(self, buf):
-        a = as_array(buf)
-        n = len(buf)
-        lib.message_reader_add_buffer(self.r, ctypes.byref(a), n)
+        self.r.add_buffer(buf)
         while True:
-            m = lib.message_reader_get_message(self.r)
-            if m:
-                yield Message(m)
-                continue
-            if not lib.message_reader_is_empty(self.r):
-                raise RuntimeError("internal error in message reader")
-            return
-
-    def reset(self):
-        lib.message_reader_reset(self.r)
+            m = self.r.get_message()
+            if not m:
+                break
+            yield Message(m)
 
 #--------------------------------------------------------------------
 
