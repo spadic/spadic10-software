@@ -38,7 +38,15 @@ class MessageReader:
         return Message(m) if m else None
 
     def get_depleted(self):
-        return list(lib.message_reader_get_depleted(self.r))
+        """Do not return anything, just verify identity of references."""
+        b = lib.message_reader_get_depleted(self.r) # gets truncated -> invalid
+        if not b:
+            pass #return None
+        else:
+            # this should match
+            buf = self._buffers.pop(0)
+            assert(ctypes.addressof(buf)%(1<<32) == b%(1<<32))
+            #return list(buf)
 
     @property
     def is_empty(self):
