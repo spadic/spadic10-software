@@ -8,6 +8,10 @@ lib = ctypes.cdll.LoadLibrary('libreader.so')
 from message_wrap import Message, as_array
 
 class MessageReader:
+    """
+    Straightforward mapping of C API to Python class.
+    """
+
     def __init__(self, r=None):
         self.r = r or lib.message_reader_new()
         if not self.r:
