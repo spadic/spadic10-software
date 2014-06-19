@@ -5,7 +5,7 @@ pure Python wrapper around libreader.so using ctypes
 import ctypes
 
 lib = ctypes.cdll.LoadLibrary('libreader.so')
-from message_wrap import as_array
+from message_wrap import Message, as_array
 
 class MessageReader:
     def __init__(self, r=None):
@@ -35,7 +35,7 @@ class MessageReader:
         m = lib.message_reader_get_message(self.r)
         if not m and not self.is_empty:
             raise RuntimeError("could not read message")
-        return m
+        return Message(m) if m else None
 
     def get_depleted(self):
         return list(lib.message_reader_get_depleted(self.r))

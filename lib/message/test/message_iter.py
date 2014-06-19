@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from message_wrap import Message
 from reader_wrap import MessageReader
 
 class MessageIterator:
@@ -13,7 +12,7 @@ class MessageIterator:
             m = self.r.get_message()
             if not m:
                 break
-            yield Message(m)
+            yield m
 
 #--------------------------------------------------------------------
 
