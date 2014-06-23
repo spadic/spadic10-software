@@ -16,11 +16,10 @@ class Message(object):
 
     #---- create, destroy, fill ---------------------------
 
-    def __init__(self):
-        m = lib.message_new()
-        if not m:
+    def __init__(self, m=None):
+        self.m = m or lib.message_new()
+        if not self.m:
             raise RuntimeError("could not create Message object")
-        self.m = m
 
     def __del__(self):
         try:

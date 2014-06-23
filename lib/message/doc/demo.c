@@ -29,6 +29,7 @@
  */
 #include <stdio.h>
 #include "message.h"
+#include "message_reader.h"
 
 #define N 15
 const uint16_t buf[N] = {
@@ -73,16 +74,31 @@ void print_hit_message(Message *m)
 
 int main(void)
 {
-    Message *m = message_new();
-    size_t n = 0;
-    while (n < N) {
-        n += message_read_from_buffer(m, buf+n, N-n);
+    /* create message reader */
+    MessageReader *r;
+    if (!(r = message_reader_new())) { return 1; }
+
+    /* add buffer */
+    message_reader_add_buffer(r, buf, N);
+
+    /* read all messages */
+    Message *m;
+    while (m = message_reader_get_message(r)) {
         if (message_is_hit(m)) {
             printf("\nmessage is hit\n");
             print_hit_message(m);
-            message_reset(m);
+            message_delete(m);
         }
     }
-    message_delete(m);
+
+    /* test if buffers depleted or error in reader */
+    if (!message_reader_is_empty(r)) { return 1; }
+
+    /* clean up */
+    const uint16_t *buf;
+    while (buf = message_reader_get_depleted(r)) {
+        /* free(buf); // not in this example */
+    }
+    message_reader_delete(r);
     return 0;
 }

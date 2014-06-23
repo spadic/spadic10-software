@@ -2,9 +2,10 @@
  * \file
  * \author Michael Krieger
  *
- * This is the API for the SPADIC 1.0 Message Library.
+ * This module provides the low-level functionality for decoding the
+ * SPADIC 1.0 message format and accessing the message contents.
  *
- * All functions that receive a pointer `m` to a Message object assume
+ * All functions that receive a pointer `m` to a ::Message object assume
  * that `m` has been properly allocated and initialized (e.g. by
  * message_new()). One exception is message_init(), for which `m` need
  * (and must) not be initialized.
@@ -12,9 +13,6 @@
 
 #ifndef SPADIC_MESSAGE_H
 #define SPADIC_MESSAGE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -268,7 +266,4 @@ uint8_t message_get_info_type(const Message *m);
 /**< \return One of the #info_types, if available, undefined otherwise. */
 /**@}*/
 
-#ifdef __cplusplus
-}
-#endif
 #endif
