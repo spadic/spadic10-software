@@ -37,7 +37,7 @@ void message_reader_reset(MessageReader *r);
 /**<
  * Reset a message reader to its initial state.
  *
- * All buffers that have been added before will be marked as 'depleted'
+ * All buffers that have been added before will be marked as "depleted"
  * and can be returned by message_reader_get_depleted().
  */
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len);
@@ -54,7 +54,7 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
  * concatenated.
  *
  * Once all words from a buffer have been consumed using
- * message_reader_get_message(), it is marked as 'depleted' and can be
+ * message_reader_get_message(), it is marked as "depleted" and can be
  * returned by message_reader_get_depleted().
  */
 const uint16_t *message_reader_get_depleted(MessageReader *r);
