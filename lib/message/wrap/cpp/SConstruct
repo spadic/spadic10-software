@@ -1,0 +1,5 @@
+# ex: syntax=python
+
+env = Environment(CPPPATH=['../../'])
+
+env.SharedLibrary('Message.cpp')
