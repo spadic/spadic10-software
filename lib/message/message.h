@@ -2,9 +2,10 @@
  * \file
  * \author Michael Krieger
  *
- * This is the API for the SPADIC 1.0 Message Library.
+ * This module provides the low-level functionality for decoding the
+ * SPADIC 1.0 message format and accessing the message contents.
  *
- * All functions that receive a pointer `m` to a Message object assume
+ * All functions that receive a pointer `m` to a ::Message object assume
  * that `m` has been properly allocated and initialized (e.g. by
  * message_new()). One exception is message_init(), for which `m` need
  * (and must) not be initialized.

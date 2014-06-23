@@ -2,13 +2,15 @@
  * \file
  * \author Michael Krieger
  *
- * This is the API for the SPADIC 1.0 Message Library.
+ * This module provides another level of abstraction for reading SPADIC
+ * messages from input buffers. It saves the user from using the
+ * message_read_from_buffer()/::message_is_complete() functions
+ * directly and having to manually keeping track of the reading position
+ * and state.
  *
- * All functions receiving a pointer `r` to a MessageReader object assume
+ * All functions receiving a pointer `r` to a ::MessageReader object assume
  * that it has been properly allocated and initialized (by
  * message_reader_new()).
- *
- * **DRAFT**
  */
 
 #ifndef SPADIC_MESSAGE_READER_H
@@ -19,7 +21,11 @@
 typedef struct message_reader MessageReader;
 /**<
  * Context for reading SPADIC messages from buffers.
+ *
+ * Manages input buffers, keeps track of the reading position and saves
+ * the state of partially read messages across buffer boundaries.
  */
+
 MessageReader *message_reader_new(void);
 /**<
  * Allocate and initialize a new message reader.
