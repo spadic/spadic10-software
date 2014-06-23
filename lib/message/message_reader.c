@@ -1,6 +1,7 @@
 /** \author Michael Krieger */
 
 #include <stdlib.h>
+#include "message.h"
 #include "message_reader.h"
 
 /*==== private declarations ========================================*/

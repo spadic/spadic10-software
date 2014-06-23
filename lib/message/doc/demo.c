@@ -28,6 +28,7 @@
  *     raw data invalid
  */
 #include <stdio.h>
+#include "message.h"
 #include "message_reader.h"
 
 #define N 15

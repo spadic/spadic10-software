@@ -16,7 +16,8 @@
 #ifndef SPADIC_MESSAGE_READER_H
 #define SPADIC_MESSAGE_READER_H
 
-#include "message.h"
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct message_reader MessageReader;
 /**<

@@ -1,3 +1,4 @@
+#include "message.h"
 #include "message_reader.h"
 
 const uint16_t buf1[] = {
