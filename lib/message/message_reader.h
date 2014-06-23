@@ -57,6 +57,10 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
  * message_reader_get_message(), it is marked as 'depleted' and can be
  * returned by message_reader_get_depleted().
  */
+const uint16_t *message_reader_get_depleted(MessageReader *r);
+/**<
+ * \return Next depleted buffer, NULL if no depleted buffers are left.
+ */
 Message *message_reader_get_message(MessageReader *r);
 /**<
  * Read the next message.
@@ -76,10 +80,6 @@ int message_reader_is_empty(MessageReader *r);
  *
  * If message_reader_get_message() returned `NULL` and the reader is not
  * empty (this function returns zero), an internal error has occurred.
- */
-const uint16_t *message_reader_get_depleted(MessageReader *r);
-/**<
- * \return Next depleted buffer, NULL if no depleted buffers are left.
  */
 
 #endif
