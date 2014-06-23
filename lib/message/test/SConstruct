@@ -3,11 +3,10 @@
 env = Environment(CPPPATH=['..'], LIB_DIR='..')
 
 libmessage = env.SharedLibrary('libmessage.so', ['$LIB_DIR/message.c'])
-libreader = env.SharedLibrary('libreader.so', ['$LIB_DIR/message.c',
-                                               '$LIB_DIR/message_reader.c'])
+libreader = env.SharedLibrary('libreader.so', ['$LIB_DIR/message_reader.c', libmessage])
 
 env.Program('test_buf_queue', ['test_buf_queue.c', '$LIB_DIR/message.c'])
-env.Program('test_reader', ['test_reader.c', libreader])
+env.Program('test_reader', ['test_reader.c', libmessage, libreader])
 
 #cpp_env = env.Clone(CCFLAGS=['-std=c++11'])
 #cpp_env.Program(['test_message.cpp', libtestmessage, libmessage])
