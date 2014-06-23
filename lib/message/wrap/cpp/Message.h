@@ -1,17 +1,15 @@
 #ifndef SPADIC_MESSAGE_WRAP_H
 #define SPADIC_MESSAGE_WRAP_H
 
+#include <cstdint>
 #include <vector>
 
-extern "C" {
-#include "message.h"
-}
+typedef struct message _Message;
 
 namespace SPADIC {
 
 class Message {
 public:
-    Message(Message*);
     ~Message();
 
     bool is_valid();
@@ -33,7 +31,8 @@ public:
     uint8_t info_type();
 
 private:
-    struct message *m;
+    Message(_Message *m);
+    _Message *m;
 };
 
 } // namespace
