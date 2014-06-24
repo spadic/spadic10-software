@@ -32,6 +32,8 @@ struct Message {
 private:
     Message(_Message *m);
     _Message *m;
+    std::vector<int16_t> _samples;
+    bool _samples_valid;
 };
 
 } // namespace

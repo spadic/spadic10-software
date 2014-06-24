@@ -6,7 +6,7 @@ extern "C" {
 
 namespace spadic {
 
-Message::Message(_Message *m) : m(m)
+Message::Message(_Message *m) : m(m), _samples_valid(false)
 {
 }
 
@@ -71,14 +71,16 @@ uint16_t Message::timestamp()
 
 const std::vector<int16_t>& Message::samples()
 {
-    int16_t *s;
-    std::vector<int16_t>::size_type n;
-    std::vector<int16_t> samples;
-    if ((s = message_get_samples(m)) &&
-        (n = message_get_num_samples(m))) {
-        samples.assign(s, s+n);
+    if (!_samples_valid) {
+        int16_t *s;
+        std::vector<int16_t>::size_type n;
+        if ((s = message_get_samples(m)) &&
+            (n = message_get_num_samples(m))) {
+            _samples.assign(s, s+n);
+        }
+        _samples_valid = true;
     }
-    return samples;
+    return _samples;
 }
 
 uint8_t Message::hit_type()
