@@ -83,17 +83,15 @@ void message_init(Message *m)
 {
     m->samples = NULL;
     m->raw_buf = NULL;
-    message_reset(m);
+    m->raw_count = 0;
+    m->valid = 0;
 }
 
 void message_reset(Message *m)
 {
     free(m->samples);
     free(m->raw_buf);
-    m->samples = NULL;
-    m->raw_buf = NULL;
-    m->raw_count = 0;
-    m->valid = 0;
+    message_init(m);
 }
 
 void message_delete(Message *m)
