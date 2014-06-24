@@ -4,7 +4,7 @@ extern "C" {
 #include "message.h"
 }
 
-namespace SPADIC {
+namespace spadic {
 
 Message::Message(_Message *m) : m(m)
 {

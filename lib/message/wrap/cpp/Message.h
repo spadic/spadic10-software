@@ -6,10 +6,9 @@
 
 typedef struct message _Message;
 
-namespace SPADIC {
+namespace spadic {
 
-class Message {
-public:
+struct Message {
     ~Message();
 
     bool is_valid();
