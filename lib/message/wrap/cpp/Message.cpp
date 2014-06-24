@@ -73,7 +73,7 @@ const std::vector<int16_t>& Message::samples()
 {
     if (!_samples_valid) {
         int16_t *s;
-        std::vector<int16_t>::size_type n;
+        size_t n;
         if ((s = message_get_samples(m)) &&
             (n = message_get_num_samples(m))) {
             _samples.assign(s, s+n);
