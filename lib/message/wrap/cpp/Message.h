@@ -22,7 +22,7 @@ struct Message {
     uint8_t group_id();
     uint8_t channel_id();
     uint16_t timestamp();
-    std::vector<int16_t> samples();
+    const std::vector<int16_t>& samples();
     uint8_t hit_type();
     uint8_t stop_type();
     uint8_t buffer_overflow_count();

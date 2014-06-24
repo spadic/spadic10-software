@@ -69,7 +69,7 @@ uint16_t Message::timestamp()
     return message_get_timestamp(m);
 }
 
-std::vector<int16_t> Message::samples()
+const std::vector<int16_t>& Message::samples()
 {
     int16_t *s;
     std::vector<int16_t>::size_type n;
