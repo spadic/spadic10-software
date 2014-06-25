@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+struct message_reader;
+
 namespace spadic {
 
 struct Message {
@@ -30,16 +32,18 @@ struct Message {
 };
 
 struct MessageReader {
-    virtual void reset() = 0;
-    virtual int add_buffer(uint16_t *buf, size_t len) = 0;
-    virtual const uint16_t *get_depleted() = 0;
-    virtual std::unique_ptr<Message> get_message() = 0;
-    virtual bool is_empty() = 0;
+    void reset();
+    int add_buffer(uint16_t *buf, size_t len);
+    const uint16_t *get_depleted();
+    std::unique_ptr<Message> get_message();
+    bool is_empty();
 
-    virtual ~MessageReader() {};
+    ~MessageReader();
+    MessageReader();
+
+private:
+    struct ::message_reader *r;
 };
-
-std::unique_ptr<MessageReader> new_MessageReader();
 
 } // namespace
 

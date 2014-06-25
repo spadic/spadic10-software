@@ -3,7 +3,7 @@
 
 int main()
 {
-    auto r = spadic::new_MessageReader();
+    spadic::MessageReader r;
 
     uint16_t buf[8] = {
      0x8012, /* start of message 1 */
@@ -16,9 +16,9 @@ int main()
      0xB1D0, /* end of message 1 */
     };
 
-    r->add_buffer(buf, 8);
+    r.add_buffer(buf, 8);
 
-    auto m = r->get_message();
+    auto m = r.get_message();
     auto s = m->samples();
     
     std::cout << "got " << s.size() << " samples" << std::endl;

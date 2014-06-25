@@ -67,36 +67,37 @@ void Message_::init_samples()
 
 //-------------------------------------------------------------------
 
-struct MessageReader_ : MessageReader {
-    void reset() { message_reader_reset(r); };
-    int add_buffer(uint16_t *buf, size_t len);
-    const uint16_t *get_depleted() { return message_reader_get_depleted(r); };
-    std::unique_ptr<Message> get_message();
-    bool is_empty() { return message_reader_is_empty(r); };
+const uint16_t *MessageReader::get_depleted()
+{
+    return message_reader_get_depleted(r);
+}
 
-    MessageReader_();
-    ~MessageReader_();
+bool MessageReader::is_empty()
+{
+    return message_reader_is_empty(r);
+}
 
-private:
-    struct message_reader *r;
-};
+void MessageReader::reset()
+{
+    message_reader_reset(r);
+}
 
-MessageReader_::MessageReader_()
+MessageReader::MessageReader()
 {
     r = message_reader_new();
 }
 
-MessageReader_::~MessageReader_()
+MessageReader::~MessageReader()
 {
     message_reader_delete(r);
 }
 
-int MessageReader_::add_buffer(uint16_t *buf, size_t len)
+int MessageReader::add_buffer(uint16_t *buf, size_t len)
 {
     return message_reader_add_buffer(r, buf, len);
 }
 
-std::unique_ptr<Message> MessageReader_::get_message()
+std::unique_ptr<Message> MessageReader::get_message()
 {
     struct message *m = message_reader_get_message(r);
     Message_ *M = m ? new Message_(m) : nullptr;
@@ -104,12 +105,6 @@ std::unique_ptr<Message> MessageReader_::get_message()
 }
 
 //-------------------------------------------------------------------
-
-std::unique_ptr<MessageReader> new_MessageReader()
-{
-    MessageReader_ *m = new MessageReader_;
-    return std::unique_ptr<MessageReader_>(m);
-}
 
 } // namespace
 
