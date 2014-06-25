@@ -2,6 +2,7 @@
 #define SPADIC_MESSAGE_WRAP_H
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace spadic {
@@ -27,6 +28,18 @@ struct Message {
 
     virtual ~Message() {};
 };
+
+struct MessageReader {
+    virtual void reset() = 0;
+    virtual int add_buffer(uint16_t *buf, size_t len) = 0;
+    virtual const uint16_t *get_depleted() = 0;
+    virtual std::unique_ptr<Message> get_message() = 0;
+    virtual bool is_empty() = 0;
+
+    virtual ~MessageReader() {};
+};
+
+std::unique_ptr<MessageReader> new_MessageReader();
 
 } // namespace
 

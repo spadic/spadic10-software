@@ -4,4 +4,6 @@ env = Environment(LIB_DIR='../../', CPPPATH=['../../'])
 env_cpp = env.Clone(CCFLAGS=['--std=c++11'])
 
 libmessage = env.SharedLibrary('$LIB_DIR/message.c')
-libmessage_cpp = env_cpp.SharedLibrary(['Message.cpp', libmessage])
+libreader = env.SharedLibrary(['$LIB_DIR/message_reader.c', libmessage])
+
+libmessage_cpp = env_cpp.SharedLibrary(['Message.cpp', libmessage, libreader])
