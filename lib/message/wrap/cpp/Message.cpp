@@ -8,9 +8,6 @@ extern "C" {
 #define IS(NAME) bool is_##NAME() { return message_is_##NAME(m); }
 #define GET(NAME) NAME() { return message_get_##NAME(m); }
 
-typedef std::vector<int16_t> samples_t;
-typedef std::vector<uint16_t> buf_t;
-
 namespace spadic {
 
 //-------------------------------------------------------------------
@@ -27,7 +24,7 @@ struct Message_ : Message {
     uint8_t GET (group_id)
     uint8_t GET (channel_id)
     uint16_t GET (timestamp)
-    const samples_t& samples() { return _samples; }
+    std::vector<int16_t> samples() { return _samples; }
     uint8_t GET (hit_type)
     uint8_t GET (stop_type)
     uint8_t GET (buffer_overflow_count)
