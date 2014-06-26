@@ -10,7 +10,7 @@ extern "C" {
 
 namespace spadic {
 
-//-------------------------------------------------------------------
+//---- Message implementation ---------------------------------------
 
 struct Message_ : Message {
     IS (valid)
@@ -62,7 +62,7 @@ void Message_::init_samples()
     }
 }
 
-//-------------------------------------------------------------------
+//---- MessageReader implementation (nested pimpl...) ----------------
 
 struct MessageReader::MessageReader_ {
     struct message_reader *r;
@@ -99,8 +99,6 @@ std::unique_ptr<Message> MessageReader::get_message()
     Message_ *M = m ? new Message_(m) : nullptr;
     return std::unique_ptr<Message>(M);
 }
-
-//-------------------------------------------------------------------
 
 } // namespace
 

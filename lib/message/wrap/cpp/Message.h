@@ -30,14 +30,16 @@ struct Message {
 };
 
 struct MessageReader {
+    MessageReader();
+    ~MessageReader();
+
     void reset();
+    std::unique_ptr<Message> get_message();
+
+    // TODO make this more C++
     int add_buffer(uint16_t *buf, size_t len);
     const uint16_t *get_depleted();
-    std::unique_ptr<Message> get_message();
     bool is_empty();
-
-    ~MessageReader();
-    MessageReader();
 
 private:
     struct MessageReader_;
