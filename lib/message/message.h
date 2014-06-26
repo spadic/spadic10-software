@@ -69,6 +69,11 @@ enum hit_types {
 typedef struct message Message;
 /**<
  * Data structure representing SPADIC 1.0 messages.
+ *
+ * Pointers to such objects can be obtained by using message_new() or
+ * message_reader_get_message() (preferred).
+ *
+ * They must be deallocated by using message_delete().
  */
 
 /**@{
