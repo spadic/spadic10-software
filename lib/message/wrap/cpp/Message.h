@@ -5,8 +5,6 @@
 #include <memory>
 #include <vector>
 
-struct message_reader;
-
 namespace spadic {
 
 struct Message {
@@ -42,7 +40,8 @@ struct MessageReader {
     MessageReader();
 
 private:
-    struct ::message_reader *r;
+    struct MessageReader_;
+    std::unique_ptr<MessageReader_> r;
 };
 
 } // namespace
