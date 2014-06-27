@@ -19,7 +19,7 @@ struct Message {
     virtual uint8_t group_id() = 0;
     virtual uint8_t channel_id() = 0;
     virtual uint16_t timestamp() = 0;
-    virtual std::vector<int16_t> samples() = 0;
+    virtual const std::vector<int16_t>& samples() = 0;
     virtual uint8_t hit_type() = 0;
     virtual uint8_t stop_type() = 0;
     virtual uint8_t buffer_overflow_count() = 0;

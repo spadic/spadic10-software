@@ -24,7 +24,7 @@ struct Message_ : Message {
     uint8_t GET (group_id)
     uint8_t GET (channel_id)
     uint16_t GET (timestamp)
-    std::vector<int16_t> samples() { return _samples; }
+    const std::vector<int16_t>& samples() { return _samples; }
     uint8_t GET (hit_type)
     uint8_t GET (stop_type)
     uint8_t GET (buffer_overflow_count)
