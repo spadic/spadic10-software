@@ -37,7 +37,7 @@ struct MessageReader {
     int add_buffer(const uint16_t *buf, size_t len);
     std::unique_ptr<Message> get_message();
 
-    // TODO make this more C++
+    // TODO what to with these
     const uint16_t *get_depleted();
     bool is_empty();
 
