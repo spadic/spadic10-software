@@ -88,7 +88,7 @@ bool MessageReader::is_empty()
     return message_reader_is_empty(r->r);
 }
 
-int MessageReader::add_buffer(uint16_t *buf, size_t len)
+int MessageReader::add_buffer(const uint16_t *buf, size_t len)
 {
     return message_reader_add_buffer(r->r, buf, len);
 }

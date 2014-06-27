@@ -34,10 +34,10 @@ struct MessageReader {
     ~MessageReader();
 
     void reset();
+    int add_buffer(const uint16_t *buf, size_t len);
     std::unique_ptr<Message> get_message();
 
     // TODO make this more C++
-    int add_buffer(uint16_t *buf, size_t len);
     const uint16_t *get_depleted();
     bool is_empty();
 
