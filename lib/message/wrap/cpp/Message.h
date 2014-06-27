@@ -1,3 +1,5 @@
+//! \author Michael Krieger
+//! C++ API for the SPADIC Message library.
 #ifndef SPADIC_MESSAGE_WRAP_H
 #define SPADIC_MESSAGE_WRAP_H
 

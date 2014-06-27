@@ -1,3 +1,4 @@
+//! \author Michael Krieger
 #include "Message.h"
 
 extern "C" {
