@@ -9,6 +9,9 @@
 
 namespace spadic {
 
+// wrap the hit/stop/info types using the technique shown in
+// http://stackoverflow.com/a/20792525
+
 struct Message {
     virtual bool is_valid() = 0;
     virtual bool is_hit() = 0;
