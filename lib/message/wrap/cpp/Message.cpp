@@ -6,14 +6,14 @@ extern "C" {
 #include "message_reader.h"
 }
 
-#define IS(NAME) bool is_##NAME() { return message_is_##NAME(m); }
-#define GET(NAME) NAME() { return message_get_##NAME(m); }
-
 namespace spadic {
 
 //---- Message implementation ---------------------------------------
 
 struct Message_ : Message {
+
+#define IS(NAME) bool is_##NAME() { return message_is_##NAME(m); }
+#define GET(NAME) NAME() { return message_get_##NAME(m); }
     IS (valid)
     IS (hit)
     IS (hit_aborted)
@@ -31,6 +31,8 @@ struct Message_ : Message {
     uint8_t GET (buffer_overflow_count)
     uint16_t GET (epoch_count)
     uint8_t GET (info_type)
+#undef IS
+#undef GET
 
     Message_(struct message *m);
     ~Message_();
@@ -102,6 +104,3 @@ std::unique_ptr<Message> MessageReader::get_message()
 }
 
 } // namespace
-
-#undef IS
-#undef GET
