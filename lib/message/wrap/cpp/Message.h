@@ -27,23 +27,25 @@ enum class hit_t : uint8_t {
 };
 
 struct Message {
-    virtual bool is_valid() = 0;
-    virtual bool is_hit() = 0;
-    virtual bool is_hit_aborted() = 0;
-    virtual bool is_buffer_overflow() = 0;
-    virtual bool is_epoch_marker() = 0;
-    virtual bool is_epoch_out_of_sync() = 0;
-    virtual bool is_info() = 0;
+#define PV(F) virtual F = 0;
+    PV (bool is_valid())
+    PV (bool is_hit())
+    PV (bool is_hit_aborted())
+    PV (bool is_buffer_overflow())
+    PV (bool is_epoch_marker())
+    PV (bool is_epoch_out_of_sync())
+    PV (bool is_info())
 
-    virtual uint8_t group_id() = 0;
-    virtual uint8_t channel_id() = 0;
-    virtual uint16_t timestamp() = 0;
-    virtual const std::vector<int16_t>& samples() = 0;
-    virtual hit_t hit_type() = 0;
-    virtual stop_t stop_type() = 0;
-    virtual uint8_t buffer_overflow_count() = 0;
-    virtual uint16_t epoch_count() = 0;
-    virtual info_t info_type() = 0;
+    PV (uint8_t group_id())
+    PV (uint8_t channel_id())
+    PV (uint16_t timestamp())
+    PV (const std::vector<int16_t>& samples())
+    PV (hit_t hit_type())
+    PV (stop_t stop_type())
+    PV (uint8_t buffer_overflow_count())
+    PV (uint16_t epoch_count())
+    PV (info_t info_type())
+#undef PV
 
     virtual ~Message() {};
 };
