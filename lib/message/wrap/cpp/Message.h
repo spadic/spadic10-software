@@ -9,7 +9,8 @@
 
 namespace spadic {
 
-// wrap the hit/stop/info types using the technique shown in
+// TODO
+// #include hit/stop/info types using the technique shown in
 // http://stackoverflow.com/a/20792525
 
 enum class stop_t : uint8_t {

@@ -12,11 +12,7 @@ namespace spadic {
 
 struct Message_ : Message {
 
-// use these macros to avoid typing the same thing over and over
 #define IS(NAME) bool is_##NAME() { return message_is_##NAME(m); }
-#define GET(NAME) NAME() { return message_get_##NAME(m); }
-#define GET_TYPE(NAME) NAME##_t NAME##_type()\
-        { return static_cast<NAME##_t>(message_get_##NAME##_type(m)); };
     IS (valid)
     IS (hit)
     IS (hit_aborted)
@@ -24,19 +20,24 @@ struct Message_ : Message {
     IS (epoch_marker)
     IS (epoch_out_of_sync)
     IS (info)
+#undef IS
 
+#define GET(NAME) NAME() { return message_get_##NAME(m); }
     uint8_t GET (group_id)
     uint8_t GET (channel_id)
     uint16_t GET (timestamp)
-    const std::vector<int16_t>& samples() { return _samples; }
-    GET_TYPE (hit)
-    GET_TYPE (stop)
     uint8_t GET (buffer_overflow_count)
     uint16_t GET (epoch_count)
-    GET_TYPE (info)
-#undef IS
 #undef GET
+
+#define GET_TYPE(NAME) NAME##_t NAME##_type()\
+        { return static_cast<NAME##_t>(message_get_##NAME##_type(m)); };
+    GET_TYPE (hit)
+    GET_TYPE (stop)
+    GET_TYPE (info)
 #undef GET_TYPE
+
+    const std::vector<int16_t>& samples() { return _samples; }
 
     Message_(struct message *m);
     ~Message_();
