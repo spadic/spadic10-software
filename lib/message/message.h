@@ -21,50 +21,27 @@
  * Stop types as returned by message_get_stop_type().
  */
 enum stop_types {
-    sEND = 0x0, /**< Normal end of message */
-    sEBF = 0x1, /**< Channel buffer full */
-    sEFF = 0x2, /**< Ordering FIFO full */
-    sEDH = 0x3, /**< Multi hit */
-    sEDB = 0x4, /**< Multi hit and channel buffer full */
-    sEDO = 0x5, /**< Multi hit and ordering FIFO full */
-/* unused
-    sXX1 = 0x6,
-    sXX2 = 0x7,
-*/
+#define STOP(X) s##X
+#include "constants/stop_types.h"
+#undef STOP
 };
 
 /**
  * Info types as returned by message_get_info_type().
  */
 enum info_types {
-    iDIS = 0x0, /**< Channel disabled during message building */
-    iNGT = 0x1, /**< Next grant timeout */
-    iNRT = 0x2, /**< Next request timeout */
-    iNBE = 0x3, /**< New grant but channel empty */
-    iMSB = 0x4, /**< Corruption in message builder */
-    iNOP = 0x5, /**< Empty word */
-    iSYN = 0x6, /**< Epoch out of sync */
-/* unused
-    iXX3 = 0x7,
-    iXX4 = 0x8,
-    iXX5 = 0x9,
-    iXX6 = 0xA,
-    iXX7 = 0xB,
-    iXX8 = 0xC,
-    iXX9 = 0xD,
-    iXXA = 0xE,
-    iXXB = 0xF,
-*/
+#define INFO(X) i##X
+#include "constants/info_types.h"
+#undef INFO
 };
 
 /**
  * Hit types as returned by message_get_hit_type().
  */
 enum hit_types {
-    hGLB = 0x0, /**< Global trigger */
-    hSLF = 0x1, /**< Self triggered */
-    hNBR = 0x2, /**< Neighbor triggered */
-    hSAN = 0x3, /**< Self and neighbor triggered */
+#define HIT(X) h##X
+#include "constants/hit_types.h"
+#undef HIT
 };
 typedef struct message Message;
 /**<
