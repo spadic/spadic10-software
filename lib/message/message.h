@@ -43,6 +43,7 @@ enum hit_types {
 #include "constants/hit_types.h"
 #undef HIT
 };
+
 typedef struct message Message;
 /**<
  * Data structure representing SPADIC 1.0 messages.
