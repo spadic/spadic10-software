@@ -108,7 +108,7 @@ std::unique_ptr<Message> MessageReader::get_message()
     } else if ((message_reader_is_empty(r->r))) {
         M = nullptr;
     } else {
-        throw MessageError("Could not create message.");
+        throw MessageError("Could not create Message.");
     }
     return std::unique_ptr<Message>(M);
 }
