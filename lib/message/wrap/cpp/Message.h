@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 namespace spadic {
@@ -24,6 +25,10 @@ enum class hit_t : uint8_t {
 #define HIT(X) X
 #include "constants/hit_types.h"
 #undef HIT
+};
+
+struct MessageError : std::runtime_error {
+    using std::runtime_error::runtime_error; // C++11: inherit constructor
 };
 
 struct Message {
@@ -55,7 +60,7 @@ struct MessageReader {
     ~MessageReader();
 
     void reset();
-    int add_buffer(const uint16_t *buf, size_t len);
+    void add_buffer(const uint16_t *buf, size_t len);
     std::unique_ptr<Message> get_message();
 
     // TODO what to with these
