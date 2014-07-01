@@ -65,7 +65,6 @@ struct MessageReader {
 
     // TODO what to with these
     const uint16_t *get_depleted();
-    bool is_empty();
 
 private:
     struct MessageReader_;
