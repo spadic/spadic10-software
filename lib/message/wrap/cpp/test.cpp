@@ -18,10 +18,13 @@ int main()
 
     r.add_buffer(buf, 8);
 
-    auto m = r.get_message();
-    auto s = m->samples();
-    
-    std::cout << "got " << s.size() << " samples" << std::endl;
+    while(auto m = r.get_message()) {
+        if (m->is_hit()) {
+            auto s = m->samples();
+            std::cout << "got " << s.size() << " samples" << std::endl;
+        }
+    }
+}
 
     return 0;
 }
