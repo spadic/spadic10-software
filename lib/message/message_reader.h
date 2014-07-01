@@ -52,8 +52,12 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
  * Add a new buffer with `len` words to a message reader.
  * \return Zero if successful, non-zero otherwise.
  *
- * The message reader will be unmodified in case of failure, which
- * includes `buf` being NULL and `len` being zero.
+ * The message reader pointed to by `r` will be unmodified in case of
+ * failure.
+ *
+ * The values of `buf` and `len` are not checked in this function.  If
+ * `buf` is `NULL`, the behaviour of the reader is undefined. For the
+ * reader to do something *useful*, `len` should be positive.
  *
  * More than one buffer can be added to a message reader. They will be
  * consumed in the order in which they were added, keeping incomplete

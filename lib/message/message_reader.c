@@ -133,7 +133,6 @@ void message_reader_reset(MessageReader *r)
 
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 {
-    if (!buf || !len) { return 1; }
     struct buf_item *b;
     if (!(b = malloc(sizeof *b))) { return 1; }
     b->buf = buf;

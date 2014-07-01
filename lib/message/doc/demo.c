@@ -79,7 +79,9 @@ int main(void)
     if (!(r = message_reader_new())) { return 1; }
 
     /* add buffer */
-    message_reader_add_buffer(r, buf, N);
+    if (buf) {
+        message_reader_add_buffer(r, buf, N);
+    }
 
     /* read all messages */
     Message *m;
