@@ -74,7 +74,8 @@ void Message_::init_samples()
 
 struct MessageReader::MessageReader_ {
     struct message_reader *r;
-    MessageReader_() : r(message_reader_new()) {};
+    MessageReader_() : r(message_reader_new())
+        { if (!r) throw MessageError("Could not create MessageReader."); };
     ~MessageReader_() { message_reader_delete(r); };
 };
 
