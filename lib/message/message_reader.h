@@ -8,7 +8,7 @@
  * directly and having to manually keeping track of the reading position
  * and state.
  *
- * All functions receiving a pointer `r` to a ::MessageReader object assume
+ * All functions receiving a pointer to a ::MessageReader object assume
  * that it has been properly allocated and initialized (by
  * message_reader_new()).
  */
@@ -36,9 +36,9 @@ void message_reader_delete(MessageReader *r);
 /**<
  * Clean up and deallocate a message reader.
  *
- * References to all buffers that have been added will be lost. If they
- * need to be deallocated, first use message_reader_get_depleted(),
- * possibly also message_reader_reset().
+ * References to all buffers that have been added will be lost. If the
+ * buffers need to be deallocated, message_reader_get_depleted() may be
+ * used first, possibly also message_reader_reset().
  */
 void message_reader_reset(MessageReader *r);
 /**<
@@ -70,7 +70,8 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
  */
 const uint16_t *message_reader_get_depleted(MessageReader *r);
 /**<
- * \return Next depleted buffer, NULL if no depleted buffers are left.
+ * \return Pointer to next depleted buffer, NULL if no depleted buffers
+ * are left.
  */
 Message *message_reader_get_message(MessageReader *r);
 /**<
@@ -89,7 +90,7 @@ int message_reader_is_empty(MessageReader *r);
  *
  * Add more buffers to read from with message_reader_add_buffer().
  *
- * If message_reader_get_message() returned `NULL` and the reader is not
+ * If message_reader_get_message() has returned `NULL` and the reader is not
  * empty (this function returns zero), an internal error has occurred.
  */
 
