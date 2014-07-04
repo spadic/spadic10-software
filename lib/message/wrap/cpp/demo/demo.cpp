@@ -20,7 +20,7 @@ void read()
 
     while(auto m = r.get_message()) {
         if (m->is_hit()) {
-            const auto& s = m->samples();
+            auto& s = m->samples();
             std::cout << "got " << s.size() << " samples" << std::endl;
         }
     }
