@@ -62,7 +62,7 @@ Message_::~Message_()
 
 void Message_::init_samples()
 {
-    int16_t *s;
+    const int16_t *s;
     size_t n;
     if ((s = message_get_samples(m)) &&
         (n = message_get_num_samples(m))) {
