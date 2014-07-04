@@ -74,12 +74,12 @@ void Message_::init_samples()
 
 struct MessageReader::MessageReader_ {
     struct message_reader *r;
-    MessageReader_() : r(message_reader_new())
+    MessageReader_() : r {message_reader_new()}
         { if (!r) throw MessageError("Could not create MessageReader."); };
     ~MessageReader_() { message_reader_delete(r); };
 };
 
-MessageReader::MessageReader() : r(new MessageReader_) {}
+MessageReader::MessageReader() : r {new MessageReader_} {}
 MessageReader::~MessageReader() {}
 
 void MessageReader::reset()
@@ -110,7 +110,7 @@ std::unique_ptr<Message> MessageReader::get_message()
     } else {
         throw MessageError("Could not create Message.");
     }
-    return std::unique_ptr<Message>(M);
+    return std::unique_ptr<Message> {M};
 }
 
 } // namespace
