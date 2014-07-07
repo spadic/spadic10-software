@@ -99,7 +99,7 @@ void MessageReader::add_buffer(const uint16_t *buf, size_t len)
     }
 }
 
-std::unique_ptr<Message> MessageReader::get_message()
+std::unique_ptr<Message> MessageReader::get_message() const
 {
     Message_ *M;
     struct message *m;
