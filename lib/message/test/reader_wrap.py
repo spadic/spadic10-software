@@ -16,7 +16,6 @@ class MessageReader:
         self.r = r or lib.message_reader_new()
         if not self.r:
             raise RuntimeError("could not create MessageReader object")
-        self._buffers = [] # keep references so they do not get gc'd
 
     def __del__(self):
         try:
@@ -30,28 +29,10 @@ class MessageReader:
     def add_buffer(self, buf):
         a = as_array(buf)
         n = len(buf)
-        self._buffers.append(a)
         fail = lib.message_reader_add_buffer(self.r, a, n)
         if fail:
             raise RuntimeError("could not add buffer")
 
     def get_message(self):
         m = lib.message_reader_get_message(self.r)
-        if not m and not self.is_empty:
-            raise RuntimeError("could not read message")
         return Message(m) if m else None
-
-    def get_depleted(self):
-        """Do not return buffer, but check identity."""
-        b = lib.message_reader_get_depleted(self.r) # gets truncated -> invalid
-        if not b:
-            return False
-        else:
-            # this should match
-            buf = self._buffers.pop(0)
-            assert(ctypes.addressof(buf)%(1<<32) == b%(1<<32))
-            return True
-
-    @property
-    def is_empty(self):
-        return bool(lib.message_reader_is_empty(self.r))

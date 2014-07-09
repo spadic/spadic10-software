@@ -23,8 +23,7 @@ typedef struct message_reader MessageReader;
 /**<
  * Context for reading SPADIC messages from buffers.
  *
- * Manages input buffers, keeps track of the reading position and saves
- * the state of partially read messages across buffer boundaries.
+ * Saves the state of partially read messages across buffer boundaries.
  */
 
 MessageReader *message_reader_new(void);
@@ -36,62 +35,42 @@ void message_reader_delete(MessageReader *r);
 /**<
  * Clean up and deallocate a message reader.
  *
- * References to all buffers that have been added will be lost. If the
- * buffers need to be deallocated, message_reader_get_depleted() may be
- * used first, possibly also message_reader_reset().
+ * All messages that have not yet been retrieved using
+ * message_reader_get_message() will be lost.
  */
 void message_reader_reset(MessageReader *r);
 /**<
  * Reset a message reader to its initial state.
  *
- * All buffers that have been added before will be marked as "depleted"
- * and can be returned by message_reader_get_depleted().
+ * All messages that have not yet been retrieved using
+ * message_reader_get_message() will be lost.
  */
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len);
 /**<
- * Add a new buffer with `len` words to a message reader.
+ * Read all messages from a buffer with `len` words.
  * \return Zero if successful, non-zero otherwise.
- *
- * The message reader pointed to by `r` will be unmodified in case of
- * failure.
  *
  * The values of `buf` and `len` are not checked in this function.  If
  * `buf` is `NULL`, the behaviour of the reader is undefined. For the
  * reader to do something *useful*, `len` should be positive.
  *
- * More than one buffer can be added to a message reader. They will be
- * consumed in the order in which they were added, keeping incomplete
- * messages across buffers. The buffers are therefore effectively
- * concatenated.
+ * When this function has successfully returned, all words from the buffer
+ * have been consumed and it is no longer needed by the MessageReader. All
+ * complete messages that were contained in the buffer can be retrieved
+ * using message_reader_get_message(). Incomplete messages (contained
+ * partially at the end of the buffer) are saved and can be completed by
+ * adding another buffer.
  *
- * Once all words from a buffer have been consumed using
- * message_reader_get_message(), it is marked as "depleted" and can be
- * returned by message_reader_get_depleted().
- */
-const uint16_t *message_reader_get_depleted(MessageReader *r);
-/**<
- * \return Pointer to next depleted buffer, NULL if no depleted buffers
- * are left.
+ * In case of failure, the state of the message reader is unmodified, so
+ * that another attempt can be made without receiving duplicate messages.
  */
 Message *message_reader_get_message(MessageReader *r);
 /**<
- * Read the next message.
+ * Retrieve the next message.
  *
  * \return Pointer to a message object, if available, `NULL` otherwise.
  *
- * Normally, `NULL` is returned because all buffers are depleted. Check
- * this with message_reader_is_empty().
- *
  * The returned messages are always complete (message_is_complete()).
- */
-int message_reader_is_empty(MessageReader *r);
-/**<
- * \return Non-zero if all buffers are depleted.
- *
- * Add more buffers to read from with message_reader_add_buffer().
- *
- * If message_reader_get_message() has returned `NULL` and the reader is not
- * empty (this function returns zero), an internal error has occurred.
  */
 
 #endif

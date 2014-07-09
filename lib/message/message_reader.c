@@ -6,192 +6,170 @@
 
 /*==== private declarations ========================================*/
 
-struct buf_item;
-struct buf_queue;
-static void buf_queue_init(struct buf_queue *q);
-static void buf_queue_append(struct buf_queue *q, struct buf_item *b);
-static struct buf_item *buf_queue_pop(struct buf_queue *q);
-static int buf_queue_is_empty(struct buf_queue *q);
+struct msg_item;
+struct msg_queue;
+static void msg_queue_init(struct msg_queue *q);
+static void msg_queue_clear(struct msg_queue *q);
+static void msg_queue_append(struct msg_queue *q, struct msg_item *t);
+static void msg_queue_extend(struct msg_queue *q, struct msg_queue *r);
+static struct msg_item *msg_queue_pop(struct msg_queue *q);
+static int msg_queue_is_empty(struct msg_queue *q);
 
-struct reader_state;
-static void reader_state_init(struct reader_state *s);
-static void reader_init(MessageReader *r);
-static void reader_clear_buf_queue(struct buf_queue *q);
+static int reader_init(MessageReader *r);
+static void reader_clear(MessageReader *r);
 
 /*==== implementation ==============================================*/
 
-struct buf_item {
-    const uint16_t *buf;
-    size_t len;
-    struct buf_item *next;
+struct msg_item {
+    Message *msg;
+    struct msg_item *next;
 };
 
-struct buf_queue {
-    struct buf_item *begin;
-    struct buf_item *end;
+struct msg_queue {
+    struct msg_item *begin;
+    struct msg_item *end;
 };
 
-void buf_queue_init(struct buf_queue *q)
+void msg_queue_init(struct msg_queue *q)
 {
     q->begin = NULL;
     q->end = NULL;
 }
 
-void buf_queue_append(struct buf_queue *q, struct buf_item *b)
+void msg_queue_clear(struct msg_queue *q)
 {
-    b->next = NULL;
-    struct buf_item *end = q->end;
-    if (end) {
-        end->next = b;
-    } else {
-        q->begin = b;
+    struct msg_item *t;
+    while (t = msg_queue_pop(q)) {
+        message_delete(t->msg);
+        free(t);
     }
-    q->end = b;
 }
 
-struct buf_item *buf_queue_pop(struct buf_queue *q)
+void msg_queue_append(struct msg_queue *q, struct msg_item *t)
 {
-    struct buf_item *b = q->begin;
-    if (b) {
-        q->begin = b->next;
-        if (!b->next) {
+    t->next = NULL;
+    struct msg_item *end = q->end;
+    if (end) {
+        end->next = t;
+    } else {
+        q->begin = t;
+    }
+    q->end = t;
+}
+
+void msg_queue_extend(struct msg_queue *q, struct msg_queue *r)
+{
+    struct msg_item *end = q->end;
+    if (end) {
+        end->next = r->begin;
+        if (r->end) {
+            q->end = r->end;
+        }
+    } else {
+        q->begin = r->begin;
+        q->end = r->end;
+    }
+}
+
+struct msg_item *msg_queue_pop(struct msg_queue *q)
+{
+    struct msg_item *t = q->begin;
+    if (t) {
+        q->begin = t->next;
+        if (!t->next) {
             q->end = NULL;
         }
     }
-    return b;
+    return t;
 }
 
-int buf_queue_is_empty(struct buf_queue *q)
+int msg_queue_is_empty(struct msg_queue *q)
 {
     return !q->begin;
 }
 
 /*------------------------------------------------------------------*/
 
-struct reader_state {
-    size_t pos;
-    Message *message;
-};
-
-void reader_state_init(struct reader_state *s)
-{
-    s->pos = 0;
-    s->message = NULL;
-}
-
 struct message_reader {
-    struct buf_queue buffers;
-    struct buf_queue depleted;
-    struct reader_state state;
+    struct msg_queue messages;
+    Message *msg;
 };
 
 MessageReader *message_reader_new(void)
 {
     MessageReader *r;
-    if (r = malloc(sizeof *r)) {
-        reader_init(r);
+    if (!(r = malloc(sizeof *r))) {
+        return NULL;
+    }
+    if (reader_init(r)) {
+        message_reader_delete(r);
+        return NULL;
     }
     return r;
 }
 
-void reader_init(MessageReader *r)
+int reader_init(MessageReader *r)
 {
-    buf_queue_init(&r->buffers);
-    buf_queue_init(&r->depleted);
-    reader_state_init(&r->state);
+    msg_queue_init(&r->messages);
+    if (!(r->msg = message_new())) {
+        return 1;
+    }
+    return 0;
 }
 
 void message_reader_delete(MessageReader *r)
 {
-    reader_clear_buf_queue(&r->buffers);
-    reader_clear_buf_queue(&r->depleted);
-    if (r->state.message) {
-        message_delete(r->state.message);
+    msg_queue_clear(&r->messages);
+    if (r->msg) {
+        message_delete(r->msg);
     }
     free(r);
 }
 
-void reader_clear_buf_queue(struct buf_queue *q)
-{
-    struct buf_item *b;
-    while (b = buf_queue_pop(q)) {
-        free(b);
-    }
-}
-
 void message_reader_reset(MessageReader *r)
 {
-    struct buf_item *b;
-    while (b = buf_queue_pop(&r->buffers)) {
-        buf_queue_append(&r->depleted, b);
+    msg_queue_clear(&r->messages);
+    if (r->msg) {
+        message_reset(r->msg);
     }
-    if (r->state.message) {
-        message_delete(r->state.message);
-    }
-    reader_state_init(&r->state);
 }
 
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 {
-    struct buf_item *b;
-    if (!(b = malloc(sizeof *b))) { return 1; }
-    b->buf = buf;
-    b->len = len;
-    buf_queue_append(&r->buffers, b);
+    struct msg_queue q;
+    msg_queue_init(&q);
+
+    Message *m;
+    if (!(m = r->msg)) { goto abort; }
+
+    size_t pos = 0;
+    while (1) {
+        pos += message_read_from_buffer(m, buf+pos, len-pos);
+        if (!(pos < len) && !(message_is_complete(m))) { break; }
+
+        struct msg_item *t;
+        if (!(t = malloc(sizeof *t))) { goto abort; }
+        t->msg = m;
+        msg_queue_append(&q, t);
+
+        if (!(m = message_new())) { goto abort; }
+    }
+
+    msg_queue_extend(&r->messages, &q);
+
+    r->msg = m;
     return 0;
+
+abort:
+    msg_queue_clear(&q);
+    return 1;
 }
 
 Message *message_reader_get_message(MessageReader *r)
 {
-    /* load state */
-    struct reader_state s = r->state;
-    Message *m = s.message;
-    if (!m && !(m = message_new())) { return NULL; }
-    size_t pos = s.pos;
-
-    /* read */
-    struct buf_item *b;
-    const uint16_t *buf;
-    size_t len;
-    while (1) {
-        if (!(b = r->buffers.begin)) {
-            s.message = m;
-            m = NULL;
-            break;
-        }
-        buf = b->buf;
-        len = b->len;
-
-        pos += message_read_from_buffer(m, buf+pos, len-pos);
-        if (pos < len) {
-            s.message = NULL;
-            break;
-        } else {
-            buf_queue_append(&r->depleted, buf_queue_pop(&r->buffers));
-            pos = 0;
-            if (message_is_complete(m)) {
-                s.message = NULL;
-                break;
-            }
-        }
-    }
-
-    /* save state */
-    s.pos = pos;
-    r->state = s;
+    struct msg_item *t = msg_queue_pop(&r->messages);
+    if (!t) { return NULL; }
+    Message *m = t->msg;
+    free(t);
     return m;
-}
-
-const uint16_t *message_reader_get_depleted(MessageReader *r)
-{
-    struct buf_item *b = buf_queue_pop(&r->depleted);
-    if (!b) { return NULL; }
-    const uint16_t *buf = b->buf;
-    free(b);
-    return buf;
-}
-
-int message_reader_is_empty(MessageReader *r)
-{
-    return buf_queue_is_empty(&r->buffers);
 }
