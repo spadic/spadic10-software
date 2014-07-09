@@ -93,14 +93,7 @@ int main(void)
         }
     }
 
-    /* test if buffers depleted or error in reader */
-    if (!message_reader_is_empty(r)) { return 1; }
-
     /* clean up */
-    const uint16_t *buf;
-    while (buf = message_reader_get_depleted(r)) {
-        /* free(buf); // not in this example */
-    }
     message_reader_delete(r);
     return 0;
 }

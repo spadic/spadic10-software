@@ -23,50 +23,6 @@ def split_at(n, words):
 
 #--------------------------------------------------------------------
 
-class MessageReaderEmpty(unittest.TestCase):
-    def setUp(self):
-        self.reader = MessageReader()
-
-    def test_empty_init(self):
-        self.assertTrue(self.reader.is_empty)
-
-    def test_not_empty_add(self):
-        self.reader.add_buffer(range(10))
-        self.assertFalse(self.reader.is_empty)
-
-    def test_empty_init_reset(self):
-        self.reader.reset()
-        self.assertTrue(self.reader.is_empty)
-
-    def test_empty_add_reset(self):
-        self.reader.add_buffer(range(10))
-        self.reader.reset()
-        self.assertTrue(self.reader.is_empty)
-
-class MessageReaderDepleted(unittest.TestCase):
-    def setUp(self):
-        self.reader = MessageReader()
-        N = 5
-        for i in range(N):
-            self.reader.add_buffer([rand(0x10000)
-                                    for j in range(rand(1, 2*N))])
-        self.N = N
-
-    def count_depleted(self):
-        i = 0
-        while self.reader.get_depleted():
-            i += 1
-        self.assertEqual(i, self.N)
-
-    def test_reset_depleted(self):
-        self.reader.reset()
-        self.count_depleted()
-
-    def test_get_message_depleted(self):
-        while self.reader.get_message():
-            pass
-        self.count_depleted()
-
 class MessageIterBase(unittest.TestCase):
     def setUp(self):
         self.it = MessageIterator()
