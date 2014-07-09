@@ -23,8 +23,7 @@ typedef struct message_reader MessageReader;
 /**<
  * Context for reading SPADIC messages from buffers.
  *
- * Keeps track of the reading position and saves the state of partially
- * read messages across buffer boundaries.
+ * Saves the state of partially read messages across buffer boundaries.
  */
 
 MessageReader *message_reader_new(void);
@@ -36,15 +35,15 @@ void message_reader_delete(MessageReader *r);
 /**<
  * Clean up and deallocate a message reader.
  *
- * All messages that have been read and not yet retrieved using
+ * All messages that have not yet been retrieved using
  * message_reader_get_message() will be lost.
  */
 void message_reader_reset(MessageReader *r);
 /**<
  * Reset a message reader to its initial state.
  *
- * All messages that have already been read (complete and incomplete) will
- * be discarded.
+ * All messages that have not yet been retrieved using
+ * message_reader_get_message() will be lost.
  */
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len);
 /**<
@@ -57,7 +56,7 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
  *
  * When this function has successfully returned, all words from the buffer
  * have been consumed and it is no longer needed by the MessageReader. All
- * complete messages that were contained in the buffer, can be retrieved
+ * complete messages that were contained in the buffer can be retrieved
  * using message_reader_get_message(). Incomplete messages (contained
  * partially at the end of the buffer) are saved and can be completed by
  * adding another buffer.
