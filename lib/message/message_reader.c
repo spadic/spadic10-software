@@ -66,7 +66,8 @@ void msg_queue_extend(struct msg_queue *q, struct msg_queue *r)
             q->end = r->end;
         }
     } else {
-        q = r;
+        q->begin = r->begin;
+        q->end = r->end;
     }
 }
 
