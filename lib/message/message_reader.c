@@ -16,7 +16,6 @@ static struct msg_item *msg_queue_pop(struct msg_queue *q);
 static int msg_queue_is_empty(struct msg_queue *q);
 
 static int reader_init(MessageReader *r);
-static void reader_clear(MessageReader *r);
 
 /*==== implementation ==============================================*/
 
