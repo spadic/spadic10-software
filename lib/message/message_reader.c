@@ -192,8 +192,3 @@ Message *message_reader_get_message(MessageReader *r)
     free(t);
     return m;
 }
-
-int message_reader_is_empty(MessageReader *r)
-{
-    return buf_queue_is_empty(&r->buffers);
-}
