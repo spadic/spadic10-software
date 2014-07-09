@@ -6,41 +6,49 @@
 
 /*==== private declarations ========================================*/
 
-struct buf_item;
-struct buf_queue;
-static void buf_queue_init(struct buf_queue *q);
-static void buf_queue_append(struct buf_queue *q, struct buf_item *b);
-static struct buf_item *buf_queue_pop(struct buf_queue *q);
-static int buf_queue_is_empty(struct buf_queue *q);
+struct msg_item;
+struct msg_queue;
+static void msg_queue_init(struct msg_queue *q);
+static void msg_queue_clear(struct msg_queue *q);
+static void msg_queue_append(struct msg_queue *q, struct msg_item *b);
+static struct msg_item *msg_queue_pop(struct msg_queue *q);
+static int msg_queue_is_empty(struct msg_queue *q);
 
 struct reader_state;
 static void reader_state_init(struct reader_state *s);
 static void reader_init(MessageReader *r);
-static void reader_clear_buf_queue(struct buf_queue *q);
 
 /*==== implementation ==============================================*/
 
-struct buf_item {
-    const uint16_t *buf;
-    size_t len;
-    struct buf_item *next;
+struct msg_item {
+    Message *msg;
+    struct msg_item *next;
 };
 
-struct buf_queue {
-    struct buf_item *begin;
-    struct buf_item *end;
+struct msg_queue {
+    struct msg_item *begin;
+    struct msg_item *end;
 };
 
-void buf_queue_init(struct buf_queue *q)
+void msg_queue_init(struct msg_queue *q)
 {
     q->begin = NULL;
     q->end = NULL;
 }
 
-void buf_queue_append(struct buf_queue *q, struct buf_item *b)
+void msg_queue_clear(struct msg_queue *q)
+{
+    struct msg_item *t;
+    while (t = msg_queue_pop(q)) {
+        message_delete(t->msg);
+        free(t);
+    }
+}
+
+void msg_queue_append(struct msg_queue *q, struct msg_item *b)
 {
     b->next = NULL;
-    struct buf_item *end = q->end;
+    struct msg_item *end = q->end;
     if (end) {
         end->next = b;
     } else {
@@ -49,9 +57,9 @@ void buf_queue_append(struct buf_queue *q, struct buf_item *b)
     q->end = b;
 }
 
-struct buf_item *buf_queue_pop(struct buf_queue *q)
+struct msg_item *msg_queue_pop(struct msg_queue *q)
 {
-    struct buf_item *b = q->begin;
+    struct msg_item *b = q->begin;
     if (b) {
         q->begin = b->next;
         if (!b->next) {
@@ -61,7 +69,7 @@ struct buf_item *buf_queue_pop(struct buf_queue *q)
     return b;
 }
 
-int buf_queue_is_empty(struct buf_queue *q)
+int msg_queue_is_empty(struct msg_queue *q)
 {
     return !q->begin;
 }
@@ -109,14 +117,6 @@ void message_reader_delete(MessageReader *r)
         message_delete(r->state.message);
     }
     free(r);
-}
-
-void reader_clear_buf_queue(struct buf_queue *q)
-{
-    struct buf_item *b;
-    while (b = buf_queue_pop(q)) {
-        free(b);
-    }
 }
 
 void message_reader_reset(MessageReader *r)
