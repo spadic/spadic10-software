@@ -101,7 +101,7 @@ MessageReader *message_reader_new(void)
     if (!(r = malloc(sizeof *r))) {
         return NULL;
     }
-    if (!(reader_init(r))) {
+    if (reader_init(r)) {
         message_reader_delete(r);
         return NULL;
     }
