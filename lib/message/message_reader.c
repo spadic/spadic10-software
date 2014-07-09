@@ -10,7 +10,7 @@ struct msg_item;
 struct msg_queue;
 static void msg_queue_init(struct msg_queue *q);
 static void msg_queue_clear(struct msg_queue *q);
-static void msg_queue_append(struct msg_queue *q, struct msg_item *b);
+static void msg_queue_append(struct msg_queue *q, struct msg_item *t);
 static struct msg_item *msg_queue_pop(struct msg_queue *q);
 static int msg_queue_is_empty(struct msg_queue *q);
 
@@ -45,28 +45,28 @@ void msg_queue_clear(struct msg_queue *q)
     }
 }
 
-void msg_queue_append(struct msg_queue *q, struct msg_item *b)
+void msg_queue_append(struct msg_queue *q, struct msg_item *t)
 {
-    b->next = NULL;
+    t->next = NULL;
     struct msg_item *end = q->end;
     if (end) {
-        end->next = b;
+        end->next = t;
     } else {
-        q->begin = b;
+        q->begin = t;
     }
-    q->end = b;
+    q->end = t;
 }
 
 struct msg_item *msg_queue_pop(struct msg_queue *q)
 {
-    struct msg_item *b = q->begin;
-    if (b) {
-        q->begin = b->next;
-        if (!b->next) {
+    struct msg_item *t = q->begin;
+    if (t) {
+        q->begin = t->next;
+        if (!t->next) {
             q->end = NULL;
         }
     }
-    return b;
+    return t;
 }
 
 int msg_queue_is_empty(struct msg_queue *q)
