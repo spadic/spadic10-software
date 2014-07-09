@@ -32,7 +32,7 @@ struct MessageError : std::runtime_error {
 };
 
 struct Message {
-#define PV(F) virtual F = 0;
+#define PV(F) virtual F const = 0;
     PV (bool is_valid())
     PV (bool is_hit())
     PV (bool is_hit_aborted())

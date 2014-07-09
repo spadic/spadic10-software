@@ -12,7 +12,7 @@ namespace spadic {
 
 struct Message_ : Message {
 
-#define IS(NAME) bool is_##NAME() { return message_is_##NAME(m); }
+#define IS(NAME) bool is_##NAME() const { return message_is_##NAME(m); }
     IS (valid)
     IS (hit)
     IS (hit_aborted)
@@ -22,7 +22,7 @@ struct Message_ : Message {
     IS (info)
 #undef IS
 
-#define GET(NAME) NAME() { return message_get_##NAME(m); }
+#define GET(NAME) NAME() const { return message_get_##NAME(m); }
     uint8_t GET (group_id)
     uint8_t GET (channel_id)
     uint16_t GET (timestamp)
@@ -30,14 +30,14 @@ struct Message_ : Message {
     uint16_t GET (epoch_count)
 #undef GET
 
-#define GET_TYPE(NAME) NAME##_t NAME##_type()\
+#define GET_TYPE(NAME) NAME##_t NAME##_type() const\
         { return static_cast<NAME##_t>(message_get_##NAME##_type(m)); };
     GET_TYPE (hit)
     GET_TYPE (stop)
     GET_TYPE (info)
 #undef GET_TYPE
 
-    const std::vector<int16_t>& samples() { return _samples; }
+    const std::vector<int16_t>& samples() const { return _samples; }
 
     Message_(struct message *m);
     ~Message_();
