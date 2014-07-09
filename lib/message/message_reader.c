@@ -135,53 +135,33 @@ void message_reader_reset(MessageReader *r)
 
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
 {
-    struct buf_item *b;
-    if (!(b = malloc(sizeof *b))) { return 1; }
-    b->buf = buf;
-    b->len = len;
-    buf_queue_append(&r->buffers, b);
-    return 0;
-}
+    struct msg_queue q;
+    msg_queue_init(&q);
 
-Message *message_reader_get_message(MessageReader *r)
-{
-    /* load state */
-    struct reader_state s = r->state;
-    Message *m = s.message;
-    if (!m && !(m = message_new())) { return NULL; }
-    size_t pos = s.pos;
+    Message *m;
+    if (!(m = r->msg)) { goto abort; }
 
-    /* read */
-    struct buf_item *b;
-    const uint16_t *buf;
-    size_t len;
+    size_t pos = 0;
     while (1) {
-        if (!(b = r->buffers.begin)) {
-            s.message = m;
-            m = NULL;
-            break;
-        }
-        buf = b->buf;
-        len = b->len;
-
         pos += message_read_from_buffer(m, buf+pos, len-pos);
-        if (pos < len) {
-            s.message = NULL;
-            break;
-        } else {
-            buf_queue_append(&r->depleted, buf_queue_pop(&r->buffers));
-            pos = 0;
-            if (message_is_complete(m)) {
-                s.message = NULL;
-                break;
-            }
-        }
+        if (!(pos < len) && !(message_is_complete(m))) { break; }
+
+        struct msg_item *t;
+        if (!(t = malloc(sizeof *t))) { goto abort; }
+        t->msg = m;
+        msg_queue_append(&q, t);
+
+        if (!(m = message_new())) { goto abort; }
     }
 
-    /* save state */
-    s.pos = pos;
-    r->state = s;
-    return m;
+    msg_queue_extend(&r->messages, &q);
+
+    r->msg = m;
+    return 0;
+
+abort:
+    msg_queue_clear(&q);
+    return 1;
 }
 
 Message *message_reader_get_message(MessageReader *r)
