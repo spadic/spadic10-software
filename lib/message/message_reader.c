@@ -4,7 +4,7 @@
 #include "message.h"
 #include "message_reader.h"
 
-/*==== private declarations ========================================*/
+/*==== message queue implementation ================================*/
 
 struct msg_item;
 struct msg_queue;
@@ -15,9 +15,7 @@ static void msg_queue_extend(struct msg_queue *q, struct msg_queue *r);
 static struct msg_item *msg_queue_pop(struct msg_queue *q);
 static int msg_queue_is_empty(struct msg_queue *q);
 
-static int reader_init(MessageReader *r);
-
-/*==== implementation ==============================================*/
+/*------------------------------------------------------------------*/
 
 struct msg_item {
     Message *msg;
@@ -87,12 +85,14 @@ int msg_queue_is_empty(struct msg_queue *q)
     return !q->begin;
 }
 
-/*------------------------------------------------------------------*/
+/*==== message_reader implementation ===============================*/
 
 struct message_reader {
     struct msg_queue messages;
     Message *msg;
 };
+
+static int reader_init(MessageReader *r);
 
 MessageReader *message_reader_new(void)
 {
