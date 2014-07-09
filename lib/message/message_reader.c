@@ -184,13 +184,13 @@ Message *message_reader_get_message(MessageReader *r)
     return m;
 }
 
-const uint16_t *message_reader_get_depleted(MessageReader *r)
+Message *message_reader_get_message(MessageReader *r)
 {
-    struct buf_item *b = buf_queue_pop(&r->depleted);
-    if (!b) { return NULL; }
-    const uint16_t *buf = b->buf;
-    free(b);
-    return buf;
+    struct msg_item *t = msg_queue_pop(&r->messages);
+    if (!t) { return NULL; }
+    Message *m = t->msg;
+    free(t);
+    return m;
 }
 
 int message_reader_is_empty(MessageReader *r)
