@@ -61,7 +61,6 @@ struct MessageReader {
 
     void reset();
     void add_buffer(const uint16_t *buf, size_t len);
-    const uint16_t *get_depleted();
 
     std::unique_ptr<Message> get_message() const;
 

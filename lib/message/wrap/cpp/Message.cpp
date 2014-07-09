@@ -87,11 +87,6 @@ void MessageReader::reset()
     message_reader_reset(r->r);
 }
 
-const uint16_t *MessageReader::get_depleted()
-{
-    return message_reader_get_depleted(r->r);
-}
-
 void MessageReader::add_buffer(const uint16_t *buf, size_t len)
 {
     if (message_reader_add_buffer(r->r, buf, len)) {
@@ -105,10 +100,8 @@ std::unique_ptr<Message> MessageReader::get_message() const
     struct message *m;
     if ((m = message_reader_get_message(r->r))) {
         M = new Message_(m);
-    } else if ((message_reader_is_empty(r->r))) {
-        M = nullptr;
     } else {
-        throw MessageError("Could not create Message.");
+        M = nullptr;
     }
     return std::unique_ptr<Message> {M};
 }
