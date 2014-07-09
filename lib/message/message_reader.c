@@ -15,9 +15,8 @@ static void msg_queue_extend(struct msg_queue *q, struct msg_queue *r);
 static struct msg_item *msg_queue_pop(struct msg_queue *q);
 static int msg_queue_is_empty(struct msg_queue *q);
 
-struct reader_state;
-static void reader_state_init(struct reader_state *s);
-static void reader_init(MessageReader *r);
+static int reader_init(MessageReader *r);
+static void reader_clear(MessageReader *r);
 
 /*==== implementation ==============================================*/
 
@@ -90,59 +89,48 @@ int msg_queue_is_empty(struct msg_queue *q)
 
 /*------------------------------------------------------------------*/
 
-struct reader_state {
-    size_t pos;
-    Message *message;
-};
-
-void reader_state_init(struct reader_state *s)
-{
-    s->pos = 0;
-    s->message = NULL;
-}
-
 struct message_reader {
-    struct buf_queue buffers;
-    struct buf_queue depleted;
-    struct reader_state state;
+    struct msg_queue messages;
+    Message *msg;
 };
 
 MessageReader *message_reader_new(void)
 {
     MessageReader *r;
-    if (r = malloc(sizeof *r)) {
-        reader_init(r);
+    if (!(r = malloc(sizeof *r))) {
+        return NULL;
+    }
+    if (!(reader_init(r))) {
+        message_reader_delete(r);
+        return NULL;
     }
     return r;
 }
 
-void reader_init(MessageReader *r)
+int reader_init(MessageReader *r)
 {
-    buf_queue_init(&r->buffers);
-    buf_queue_init(&r->depleted);
-    reader_state_init(&r->state);
+    msg_queue_init(&r->messages);
+    if (!(r->msg = message_new())) {
+        return 1;
+    }
+    return 0;
 }
 
 void message_reader_delete(MessageReader *r)
 {
-    reader_clear_buf_queue(&r->buffers);
-    reader_clear_buf_queue(&r->depleted);
-    if (r->state.message) {
-        message_delete(r->state.message);
+    msg_queue_clear(&r->messages);
+    if (r->msg) {
+        message_delete(r->msg);
     }
     free(r);
 }
 
 void message_reader_reset(MessageReader *r)
 {
-    struct buf_item *b;
-    while (b = buf_queue_pop(&r->buffers)) {
-        buf_queue_append(&r->depleted, b);
+    msg_queue_clear(&r->messages);
+    if (r->msg) {
+        message_reset(r->msg);
     }
-    if (r->state.message) {
-        message_delete(r->state.message);
-    }
-    reader_state_init(&r->state);
 }
 
 int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
