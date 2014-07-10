@@ -153,9 +153,9 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
         if (!(m = message_new())) { goto abort; }
     }
 
-    msg_queue_extend(&r->messages, &q);
-
     r->msg = m;
+
+    msg_queue_extend(&r->messages, &q);
     return 0;
 
 abort:
