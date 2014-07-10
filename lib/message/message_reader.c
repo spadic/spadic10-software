@@ -138,8 +138,7 @@ int message_reader_add_buffer(MessageReader *r, const uint16_t *buf, size_t len)
     struct msg_queue q;
     msg_queue_init(&q);
 
-    Message *m;
-    if (!(m = r->msg)) { goto abort; }
+    Message *m = r->msg;
 
     size_t pos = 0;
     while (1) {
