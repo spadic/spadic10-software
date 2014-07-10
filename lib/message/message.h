@@ -102,7 +102,7 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  *
  * `buf` must be non-`NULL`.
  *
- * \return The number `n` of consumed words.
+ * \return The number `n` of consumed words (at most `len`).
  *
  * Words from the buffer are consumed until either
  * - an end-of-message word is encountered (`n` &le; `len`), or
@@ -110,6 +110,8 @@ size_t message_read_from_buffer(Message *m, const uint16_t *buf, size_t len);
  *
  * If `n` = `len`, the two cases can be distinguished by using
  * message_is_complete().
+ *
+ * If `len` is zero, nothing is done.
  *
  * The contents of the consumed words are copied into the message object
  * pointed to by `m`. If (and only if) a start-of-message word is
