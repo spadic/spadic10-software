@@ -19,6 +19,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef struct message Message;
+
 typedef struct message_reader MessageReader;
 /**<
  * Context for reading SPADIC messages from buffers.
