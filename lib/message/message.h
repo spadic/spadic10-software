@@ -22,7 +22,7 @@
  */
 enum stop_types {
 #define STOP(K, V) s##K = V,
-#include "constants/stop_types.h"
+#include "constants/stop_types.inc"
 #undef STOP
 };
 
@@ -31,7 +31,7 @@ enum stop_types {
  */
 enum info_types {
 #define INFO(K, V) i##K = V,
-#include "constants/info_types.h"
+#include "constants/info_types.inc"
 #undef INFO
 };
 
@@ -40,7 +40,7 @@ enum info_types {
  */
 enum hit_types {
 #define HIT(K, V) h##K = V,
-#include "constants/hit_types.h"
+#include "constants/hit_types.inc"
 #undef HIT
 };
 
