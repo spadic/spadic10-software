@@ -12,17 +12,17 @@
 namespace spadic {
 
 enum class stop_t : uint8_t {
-#define STOP(X) X
+#define STOP(K, V) K = V,
 #include "constants/stop_types.h"
 #undef STOP
 };
 enum class info_t : uint8_t {
-#define INFO(X) X
+#define INFO(K, V) K = V,
 #include "constants/info_types.h"
 #undef INFO
 };
 enum class hit_t : uint8_t {
-#define HIT(X) X
+#define HIT(K, V) K = V,
 #include "constants/hit_types.h"
 #undef HIT
 };
