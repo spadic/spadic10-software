@@ -20,16 +20,11 @@ class Spadic:
     Arguments:
     reset - flag for initial reset of the chip configuration
     load  - name of .spc configuration file to be loaded
-
-    Optional debugging keyword arguments:
-    _debug_out   - file-like object where debug output is sent to
-    _debug_ftdi  - flag for logging FTDI communication
-    _debug_cbmif - flag for logging CBMnet interface communication
     """
 
-    # TODO use proper logging
+    from util import log as _log
     def _debug(self, *text):
-        self._cbmif._debug(*text)
+        self._log.info(' '.join(text))
 
     def __init__(self, reset=False, load=None, **kwargs):
         try:
@@ -38,12 +33,6 @@ class Spadic:
             raise # TODO enter offline mode
 
         self._stop = self._cbmif._stop
-
-        # here we enforce arguments to be passed as keyword arguments
-        debug_kwargs = ['_debug_out', '_debug_ftdi', '_debug_cbmif']
-        for arg in debug_kwargs:
-            if arg in kwargs:
-                setattr(self, arg, kwargs[arg])
 
         self.readout_enable(0)
 
@@ -119,8 +108,7 @@ class Spadic:
         # maybe do:
         #while self._recv_worker.is_alive():
         #    self._recv_worker.join(timeout=1)
-        if self._debug_cbmif:
-            self._debug("[main]", self._recv_worker.name, "finished")
+        self._debug("[main]", self._recv_worker.name, "finished")
 
         
     #----------------------------------------------------------------

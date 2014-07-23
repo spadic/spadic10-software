@@ -1,5 +1,3 @@
-import threading
-
 # libFTDI was renamed when version 1.0 was released -- try to get the
 # newer version first.
 try:
@@ -88,10 +86,14 @@ USB_ERROR_CODE = {
 class Ftdi:
     """Wrapper for simple FTDI communication."""
 
+    from util import log as _log
+    def _debug(self, *text):
+        self._log.debug(' '.join(text))
+
     #----------------------------------------------------------------
     # connection management methods
     #----------------------------------------------------------------
-    def __init__(self, VID=0x0403, PID=0x6010, _debug_out=None):
+    def __init__(self, VID=0x0403, PID=0x6010):
         """Open USB connection and initialize FTDI context."""
         context = ftdi.new()
         if not (ftdi.usb_open(context, VID, PID) == 0):
@@ -100,17 +102,6 @@ class Ftdi:
             raise IOError('could not open USB connection!')
         ftdi.set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self.ftdic = context
-        self._debug_ftdi = False
-        self._debug_out = _debug_out
-        self._debug_lock = threading.Lock()
-
-    def _debug(self, *text):
-        with self._debug_lock:
-            try:
-                print >> self._debug_out, " ".join(map(str, text))
-                self._debug_out.flush()
-            except:
-                pass
 
     def __enter__(self):
         return self
@@ -123,8 +114,7 @@ class Ftdi:
             #ftdi.set_bitmode(self.ftdic, 0, ftdi.BITMODE_RESET)
             ftdi.free(self.ftdic)
                     # free -> deinit -> usb_close_internal -> usb_close
-        if self._debug_ftdi:
-            self._debug("[FTDI] exit")
+        self._debug("exit")
 
     def purge(self):
         """Purge all FTDI buffers."""
@@ -146,9 +136,8 @@ class Ftdi:
     #----------------------------------------------------------------
     def write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
-        if self._debug_ftdi:
-            self._debug("[FTDI] write",
-                        "[%s]"%(" ".join("%02X" % b for b in byte_list)))
+        self._debug("write",
+                    "[%s]"%(" ".join("%02X" % b for b in byte_list)))
         bytes_left = byte_list
         iter_left = max_iter
         while bytes_left:
@@ -183,8 +172,8 @@ class Ftdi:
             bytes_left -= n
             if iter_left is not None:
                 iter_left -= 1
-        if self._debug_ftdi and bytes_read:
-            self._debug("[FTDI] read",
+        if bytes_read:
+            self._debug("read",
                         "[%s]"%(" ".join("%02X" % b for b in bytes_read)))
         return bytes_read
 

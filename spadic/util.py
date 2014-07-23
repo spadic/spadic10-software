@@ -1,3 +1,4 @@
+import logging
 import threading
 import Queue
 
@@ -41,4 +42,11 @@ class InfiniteSemaphore:
 
     def release(self):
         pass
+
+
+# technique shown in
+# http://www.artima.com/weblogs/viewpost.jsp?thread=246483
+@property
+def log(self):
+    return logging.getLogger(self.__class__.__name__)
 

@@ -28,9 +28,9 @@ WNOP = sum((v & m) for (v, m) in [message.preamble['wINF'],
 
 
 class SpadicServer:
-    # TODO use proper logging
+    from util import log as _log
     def _debug(self, *text):
-        self._spadic._debug(*text)
+        self._log.info(' '.join(map(str, text)))
 
     def __init__(self, reset=False, load=None, port_base=None, **kwargs):
         self._spadic = Spadic(reset, load, **kwargs)
@@ -41,10 +41,7 @@ class SpadicServer:
                 serv._stop = self._stop
                 serv.run()
 
-        try:
-            debug = self._debug if kwargs['_debug_server'] else None
-        except KeyError:
-            debug = None
+        debug = self._debug
 
         def _run_rf_server():
             _run_gen(SpadicRFServer, self._spadic._registerfile, port_base, debug)
@@ -234,7 +231,7 @@ class SpadicDLMServer(BaseRequestServer):
     def __init__(self, dlm_send_func, port_base=None, debug=None):
         if debug:
             def _debug(*args):
-                debug("[DLM server]", *args)
+                debug("[DLM]", *args)
         else:
             _debug = None
         BaseRequestServer.__init__(self, port_base, _debug)
@@ -273,7 +270,7 @@ class SpadicRFServer(BaseRegisterServer):
     def __init__(self, registerfile, port_base=None, debug=None):
         if debug:
             def _debug(*args):
-                debug("[RF server]", *args)
+                debug("[RF]", *args)
         else:
             _debug = None
         BaseRegisterServer.__init__(self, port_base, _debug)
@@ -285,7 +282,7 @@ class SpadicSRServer(BaseRegisterServer):
     def __init__(self, shiftregister, port_base=None, debug=None):
         if debug:
             def _debug(*args):
-                debug("[SR server]", *args)
+                debug("[SR]", *args)
         else:
             _debug = None
         BaseRegisterServer.__init__(self, port_base, _debug)
@@ -325,7 +322,7 @@ class SpadicDataServer(BaseStreamServer):
 
         if debug:
             def _debug(*args):
-                debug("[Data%s server]"%g, *args)
+                debug("[Data%s]"%g, *args)
         else:
             _debug = None
         self.port_offset = PORT_OFFSET["DATA_%s"%g]

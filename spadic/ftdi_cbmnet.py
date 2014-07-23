@@ -19,16 +19,15 @@ WRITE_LEN = {
 class FtdiCbmnet:
     """Wrapper for FTDI <-> CBMnet interface communication."""
 
-    # TODO use proper logging
+    from util import log as _log
     def _debug(self, *text):
-        self._ftdi._debug(*text)
+        self._log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self):
         try:
             self._ftdi = Ftdi.Ftdi()
         except IOError:
             raise
-        self._debug_cbmif = False
 
     def __enter__(self):
         return self
@@ -51,9 +50,8 @@ class FtdiCbmnet:
         if len(words) != WRITE_LEN[addr]:
             raise ValueError("Wrong number of words for this CBMnet port.")
 
-        if self._debug_cbmif:
-            self._debug("[CBMnet] write", "%i,"%addr,
-                        "[%s]"%(" ".join("%X"%w for w in words)))
+        self._debug("write", "%i,"%addr,
+                    "[%s]"%(" ".join("%X"%w for w in words)))
 
         header = [addr, len(words)]
         data = []
@@ -89,9 +87,8 @@ class FtdiCbmnet:
             w = (high<<8) + low
             words.append(w)
 
-        if self._debug_cbmif:
-            self._debug("[CBMnet] read", "%i,"%addr,
-                        "[%s]"%(" ".join("%X"%w for w in words)))
+        self._debug("read", "%i,"%addr,
+                    "[%s]"%(" ".join("%X"%w for w in words)))
 
         return (addr, words)
 
@@ -148,8 +145,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
             # maybe do:
             #while w.is_alive():
             #    w.join(timeout=1)
-            if self._debug_cbmif:
-                self._debug("[CBMnet]", w.name, "finished")
+            self._debug(w.name, "finished")
         FtdiCbmnet.__exit__(self)
 
 

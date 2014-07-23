@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import logging
 import sys
 import time
 
@@ -26,12 +27,10 @@ except:
     log_file_p = None
 
 try:
-    _debug = int(sys.argv[sys.argv.index("--debug")+1], 0)
+    log_level = sys.argv[sys.argv.index("--log")+1]
 except:
-    _debug = 0b110 # default: server+cbmif
-_debug_ftdi   = (_debug>>0) & 1
-_debug_cbmif  = (_debug>>1) & 1
-_debug_server = (_debug>>2) & 1
+    log_level = "warning"
+logging.basicConfig(level=getattr(logging, log_level.upper()))
 
 try:
     load_file = sys.argv[sys.argv.index("--load")+1]
@@ -49,9 +48,6 @@ except:
 options = {'reset':         reset,
            'load':          load_file,
            'port_base':     port,
-           '_debug_ftdi':   _debug_ftdi,
-           '_debug_cbmif':  _debug_cbmif,
-           '_debug_server': _debug_server,
            '_debug_out':    log_file_p}
 
 try:
