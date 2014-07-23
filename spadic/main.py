@@ -28,7 +28,7 @@ class Spadic:
 
     def __init__(self, reset=False, load=None, **kwargs):
         try:
-            self._cbmif = ftdi_cbmnet.FtdiCbmnetThreaded()
+            self._cbmif = ftdi_cbmnet.FtdiCbmnet()
         except IOError:
             raise # TODO enter offline mode
 

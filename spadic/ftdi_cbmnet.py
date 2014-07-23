@@ -16,6 +16,8 @@ WRITE_LEN = {
   ADDR_CTRL: 3
 }
 
+WR_TASK = 0 # lower value -> higher priority
+RD_TASK = 1 # higher value -> lower priority
 
 class FtdiCbmnet:
     """Wrapper for FTDI <-> CBMnet interface communication."""
@@ -24,20 +26,10 @@ class FtdiCbmnet:
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
-    def __init__(self):
-        try:
-            self._ftdi = Ftdi.Ftdi()
-        except IOError:
-            raise
-        self._ftdi.__enter__()
-
     def __enter__(self):
         return self
 
-    def __exit__(self, *args):
-        self._ftdi.__exit__(*args)
-
-    def write(self, addr, words):
+    def _write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
         
         addr: Address of the CBMnet send port
@@ -61,7 +53,7 @@ class FtdiCbmnet:
         self._ftdi.write(ftdi_data)
 
 
-    def read(self):
+    def _read(self):
         """Access CBMnet receive interface through FTDI read port.
 
         This method tries to read data from the FTDI and reconstruct a
@@ -86,18 +78,13 @@ class FtdiCbmnet:
 
         return (addr, words)
 
-
-WR_TASK = 0 # higher priority
-RD_TASK = 1 # lower priority
-
-class FtdiCbmnetThreaded(FtdiCbmnet):
-    """FTDI <-> CBMnet interface communication with threads."""
-
     def __init__(self):
         try:
-            FtdiCbmnet.__init__(self)
+            self._ftdi = Ftdi.Ftdi()
         except IOError:
             raise
+        self._ftdi.__enter__()
+
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
         self._send_data = Queue.Queue()
@@ -115,12 +102,9 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def __exit__(self, *args):
         """Bring all threads to halt."""
         self._stop_threads()
-        FtdiCbmnet.__exit__(self)
+        self._ftdi.__exit__(*args)
 
 
-    #--------------------------------------------------------------------
-    # overwrite the non-threaded user interface
-    #--------------------------------------------------------------------
     def write(self, addr, words):
         """Write words to the CBMnet send interface."""
         self._send_queue.put((addr, words))
@@ -173,13 +157,13 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
                 continue
             if task == RD_TASK:
                 try:
-                    (addr, words) = FtdiCbmnet.read(self)
+                    addr, words = self._read()
                 except TypeError: # read result is None
                     continue
                 self._recv_queue.put((addr, words))
             elif task == WR_TASK:
                 (addr, words) = self._send_data.get()
-                FtdiCbmnet.write(self, addr, words)
+                self._write(addr, words)
                 self._send_data.task_done()
             if not self._stop.is_set():
                 self._comm_tasks.put(RD_TASK)
