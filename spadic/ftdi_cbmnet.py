@@ -98,30 +98,12 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
             FtdiCbmnet.__init__(self)
         except IOError:
             raise
-
-        # set up threads and queues
-        self._stop = threading.Event()
-
         self._send_queue = Queue.Queue()
-        self._send_worker = threading.Thread(name="send worker")
-        self._send_worker.run = self._send_job
-        self._send_worker.daemon = True
-
-        self._read_worker = threading.Thread(name="read worker")
-        self._read_worker.run = self._read_job
-        self._read_worker.daemon = True
-
         self._comm_tasks = Queue.PriorityQueue()
         self._send_data = Queue.Queue()
         self._recv_queue = Queue.Queue()
-        self._comm_worker = threading.Thread(name="comm worker")
-        self._comm_worker.run = self._comm_job
-        self._comm_worker.daemon = True
-
-        # start threads
-        self._send_worker.start()
-        self._read_worker.start()
-        self._comm_worker.start()
+        self._setup_threads()
+        self._start_threads()
 
     def __del__(self):
         self.__exit__()
@@ -132,14 +114,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     #--------------------------------------------------------------------
     def __exit__(self, *args):
         """Bring all threads to halt."""
-        if not self._stop.is_set():
-            self._stop.set()
-        for w in [self._send_worker, self._read_worker, self._comm_worker]:
-            w.join()
-            # maybe do:
-            #while w.is_alive():
-            #    w.join(timeout=1)
-            self._debug(w.name, "finished")
+        self._stop_threads()
         FtdiCbmnet.__exit__(self)
 
 
@@ -209,4 +184,34 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
             if not self._stop.is_set():
                 self._comm_tasks.put(RD_TASK)
             self._comm_tasks.task_done()
+
+    def _setup_threads(self):
+        self._stop = threading.Event()
+
+        self._send_worker = threading.Thread(name="send worker")
+        self._send_worker.run = self._send_job
+        self._send_worker.daemon = True
+
+        self._read_worker = threading.Thread(name="read worker")
+        self._read_worker.run = self._read_job
+        self._read_worker.daemon = True
+
+        self._comm_worker = threading.Thread(name="comm worker")
+        self._comm_worker.run = self._comm_job
+        self._comm_worker.daemon = True
+
+    def _start_threads(self):
+        self._send_worker.start()
+        self._read_worker.start()
+        self._comm_worker.start()
+
+    def _stop_threads(self):
+        if not self._stop.is_set():
+            self._stop.set()
+        for w in [self._send_worker, self._read_worker, self._comm_worker]:
+            w.join()
+            # maybe do:
+            #while w.is_alive():
+            #    w.join(timeout=1)
+            self._debug(w.name, "finished")
 
