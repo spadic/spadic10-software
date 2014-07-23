@@ -89,7 +89,7 @@ void MessageReader::reset()
 
 void MessageReader::add_buffer(const uint16_t *buf, size_t len)
 {
-    if (message_reader_add_buffer(r->r, buf, len)) {
+    if (!(message_reader_add_buffer(r->r, buf, len) == 0)) {
         throw MessageError("Could not add buffer.");
     }
 }
