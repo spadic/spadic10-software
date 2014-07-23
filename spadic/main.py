@@ -27,7 +27,7 @@ class Spadic:
         self._log.info(' '.join(text))
 
     def __init__(self, reset=False, load=None, **kwargs):
-        self._cbmif = ftdi_cbmnet.FtdiCbmnetThreaded()
+        self._cbmif = ftdi_cbmnet.FtdiCbmnet()
 
         self._stop = threading.Event()
 

@@ -17,7 +17,7 @@ WRITE_LEN = {
 }
 
 
-class FtdiCbmnet:
+class FtdiCbmnetInterface:
     """Wrapper for FTDI <-> CBMnet interface communication."""
 
     from util import log as _log
@@ -87,11 +87,11 @@ class FtdiCbmnet:
 WR_TASK = 0 # lower value -> higher priority
 RD_TASK = 1 # higher value -> lower priority
 
-class FtdiCbmnetThreaded(FtdiCbmnet):
+class FtdiCbmnet(FtdiCbmnetInterface):
     """FTDI <-> CBMnet interface communication with threads."""
 
     def __init__(self):
-        FtdiCbmnet.__init__(self)
+        FtdiCbmnetInterface.__init__(self)
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
         self._send_data = Queue.Queue()
@@ -105,7 +105,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def __exit__(self, *args):
         """Bring all threads to halt."""
         self._stop_threads()
-        FtdiCbmnet.__exit__(self)
+        FtdiCbmnetInterface.__exit__(self)
 
     #--------------------------------------------------------------------
     # overwrite the non-threaded user interface
@@ -161,13 +161,13 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
                 continue
             if task == RD_TASK:
                 try:
-                    (addr, words) = FtdiCbmnet.read(self)
+                    (addr, words) = FtdiCbmnetInterface.read(self)
                 except TypeError: # read result is None
                     continue
                 self._recv_queue.put((addr, words))
             elif task == WR_TASK:
                 (addr, words) = self._send_data.get()
-                FtdiCbmnet.write(self, addr, words)
+                FtdiCbmnetInterface.write(self, addr, words)
                 self._send_data.task_done()
             if not self._stop.is_set():
                 self._comm_tasks.put(RD_TASK)
