@@ -1,5 +1,5 @@
 //! \author Michael Krieger
-#include "Message.h"
+#include "Message.hpp"
 
 extern "C" {
 #include "message.h"

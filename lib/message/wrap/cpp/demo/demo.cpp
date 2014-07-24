@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Message.h"
+#include "Message.hpp"
 
 uint16_t buf[8] = {
     0x8012, /* start of message */
