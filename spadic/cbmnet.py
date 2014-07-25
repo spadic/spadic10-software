@@ -48,21 +48,25 @@ class SpadicCbmnetRegisterAccess:
             reg_addr, reg_val = words
             self._read_results.put(reg_addr, reg_val)
 
-    def write_register(self, address, value):
-        """Write a value into a register."""
-        words = [type(self).WRITE, address, value]
-        self._cbmnet.write_ctrl(words)
+    def write_registers(self, operations):
+        """Perform register write operations as specified in the given list of
+        (address, value) tuples.
+        """
+        for address, value in operations:
+            words = [type(self).WRITE, address, value]
+            self._cbmnet.write_ctrl(words)
 
-    def read_register(self, address, clear_skip=False,
-                      request_skip=False, request_only=False):
-        """Read the value from a register."""
-        if not request_skip:
-            if not clear_skip:
-                self._retransmit_workaround(address)
+    def read_registers(self, addresses):
+        """Generate the values from reading registers at a list of addresses."""
+        for address in set(addresses):
+            self._retransmit_workaround(address)
+        # send all read requests
+        for address in addresses:
             words = [type(self).READ, address, 0]
             self._cbmnet.write_ctrl(words)
-        if not request_only:
-            return self._read_results.get(address, timeout=1)
+        # read all results
+        for address in addresses:
+            yield self._read_results.get(address, timeout=1)
 
     def _retransmit_workaround(self, address):
         """Workaround for the retransmit bug in SPADIC 1.0 CBMnet.

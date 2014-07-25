@@ -501,15 +501,15 @@ SR_WRITE = 2
 
 class SpadicShiftRegister(ShiftRegister):
     """Representation of the SPADIC shift register."""
-    def __init__(self, write_register, read_register):
-        self._write_register = write_register
-        self._read_register = read_register
+    def __init__(self, write_registers, read_registers):
+        self._write_registers = write_registers
+        self._read_registers = read_registers
         ShiftRegister.__init__(self, SPADIC_SR_LENGTH, SPADIC_SR)
 
     def _write(self, bits):
         """Perform the write operation of the whole shift register."""
         ctrl_data = (self._length << 3) + SR_WRITE
-        self._write_register(0x2F0, ctrl_data)
+        self._write_registers([(0x2F0, ctrl_data)])
 
         # divide bit string into 16 bit chunks, right first
         while bits:
@@ -518,7 +518,7 @@ class SpadicShiftRegister(ShiftRegister):
             # one chunk is written LSB first (from "shift.v"):
             #   sr_write_bitin <= write_buf[0];
             #   write_buf[14:0] <= write_buf[15:1];
-            self._write_register(0x300, int(chunk, 2))
+            self._write_registers([(0x300, int(chunk, 2))])
 
     def _read(self):
         """
@@ -542,33 +542,25 @@ class SpadicShiftRegister(ShiftRegister):
         This method would be sufficient without the retransmit bug.
         """
         ctrl_data = (self._length << 3) + SR_READ
-        self._write_register(0x2F0, ctrl_data)
+        self._write_registers([(0x2F0, ctrl_data)])
 
-        # send read requests for 16 bit chunks
+        # collect needed read requests for 16-bit chunks
         bits_left = self._length
         chunks = []
-        cleared = False
         while bits_left:
             len_chunk = min(bits_left, 16)
-            self._read_register(0x300, request_only=True, clear_skip=cleared)
-            cleared = True # clear only before the first request
             chunks.append(len_chunk)
             bits_left -= len_chunk
 
-        # read chunks and concatenate, right first
+        # read chunks
+        result = self._read_registers([0x300 for c in chunks])
+
+        # concatenate chunks, right first
         bits = ''
-        for len_chunk in chunks:
+        for len_chunk, chunk in zip(chunks, result):
             # one chunk is read MSB first (from "shift.v"):
             #   read_buf <= {read_buf[14:0],sr_read_bitout};
             # so we have to reverse the bit order again
-            try:
-                chunk = self._read_register(0x300, request_skip=True)
-            except IOError:
-                if not bits:
-                    raise IOError("cannot read shift register")
-                else:
-                    raise RuntimeError("try again")
             chunk_bits = ''.join(reversed(int2bitstring(chunk, len_chunk)))
             bits = chunk_bits + bits
         return bits
-

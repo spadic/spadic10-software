@@ -29,17 +29,17 @@ class Spadic:
         # higher level register file access
         def rf_write_gen(name, addr):
             def write(value):
-                self._reg_access.write_register(addr, value)
+                self._reg_access.write_registers([(addr, value)])
             return write
         def rf_read_gen(name, addr):
             def read():
-                return self._reg_access.read_register(addr)
+                return next(self._reg_access.read_registers([addr]))
             return read
         self._registerfile = SpadicRegisterFile(rf_write_gen, rf_read_gen)
 
         # higher level shift register access
         self._shiftregister = SpadicShiftRegister(
-            self._reg_access.write_register, self._reg_access.read_register)
+            self._reg_access.write_registers, self._reg_access.read_registers)
 
         # highest level configuration controller
         self.control = SpadicController(self._registerfile,
