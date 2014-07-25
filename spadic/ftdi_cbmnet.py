@@ -1,4 +1,5 @@
 import Ftdi
+import struct
 import threading, Queue
 import time
 
@@ -54,12 +55,8 @@ class FtdiCbmnet:
         self._debug("write", "%i,"%addr,
                     "[%s]"%(" ".join("%X"%w for w in words)))
 
-        header = [addr, len(words)]
-        data = []
-        for w in words:
-            high, low = w//0x100, w%0x100
-            data.append(high)
-            data.append(low)
+        header = struct.pack('BB', addr, len(words))
+        data = struct.pack('>%dH' % len(words), *words)
         ftdi_data = header + data
         self._ftdi.write(ftdi_data)
 
@@ -80,13 +77,9 @@ class FtdiCbmnet:
         if len(header) < 2:
             return None
         
-        [addr, num_words] = header
+        [addr, num_words] = struct.unpack('BB', header)
         data = self._ftdi.read(2*num_words)
-        words = []
-        for i in range(num_words):
-            high, low = data[2*i], data[2*i+1]
-            w = (high<<8) + low
-            words.append(w)
+        words = struct.unpack('>%dH' % num_words, data)
 
         self._debug("read", "%i,"%addr,
                     "[%s]"%(" ".join("%X"%w for w in words)))

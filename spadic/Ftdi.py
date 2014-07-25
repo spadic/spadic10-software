@@ -143,20 +143,27 @@ class Ftdi:
     #----------------------------------------------------------------
     # data transfer methods
     #----------------------------------------------------------------
-    def write(self, byte_list, max_iter=None):
-        """Write data to the FTDI chip."""
+    def write(self, byte_str, max_iter=None):
+        """
+        Write a sequence of bytes (encoded as a string) to the FTDI chip.
+
+        `max_iter`: Maximum number of retries, should not all the data
+            be written at once. `None` means unlimited retries.
+
+        Returns the number of bytes written (can be less than the length
+        of `byte_str`).
+        """
         if not self._context:
             raise RuntimeError('FTDI context not initialized.')
 
         self._debug("write",
-                    "[%s]"%(" ".join("%02X" % b for b in byte_list)))
-        bytes_left = byte_list
+                    "[%s]"%(" ".join("%02X" % ord(b) for b in byte_str)))
+        bytes_left = byte_str
         iter_left = max_iter
         while bytes_left:
             if iter_left == 0:
                 break
-            n = ftdi.write_data(self._context,
-                    ''.join(map(chr, bytes_left)), len(bytes_left))
+            n = ftdi.write_data(self._context, bytes_left, len(bytes_left))
             if n < 0:
                 raise IOError('USB write error (error code %i: %s)'
                               % (n, USB_ERROR_CODE[n]
@@ -165,15 +172,25 @@ class Ftdi:
             if iter_left is not None:
                 iter_left -= 1
         # number of bytes that were written
-        return len(byte_list)-len(bytes_left)
+        return len(byte_str) - len(bytes_left)
 
     def read(self, num_bytes, max_iter=None):
-        """Read data from the FTDI chip."""
+        """
+        Read a sequence of bytes (encoded as a string) from the FTDI chip.
+
+        `num_bytes`: Requested number of bytes to read.
+        `max_iter`: Maximum number of retries, should the requested
+            number of bytes not be available at once. `None` means
+            unlimited retries.
+
+        Returns the read bytes encoded as a string (can be fewer than
+        `num_bytes`).
+        """
         if not self._context:
             raise RuntimeError('FTDI context not initialized.')
 
         bytes_left = num_bytes
-        bytes_read = []
+        bytes_read = ''
         iter_left = max_iter
         while bytes_left:
             if iter_left == 0:
@@ -183,12 +200,12 @@ class Ftdi:
                 raise IOError('USB read error (error code %i: %s)'
                               % (n, USB_ERROR_CODE[n]
                                     if n in USB_ERROR_CODE else 'unknown'))
-            bytes_read += map(ord, buf[:n])
+            bytes_read += buf[:n]
             bytes_left -= n
             if iter_left is not None:
                 iter_left -= 1
         if bytes_read:
             self._debug("read",
-                        "[%s]"%(" ".join("%02X" % b for b in bytes_read)))
+                        "[%s]"%(" ".join("%02X" % ord(b) for b in bytes_read)))
         return bytes_read
 
