@@ -32,8 +32,9 @@ class FtdiCbmnet:
 
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
+        self._recv_queue = {addr: Queue.Queue()
+                            for addr in (ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL)}
         self._send_data = Queue.Queue()
-        self._recv_queue = Queue.Queue()
         self._setup_threads()
         self._debug('init')
 
@@ -51,17 +52,15 @@ class FtdiCbmnet:
         self._debug('exit')
 
 
-    def read(self):
-        """Read words from the CBMnet receive interface.
-
-        If there was nothing to read, return None.
-        """
+    def read(self, addr, timeout=1):
+        """Access CBMnet receive interface through FTDI read port."""
+        q = self._recv_queue[addr]
         try:
-            (addr, words) = self._recv_queue.get(timeout=0.1)
+            words = q.get(timeout=timeout)
         except Queue.Empty:
             return None
-        self._recv_queue.task_done()
-        return (addr, words)
+        q.task_done()
+        return words
 
     def _read(self):
         """Access CBMnet receive interface through FTDI read port.
@@ -154,7 +153,7 @@ class FtdiCbmnet:
                     addr, words = self._read()
                 except TypeError: # read result is None
                     continue
-                self._recv_queue.put((addr, words))
+                self._recv_queue[addr].put(words)
             elif task == WR_TASK:
                 (addr, words) = self._send_data.get()
                 self._write(addr, words)

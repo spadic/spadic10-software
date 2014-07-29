@@ -42,11 +42,21 @@ class Spadic:
         # register read result Queue (indexable)
         self._ctrl_queue = IndexQueue()
 
-        # data reader thread
-        self._recv_worker = threading.Thread(name="recv worker")
-        self._recv_worker.run = self._recv_job
-        self._recv_worker.daemon = True
-        self._recv_worker.start()
+        # data reader threads
+        self._dataA_worker = threading.Thread(name="dataA worker")
+        self._dataA_worker.run = self._dataA_job
+        self._dataA_worker.daemon = True
+        self._dataA_worker.start()
+
+        self._dataB_worker = threading.Thread(name="dataB worker")
+        self._dataB_worker.run = self._dataB_job
+        self._dataB_worker.daemon = True
+        self._dataB_worker.start()
+
+        self._ctrl_worker = threading.Thread(name="ctrl worker")
+        self._ctrl_worker.run = self._ctrl_job
+        self._ctrl_worker.daemon = True
+        self._ctrl_worker.start()
 
         # higher level register file access
         def rf_write_gen(name, addr):
@@ -73,25 +83,32 @@ class Spadic:
         self._cbmif.__enter__()
         return self
 
-    def _recv_job(self):
-        """Process data received from the CBMnet interface."""
+    def _dataA_job(self):
+        """Process dataA received from the CBMnet interface."""
         while not self._stop.is_set():
-            try:
-                (addr, words) = self._cbmif.read()
-            except TypeError: # read result is None
+            words = self._cbmif.read(ftdi_cbmnet.ADDR_DATA_A)
+            if not words:
                 continue
+            for m in self._dataA_splitter(words):
+                self._dataA_queue.put(m)
 
-            if addr == ftdi_cbmnet.ADDR_DATA_A:
-                for m in self._dataA_splitter(words):
-                    self._dataA_queue.put(m)
+    def _dataB_job(self):
+        """Process dataB received from the CBMnet interface."""
+        while not self._stop.is_set():
+            words = self._cbmif.read(ftdi_cbmnet.ADDR_DATA_B)
+            if not words:
+                continue
+            for m in self._dataB_splitter(words):
+                self._dataB_queue.put(m)
 
-            elif addr == ftdi_cbmnet.ADDR_DATA_B:
-                for m in self._dataB_splitter(words):
-                    self._dataB_queue.put(m)
-
-            elif addr == ftdi_cbmnet.ADDR_CTRL:
-                [reg_addr, reg_val] = words
-                self._ctrl_queue.put(reg_addr, reg_val)
+    def _ctrl_job(self):
+        """Process control response received from the CBMnet interface."""
+        while not self._stop.is_set():
+            words = self._cbmif.read(ftdi_cbmnet.ADDR_CTRL)
+            if not words:
+                continue
+            reg_addr, reg_val = words
+            self._ctrl_queue.put(reg_addr, reg_val)
 
 
     def __exit__(self, *args):
@@ -101,11 +118,12 @@ class Spadic:
         if not self._stop.is_set():
             self._stop.set()
         self._cbmif.__exit__(*args)
-        while self._recv_worker.is_alive():
-            self._recv_worker.join(timeout=1)
-        self._debug("[main]", self._recv_worker.name, "finished")
+        for t in [self._dataA_worker, self._dataB_worker, self._ctrl_worker]:
+            while t.is_alive():
+                t.join(timeout=1)
+            self._debug("[main]", t.name, "finished")
 
-        
+
     #----------------------------------------------------------------
     # access register file
     #----------------------------------------------------------------
