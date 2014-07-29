@@ -104,10 +104,12 @@ class FtdiCbmnet:
         self._interface = FtdiCbmnetInterface()
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
+        self._recv_queue = {addr: Queue.Queue()
+                            for addr in (ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL)}
         self._send_data = Queue.Queue()
-        self._recv_queue = Queue.Queue()
         self._setup_threads()
         self._debug('init')
+
 
     def __enter__(self):
         self._interface.__enter__()
@@ -128,17 +130,18 @@ class FtdiCbmnet:
         """Write words to the CBMnet send interface."""
         self._send_queue.put((addr, words))
 
-    def read(self):
+    def read(self, addr, timeout=1):
         """Read words from the CBMnet receive interface.
 
         If there was nothing to read, return None.
         """
+        q = self._recv_queue[addr]
         try:
-            (addr, words) = self._recv_queue.get(timeout=0.1)
+            words = q.get(timeout=timeout)
         except Queue.Empty:
             return None
-        self._recv_queue.task_done()
-        return (addr, words)
+        q.task_done()
+        return words
 
     #--------------------------------------------------------------------
     # The following methods are run in separate threads and connect
@@ -178,7 +181,7 @@ class FtdiCbmnet:
                     (addr, words) = self._interface.read()
                 except TypeError: # read result is None
                     continue
-                self._recv_queue.put((addr, words))
+                self._recv_queue[addr].put(words)
             elif task == WR_TASK:
                 (addr, words) = self._send_data.get()
                 self._interface.write(addr, words)
