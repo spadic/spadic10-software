@@ -1,10 +1,6 @@
-=====================================================
-SPADIC 1.0 control software for Susibo/CBMnet readout
-=====================================================
+# SPADIC 1.0 control software for Susibo/CBMnet readout
 
---------
-Changes:
---------
+## Changes:
 
 * v1.1.7 (2013-12-10)
   The fit residual is now plotted in SpadicScope. Added the option to set
@@ -59,9 +55,7 @@ Changes:
   First version using CBMnet communication.
 
 
--------------
-Requirements:
--------------
+## Requirements:
 
 * Python 2.7 or newer (but not Python 3.x)
 
@@ -73,17 +67,19 @@ Requirements:
 
   Quick installation guide:
 
+  ```sh
   $ git clone git://developer.intra2net.com/libftdi /tmp/libftdi
   $ cd /tmp/libftdi
   $ mkdir build; cd build
   $ cmake ..
   $ make
   $ make install
-
+  ```
 
 * mutti (Michael's User Text Terminal Interface)
 
+  ```sh
   $ git clone https://github.com/mkrieger1/mutti.git /tmp/mutti
   $ cd /tmp/mutti
   $ python setup.py install [--user]
-
+  ```
