@@ -83,7 +83,7 @@ Requirements:
 
 * mutti (Michael's User Text Terminal Interface)
 
-  $ git clone http://www.spadic.uni-hd.de/spadic10/secure/mutti.git /tmp/mutti
+  $ git clone https://github.com/mkrieger1/mutti.git /tmp/mutti
   $ cd /tmp/mutti
   $ python setup.py install [--user]
 
