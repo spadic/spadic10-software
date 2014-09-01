@@ -28,7 +28,12 @@ enum class hit_t : uint8_t {
 };
 
 struct MessageError : std::runtime_error {
-    using std::runtime_error::runtime_error; // C++11: inherit constructor
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 7)
+    // C++11: inheriting constructor supported by GCC 4.8+
+    using std::runtime_error::runtime_error;
+#else
+    MessageError(const char *text) : std::runtime_error::runtime_error(text) {}
+#endif
 };
 
 struct Message {
