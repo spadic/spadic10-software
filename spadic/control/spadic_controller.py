@@ -88,12 +88,15 @@ class SpadicController:
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
-    def save(self, filename=None):
+    def save(self, filename=None, compress=True):
         filename = filename or AUTOSAVE_FILE
+        if compress:
+            filename += '.gz'
         save_dir = os.path.dirname(os.path.abspath(filename))
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        with gzip.open(filename, 'w') as f:
+        fopen = gzip.open if compress else open
+        with fopen(filename, 'w') as f:
             self._save(f)
 
     def _save(self, f=None, nonzero=False):
@@ -124,7 +127,8 @@ class SpadicController:
         print >> f, '\n'.join(lines)
 
     def load(self, filename):
-        with gzip.open(filename) as f:
+        fopen = gzip.open if filename.endswith('.gz') else open
+        with fopen(filename) as f:
             self._load(f)
 
     def _load(self, f):
