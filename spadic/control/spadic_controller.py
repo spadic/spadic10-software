@@ -88,6 +88,14 @@ class SpadicController:
         return '\n\n'.join(frame(name)+'\n'+str(unit)
                            for (name, unit) in self._units.iteritems())
 
+    def save(self, filename=None):
+        filename = filename or AUTOSAVE_FILE
+        save_dir = os.path.dirname(os.path.abspath(filename))
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        with gzip.open(filename, 'w') as f:
+            self._save(f)
+
     def _save(self, f=None, nonzero=False):
         """Save the current configuration to a file."""
         def fmtnumber(n, sz):
@@ -115,13 +123,9 @@ class SpadicController:
         lines += sorted(srlines, key=str.lower)
         print >> f, '\n'.join(lines)
 
-    def save(self, filename=None):
-        filename = filename or AUTOSAVE_FILE
-        save_dir = os.path.dirname(os.path.abspath(filename))
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        with gzip.open(filename, 'w') as f:
-            self._save(f)
+    def load(self, filename):
+        with gzip.open(filename) as f:
+            self._load(f)
 
     def _load(self, f):
         """Load the configuration from a file."""
@@ -146,8 +150,4 @@ class SpadicController:
         self.shiftregister.set(sr_values)
         self.registerfile.apply()
         self.shiftregister.apply()
-
-    def load(self, filename):
-        with gzip.open(filename) as f:
-            self._load(f)
 
