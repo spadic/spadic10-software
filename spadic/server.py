@@ -167,7 +167,8 @@ class BaseServer:
     def __exit__(self, *args, **kwargs):
         if not self._stop.is_set():
             self._stop.set()
-        self.socket.close()
+        if self.socket:
+            self.socket.close()
         self._debug("finished")
 
     def serve(self, connection):
