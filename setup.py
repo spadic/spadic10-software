@@ -16,4 +16,3 @@ setup(name='spadic',
                'scripts/spadic_scope',
                'scripts/spadic_recorder'],
      )
-
