@@ -209,9 +209,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         if not self._stop.is_set():
             self._stop.set()
         for w in [self._send_worker, self._read_worker, self._comm_worker]:
-            w.join()
-            # maybe do:
-            #while w.is_alive():
-            #    w.join(timeout=1)
+            while w.is_alive():
+                w.join(timeout=1)
             self._debug(w.name, "finished")
 

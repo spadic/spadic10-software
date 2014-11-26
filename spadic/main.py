@@ -104,10 +104,8 @@ class Spadic:
         if not self._stop.is_set():
             self._stop.set()
         self._cbmif.__exit__(*args)
-        self._recv_worker.join()
-        # maybe do:
-        #while self._recv_worker.is_alive():
-        #    self._recv_worker.join(timeout=1)
+        while self._recv_worker.is_alive():
+            self._recv_worker.join(timeout=1)
         self._debug("[main]", self._recv_worker.name, "finished")
 
         
