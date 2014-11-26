@@ -98,10 +98,10 @@ class Ftdi:
         context = ftdi.new()
         if not (ftdi.usb_open(context, VID, PID) == 0):
             ftdi.free(context)
-            self.ftdic = None
+            self._context = None
             raise IOError('could not open USB connection!')
         ftdi.set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
-        self.ftdic = context
+        self._context = context
 
     def __enter__(self):
         return self
@@ -110,21 +110,21 @@ class Ftdi:
         """Deinitialize FTDI context and close USB connection."""
         self.purge()
         self.reset()
-        if self.ftdic is not None:
-            #ftdi.set_bitmode(self.ftdic, 0, ftdi.BITMODE_RESET)
-            ftdi.free(self.ftdic)
+        if self._context:
+            #ftdi.set_bitmode(self._context, 0, ftdi.BITMODE_RESET)
+            ftdi.free(self._context)
                     # free -> deinit -> usb_close_internal -> usb_close
         self._debug("exit")
 
     def purge(self):
         """Purge all FTDI buffers."""
-        if self.ftdic is not None:
-            ftdi.usb_purge_buffers(self.ftdic)
+        if self._context is not None:
+            ftdi.usb_purge_buffers(self._context)
         
     def reset(self):
         """Reset the FTDI chip."""
-        if self.ftdic is not None:
-            ftdi.usb_reset(self.ftdic)
+        if self._context is not None:
+            ftdi.usb_reset(self._context)
 
     def reconnect(self):
         """Close and re-open FTDI connection."""
@@ -143,7 +143,7 @@ class Ftdi:
         while bytes_left:
             if iter_left == 0:
                 break
-            n = ftdi.write_data(self.ftdic,
+            n = ftdi.write_data(self._context,
                     ''.join(map(chr, bytes_left)), len(bytes_left))
             if n < 0:
                 raise IOError('USB write error (error code %i: %s)'
@@ -163,7 +163,7 @@ class Ftdi:
         while bytes_left:
             if iter_left == 0:
                 break
-            [n, buf] = ftdi.read_data(self.ftdic, bytes_left)
+            [n, buf] = ftdi.read_data(self._context, bytes_left)
             if n < 0:
                 raise IOError('USB read error (error code %i: %s)'
                               % (n, USB_ERROR_CODE[n]
