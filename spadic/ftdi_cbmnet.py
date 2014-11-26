@@ -25,14 +25,20 @@ class FtdiCbmnetInterface:
         self._log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self):
+        """Prepare FTDI connection."""
         self._ftdi = Ftdi.Ftdi()
-        self._ftdi.__enter__()
+        self._debug('init')
 
     def __enter__(self):
+        """Open FTDI connection."""
+        self._ftdi.__enter__()
+        self._debug('enter')
         return self
 
     def __exit__(self, *args):
+        """Close FTDI connection."""
         self._ftdi.__exit__(*args)
+        self._debug('exit')
 
     def write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
@@ -96,6 +102,7 @@ class FtdiCbmnet:
 
     def __init__(self):
         self._interface = FtdiCbmnetInterface()
+        self._interface.__enter__()
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
         self._send_data = Queue.Queue()
