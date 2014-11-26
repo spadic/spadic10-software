@@ -188,28 +188,24 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def _setup_threads(self):
         self._stop = threading.Event()
 
-        self._send_worker = threading.Thread(name="send worker")
-        self._send_worker.run = self._send_job
-        self._send_worker.daemon = True
+        names = ["send worker", "read worker", "comm worker"]
+        jobs = [self._send_job, self._read_job, self._comm_job]
+        self._threads = {n: threading.Thread(name=n) for n in names}
 
-        self._read_worker = threading.Thread(name="read worker")
-        self._read_worker.run = self._read_job
-        self._read_worker.daemon = True
-
-        self._comm_worker = threading.Thread(name="comm worker")
-        self._comm_worker.run = self._comm_job
-        self._comm_worker.daemon = True
+        for (name, job) in zip(names, jobs):
+            t = self._threads[name]
+            t.run = job
+            t.daemon = True
 
     def _start_threads(self):
-        self._send_worker.start()
-        self._read_worker.start()
-        self._comm_worker.start()
+        for t in self._threads.values():
+            t.start()
+            self._debug(t.name, "started")
 
     def _stop_threads(self):
         if not self._stop.is_set():
             self._stop.set()
-        for w in [self._send_worker, self._read_worker, self._comm_worker]:
-            while w.is_alive():
-                w.join(timeout=1)
-            self._debug(w.name, "finished")
-
+        for t in self._threads.values():
+            while t.is_alive():
+                t.join(timeout=1)
+            self._debug(t.name, "finished")
