@@ -27,26 +27,28 @@ class FtdiCbmnet:
         self._log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self):
+        """Prepare FTDI connection and threads."""
         self._ftdi = Ftdi.Ftdi()
-        self._ftdi.__enter__()
 
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
         self._send_data = Queue.Queue()
         self._recv_queue = Queue.Queue()
         self._setup_threads()
-        self._start_threads()
-
-    def __del__(self):
-        self.__exit__()
+        self._debug('init')
 
     def __enter__(self):
+        """Open FTDI connection and start threads."""
+        self._ftdi.__enter__()
+        self._start_threads()
+        self._debug('enter')
         return self
 
     def __exit__(self, *args):
-        """Bring all threads to halt."""
+        """Close FTDI connection and stop threads."""
         self._stop_threads()
         self._ftdi.__exit__(*args)
+        self._debug('exit')
 
 
     def read(self):
@@ -113,10 +115,6 @@ class FtdiCbmnet:
         data = struct.pack('>%dH' % len(words), *words)
         ftdi_data = header + data
         self._ftdi.write(ftdi_data)
-
-    #--------------------------------------------------------------------
-    # support "with" statement -> __exit__ is guaranteed to be called
-    #--------------------------------------------------------------------
 
     #--------------------------------------------------------------------
     # The following methods are run in separate threads and connect
