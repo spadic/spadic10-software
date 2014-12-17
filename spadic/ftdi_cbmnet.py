@@ -27,10 +27,7 @@ class FtdiCbmnet:
         self._log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self):
-        try:
-            self._ftdi = Ftdi.Ftdi()
-        except IOError:
-            raise
+        self._ftdi = Ftdi.Ftdi()
         self._ftdi.__enter__()
 
         self._send_queue = Queue.Queue()
