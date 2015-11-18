@@ -17,6 +17,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/*
+ * The technique used for creating the enumerations is called ["relational
+ * headers"][1] and is similar to "relational macros" a.k.a. ["X Macro"][2].
+ * "relational macros" cannot easily be used without losing the Doxygen
+ * comments.
+ *
+ * [1]: http://garethrees.org/2007/04/24/relational-macros/
+ * [2]: https://en.wikipedia.org/wiki/X_Macro
+ */
+
 /**
  * Stop types as returned by message_get_stop_type().
  */
