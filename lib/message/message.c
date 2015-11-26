@@ -68,7 +68,7 @@ static const Wordtype wINF = {0xF000, 0xF000, 1<<6, fill_wINF};
 Message *message_new(void)
 {
     Message *m;
-    if (m = malloc(sizeof *m)) {
+    if ( (m = malloc(sizeof *m)) ) {
         message_init(m);
     }
     return m;

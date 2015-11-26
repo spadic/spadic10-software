@@ -48,7 +48,7 @@ private:
     void init_samples();
 };
 
-Message_::Message_(struct message *m) : m(m)
+Message_::Message_(struct message *_m) : m(_m)
 {
     if (is_hit()) {
         init_samples();
