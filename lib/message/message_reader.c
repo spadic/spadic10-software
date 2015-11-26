@@ -36,7 +36,7 @@ void msg_queue_init(struct msg_queue *q)
 void msg_queue_clear(struct msg_queue *q)
 {
     struct msg_item *t;
-    while (t = msg_queue_pop(q)) {
+    while ((t = msg_queue_pop(q))) {
         message_delete(t->msg);
         free(t);
     }
