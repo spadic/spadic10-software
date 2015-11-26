@@ -19,7 +19,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/*
+ * Having the type declaration here leads to a redefinition, because it is also
+ * present in message.h and the two header files are normally both required.
+ * The type redefinition is strictly only allowed in C11.
+ * On the other hand, not having it here requires that message.h is always
+ * included *before* message_reader.h.
+ *
+ * --> TODO Find a better structure for the header files so that only one
+ * include is needed.
+ */
+#if 0
 typedef struct message Message;
+#endif
 
 typedef struct message_reader MessageReader;
 /**<
