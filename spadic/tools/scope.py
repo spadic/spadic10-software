@@ -57,15 +57,6 @@ class SpadicScope:
             self.curves.insert(0, curve)
         self.data = []
 
-        def model(x, a, b, c, t):
-            """
-            Model function of the expected pulse shape.
-
-            t is approximately 2 (shaping time divided by sampling period)
-            """
-            return a * np.maximum((x-b)*np.exp(-(x-b)/t), 0) + c
-        self.model = model
-
     def run(self):
         timer = QtCore.QTimer()
         timer.timeout.connect(self.update_data)
@@ -84,10 +75,19 @@ class SpadicScope:
         x, y = data
         xfit = x[:self.fit]
         yfit = y[:self.fit]
-        popt, _ = scipy.optimize.curve_fit(self.model, xfit, yfit, p0=[200, 2, -100, 2])
+
+        def model(x, a, b, c, t):
+            """
+            Model function of the expected pulse shape.
+
+            t is approximately 2 (shaping time divided by sampling period)
+            """
+            return a * np.maximum((x-b)*np.exp(-(x-b)/t), 0) + c
+
+        popt, _ = scipy.optimize.curve_fit(model, xfit, yfit, p0=[200, 2, -100, 2])
         print popt
         xcorr = popt[1]-x0
-        fit = self.model(x, *popt)
+        fit = model(x, *popt)
         res = np.array(y)-fit
         self.curve_res.setData([t-xcorr for t in x], res)
         return ([t-xcorr for t in x], y)
