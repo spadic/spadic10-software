@@ -153,6 +153,9 @@ class Frontend(ControlUnitBase):
         for name in r[self._frontend]:
             self._shiftregister[name].apply()
 
+        for ch in self.channel:
+            ch.apply()
+
     def update(self):
         self._frontend = self._shiftregister['DecSelectNP'].read()
         fe ={0: 'N', 1: 'P'}[self._frontend] 
