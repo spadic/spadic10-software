@@ -56,6 +56,7 @@ def crc(data, data_bits, poly, poly_bits, init='1'):
     """
     if init == '1':
         reg = 2 ** poly_bits - 1
+        assert '{:b}'.format(reg) == '1' * poly_bits
     else:
         reg = init
 
