@@ -18,18 +18,18 @@ def reverse_bits(value, bits):
                for i in range(bits))
 
 
-def make_poly(value, bits, representation='reversed reciprocal'):
+def normalize_poly(value, bits, representation='reversed reciprocal'):
     """Convert different numerical representations of a polynomial to
     a canonical ('normal') representation.
 
     See https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Specification
     and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
 
-    >>> '{:04b}'.format(make_poly(0b0011, 4, 'normal'))
+    >>> '{:04b}'.format(normalize_poly(0b0011, 4, 'normal'))
     '0011'
-    >>> '{:04b}'.format(make_poly(0b1010, 4, 'reversed'))
+    >>> '{:04b}'.format(normalize_poly(0b1010, 4, 'reversed'))
     '0101'
-    >>> '{:04b}'.format(make_poly(0b1100, 4, 'reversed reciprocal'))
+    >>> '{:04b}'.format(normalize_poly(0b1100, 4, 'reversed reciprocal'))
     '1001'
     """
     if representation == 'normal':
@@ -47,7 +47,7 @@ def crc(data, data_bits, poly, poly_bits, init='1'):
     """Calculate the CRC value of the data using the given polynomial in normal
     representation.
 
-    >>> p = make_poly(value=0x62cc, bits=15)  # known as CRC-15-CAN
+    >>> p = normalize_poly(value=0x62cc, bits=15)  # known as CRC-15-CAN
     >>> '{:04x}'.format(crc(data=0x00384c0, data_bits=25,
     ...                     poly=p, poly_bits=15))
     '007c'
