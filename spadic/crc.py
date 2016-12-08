@@ -59,7 +59,7 @@ def crc(data, data_bits, poly, poly_bits, init='1'):
     else:
         reg = init
 
-    for i in range(data_bits):
+    for i in reversed(range(data_bits)):
         high_bit = get_bit(reg, poly_bits - 1) ^ get_bit(data, i)
         reg <<= 1
         if high_bit:
