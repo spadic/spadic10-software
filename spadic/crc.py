@@ -38,7 +38,7 @@ def make_poly(value, bits, representation='reversed reciprocal'):
         return value % (2 ** bits)
     elif representation == 'reversed':
         return reverse_bits(value, bits)
-    elif representation == 'reversed reciprocal':
+    elif representation in ['reversed reciprocal', 'koopman']:
         return ((value << 1) % (2 ** bits)) + 1
     else:
         raise NotImplementedError(representation)
