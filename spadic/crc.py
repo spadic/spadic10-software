@@ -41,7 +41,8 @@ def make_poly(value, bits, representation='reversed reciprocal'):
     elif representation in ['reversed reciprocal', 'koopman']:
         return ((value << 1) % (2 ** bits)) + 1
     else:
-        raise NotImplementedError(representation)
+        raise NotImplementedError(
+            'Unknown representation: {}'.format(representation))
 
 
 def crc(data, data_bits, poly, poly_bits, init='1'):
