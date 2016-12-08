@@ -14,10 +14,8 @@ def reverse_bits(value, bits):
     >>> '{:04b}'.format(reverse_bits(0b1101, 4))
     '1011'
     """
-    result = 0
-    for i in range(bits):
-        result += 2 ** i * get_bit(value, bits - i - 1)
-    return result
+    return sum(2 ** i * get_bit(value, bits - i - 1)
+               for i in range(bits))
 
 
 def make_poly(value, bits, representation='reversed reciprocal'):
