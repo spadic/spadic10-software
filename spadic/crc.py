@@ -1,16 +1,18 @@
 def get_bit(value, position):
-    """
+    """Return the digit of the binary representation of the value at the given
+    position, where position 0 is the LSB.
+
     >>> [get_bit(0b1101, position=i) for i in reversed(range(4))]
     [1, 1, 0, 1]
     """
-
     return (value >> position) & 1
 
 
 def reverse_bits(value, bits):
-    """
-    >>> bin(reverse_bits(0b1101, 4))
-    '0b1011'
+    """Return the value obtained by reversing the binary representation.
+
+    >>> '{:04b}'.format(reverse_bits(0b1101, 4))
+    '1011'
     """
     result = 0
     for i in range(bits):
@@ -19,6 +21,19 @@ def reverse_bits(value, bits):
 
 
 def make_poly(value, bits, representation='reversed reciprocal'):
+    """Convert different numerical representations of a polynomial to
+    a canonical ('normal') representation.
+
+    See https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Specification
+    and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
+
+    >>> '{:04b}'.format(make_poly(0b0011, 4, 'normal'))
+    '0011'
+    >>> '{:04b}'.format(make_poly(0b1010, 4, 'reversed'))
+    '0101'
+    >>> '{:04b}'.format(make_poly(0b1100, 4, 'reversed reciprocal'))
+    '1001'
+    """
     if representation == 'normal':
         return value % (2 ** bits)
     elif representation == 'reversed':
@@ -30,12 +45,14 @@ def make_poly(value, bits, representation='reversed reciprocal'):
 
 
 def crc(data, data_bits, poly, poly_bits, init='1'):
-    """
-    >>> poly = make_poly(value=0x62cc, bits=15)
-    >>> crc(data=0x00384c0, data_bits=25, poly=poly, poly_bits=15, init='1')
-    0x007c
-    """
+    """Calculate the CRC value of the data using the given polynomial in normal
+    representation.
 
+    >>> p = make_poly(value=0x62cc, bits=15)  # known as CRC-15-CAN
+    >>> '{:04x}'.format(crc(data=0x00384c0, data_bits=25,
+    ...                     poly=p, poly_bits=15))
+    '007c'
+    """
     if init == '1':
         reg = 2 ** poly_bits - 1
     else:
