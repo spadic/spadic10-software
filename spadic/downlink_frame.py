@@ -29,13 +29,11 @@ def downlink_frame(chip_address, sequence_number, request_type, payload):
 
 
 def split_words(frame):
-    """Split a 40-bit value into 5 bytes (MSB-first).
+    """Generate 5 bytes by splitting the 40-bit frame (MSB-first).
 
     >>> ['{:02x}'.format(w) for w in split_words(0x6789ABCDEF)]
     ['67', '89', 'ab', 'cd', 'ef']
     """
-    def words(frame):
-        for _ in range(5):
-            yield (frame >> 32) % (1 << 8)
-            frame <<= 8
-    return list(words(frame))
+    for _ in range(5):
+        yield (frame >> 32) % (1 << 8)
+        frame <<= 8
