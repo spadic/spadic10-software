@@ -10,6 +10,12 @@ def calc_crc(data):
     return crc.crc(data, data_bits=25, poly=DOWNLINK_CRC_POLY)
 
 
+def has_correct_crc(frame):
+    """Return True iff the 15-bit CRC contained in the 40-bit frame is
+    correct."""
+    return crc.crc(frame, data_bits=40, poly=DOWNLINK_CRC_POLY) == 0
+
+
 def downlink_frame(chip_address, sequence_number, request_type, payload):
     """Calculate the 40-bit downlink frame as a single numeric value.
 
@@ -24,8 +30,10 @@ def downlink_frame(chip_address, sequence_number, request_type, payload):
     data = (data << 4) + sequence_number
     data = (data << 2) + request_type
     data = (data << 15) + payload
-    data = (data << 15) + calc_crc(data)
-    return data
+
+    frame = (data << 15) + calc_crc(data)
+    assert has_correct_crc(frame)
+    return frame
 
 
 def split_words(frame):
