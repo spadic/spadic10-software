@@ -16,16 +16,25 @@ WRITE_LEN = {
 }
 
 
-class FtdiCbmnet(Ftdi.Ftdi):
+class FtdiCbmnet:
     """Wrapper for FTDI <-> CBMnet interface communication."""
+
+    # TODO use proper logging
+    def _debug(self, *text):
+        self._ftdi._debug(*text)
 
     def __init__(self):
         try:
-            Ftdi.Ftdi.__init__(self)
+            self._ftdi = Ftdi.Ftdi()
         except IOError:
             raise
         self._debug_cbmif = False
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self._ftdi.__exit__(*args)
 
     def _cbmif_write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
@@ -53,7 +62,7 @@ class FtdiCbmnet(Ftdi.Ftdi):
             data.append(high)
             data.append(low)
         ftdi_data = header + data
-        self._ftdi_write(ftdi_data)
+        self._ftdi.write(ftdi_data)
 
 
     def _cbmif_read(self):
@@ -68,12 +77,12 @@ class FtdiCbmnet(Ftdi.Ftdi):
 
         Otherwise, it does not block, but return None instead.
         """
-        header = self._ftdi_read(2, max_iter=1)
+        header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
             return None
         
         [addr, num_words] = header
-        data = self._ftdi_read(2*num_words)
+        data = self._ftdi.read(2*num_words)
         words = []
         for i in range(num_words):
             high, low = data[2*i], data[2*i+1]

@@ -144,7 +144,7 @@ class Ftdi:
     #----------------------------------------------------------------
     # data transfer methods
     #----------------------------------------------------------------
-    def _ftdi_write(self, byte_list, max_iter=None):
+    def write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
         if self._debug_ftdi:
             self._debug("[FTDI] write",
@@ -166,7 +166,7 @@ class Ftdi:
         # number of bytes that were written
         return len(byte_list)-len(bytes_left)
 
-    def _ftdi_read(self, num_bytes, max_iter=None):
+    def read(self, num_bytes, max_iter=None):
         """Read data from the FTDI chip."""
         bytes_left = num_bytes
         bytes_read = []
