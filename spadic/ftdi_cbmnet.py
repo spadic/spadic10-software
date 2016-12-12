@@ -36,7 +36,7 @@ class FtdiCbmnet:
     def __exit__(self, *args):
         self._ftdi.__exit__(*args)
 
-    def _cbmif_write(self, addr, words):
+    def write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
         
         addr: Address of the CBMnet send port
@@ -65,7 +65,7 @@ class FtdiCbmnet:
         self._ftdi.write(ftdi_data)
 
 
-    def _cbmif_read(self):
+    def read(self):
         """Access CBMnet receive interface through FTDI read port.
 
         This method tries to read data from the FTDI and reconstruct a
@@ -156,11 +156,11 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     #--------------------------------------------------------------------
     # overwrite the non-threaded user interface
     #--------------------------------------------------------------------
-    def _cbmif_write(self, addr, words):
+    def write(self, addr, words):
         """Write words to the CBMnet send interface."""
         self._send_queue.put((addr, words))
 
-    def _cbmif_read(self):
+    def read(self):
         """Read words from the CBMnet receive interface.
         
         If there was nothing to read, return None.
@@ -208,13 +208,13 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
                 continue
             if task == RD_TASK:
                 try:
-                    (addr, words) = FtdiCbmnet._cbmif_read(self)
+                    (addr, words) = FtdiCbmnet.read(self)
                 except TypeError: # read result is None
                     continue
                 self._recv_queue.put((addr, words))
             elif task == WR_TASK:
                 (addr, words) = self._send_data.get()
-                FtdiCbmnet._cbmif_write(self, addr, words)
+                FtdiCbmnet.write(self, addr, words)
                 self._send_data.task_done()
             if not self._stop.is_set():
                 self._comm_tasks.put(RD_TASK)

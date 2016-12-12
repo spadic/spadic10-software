@@ -13,7 +13,7 @@ RF_WRITE = 1
 RF_READ  = 2
 
 
-class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
+class Spadic:
     """
     Wrapper for CBMnet interface <-> SPADIC communication.
     
@@ -26,11 +26,18 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
     _debug_ftdi  - flag for logging FTDI communication
     _debug_cbmif - flag for logging CBMnet interface communication
     """
+
+    # TODO use proper logging
+    def _debug(self, *text):
+        self._cbmif._debug(*text)
+
     def __init__(self, reset=False, load=None, **kwargs):
         try:
-            ftdi_cbmnet.FtdiCbmnetThreaded.__init__(self)
+            self._cbmif = ftdi_cbmnet.FtdiCbmnetThreaded()
         except IOError:
             raise # TODO enter offline mode
+
+        self._stop = self._cbmif._stop
 
         # here we enforce arguments to be passed as keyword arguments
         debug_kwargs = ['_debug_out', '_debug_ftdi', '_debug_cbmif']
@@ -76,12 +83,15 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
 
         self.readout_enable(1)
 
+    def __enter__(self):
+        self._cbmif.__enter__()
+        return self
 
     def _recv_job(self):
         """Process data received from the CBMnet interface."""
         while not self._stop.is_set():
             try:
-                (addr, words) = self._cbmif_read()
+                (addr, words) = self._cbmif.read()
             except TypeError: # read result is None
                 continue
 
@@ -104,7 +114,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
             return
         if not self._stop.is_set():
             self._stop.set()
-        ftdi_cbmnet.FtdiCbmnetThreaded.__exit__(self)
+        self._cbmif.__exit__(*args)
         self._recv_worker.join()
         # maybe do:
         #while self._recv_worker.is_alive():
@@ -120,7 +130,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         """Write a value into a register."""
         addr = ftdi_cbmnet.ADDR_CTRL
         words = [RF_WRITE, address, value]
-        self._cbmif_write(addr, words)
+        self._cbmif.write(addr, words)
 
     def read_register(self, address, clear_skip=False,
                       request_skip=False, request_only=False):
@@ -135,7 +145,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
                 # End workaround
             addr = ftdi_cbmnet.ADDR_CTRL
             words = [RF_READ, address, 0]
-            self._cbmif_write(addr, words)
+            self._cbmif.write(addr, words)
         if not request_only:
             try:
                 return self._ctrl_queue.get(address, timeout=1)
@@ -150,7 +160,7 @@ class Spadic(ftdi_cbmnet.FtdiCbmnetThreaded):
         """Send a DLM."""
         addr = ftdi_cbmnet.ADDR_DLM
         words = [number]
-        self._cbmif_write(addr, words)
+        self._cbmif.write(addr, words)
 
     def readout_enable(self, enable):
         """Start or stop data taking in the chip."""
