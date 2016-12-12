@@ -106,7 +106,9 @@ class Ftdi:
         if not (ftdi.usb_open(context, self._VID, self._PID) == 0):
             ftdi.free(context)
             raise IOError('could not open USB connection!')
-        ftdi.set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
+        if not ftdi.set_bitmode(context, 0, ftdi.BITMODE_SYNCFF) == 0:
+            ftdi.free(context)
+            raise IOError('Could not set FTDI synchronous FIFO mode.')
         self._context = context
         self._debug("enter")
         return self
