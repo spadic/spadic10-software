@@ -28,6 +28,7 @@ class FtdiCbmnet:
             self._ftdi = Ftdi.Ftdi()
         except IOError:
             raise
+        self._ftdi.__enter__()
 
     def __enter__(self):
         return self

@@ -94,16 +94,21 @@ class Ftdi:
     # connection management methods
     #----------------------------------------------------------------
     def __init__(self, VID=0x0403, PID=0x6010):
+        """Prepare, but don't initialize FTDI context."""
+        self._VID = VID
+        self._PID = PID
+        self._context = None
+        self._debug("init")
+
+    def __enter__(self):
         """Open USB connection and initialize FTDI context."""
         context = ftdi.new()
-        if not (ftdi.usb_open(context, VID, PID) == 0):
+        if not (ftdi.usb_open(context, self._VID, self._PID) == 0):
             ftdi.free(context)
-            self._context = None
             raise IOError('could not open USB connection!')
         ftdi.set_bitmode(context, 0, ftdi.BITMODE_SYNCFF)
         self._context = context
-
-    def __enter__(self):
+        self._debug("enter")
         return self
 
     def __exit__(self, *args):
@@ -118,24 +123,29 @@ class Ftdi:
 
     def purge(self):
         """Purge all FTDI buffers."""
-        if self._context is not None:
-            ftdi.usb_purge_buffers(self._context)
+        if not self._context:
+            raise RuntimeError('FTDI context not initialized.')
+        ftdi.usb_purge_buffers(self._context)
         
     def reset(self):
         """Reset the FTDI chip."""
-        if self._context is not None:
-            ftdi.usb_reset(self._context)
+        if not self._context:
+            raise RuntimeError('FTDI context not initialized.')
+        ftdi.usb_reset(self._context)
 
     def reconnect(self):
         """Close and re-open FTDI connection."""
         self.__exit__()
-        self.__init__()
+        self.__enter__()
 
     #----------------------------------------------------------------
     # data transfer methods
     #----------------------------------------------------------------
     def write(self, byte_list, max_iter=None):
         """Write data to the FTDI chip."""
+        if not self._context:
+            raise RuntimeError('FTDI context not initialized.')
+
         self._debug("write",
                     "[%s]"%(" ".join("%02X" % b for b in byte_list)))
         bytes_left = byte_list
@@ -157,6 +167,9 @@ class Ftdi:
 
     def read(self, num_bytes, max_iter=None):
         """Read data from the FTDI chip."""
+        if not self._context:
+            raise RuntimeError('FTDI context not initialized.')
+
         bytes_left = num_bytes
         bytes_read = []
         iter_left = max_iter
