@@ -27,9 +27,14 @@ WNOP = sum((v & m) for (v, m) in [message.preamble['wINF'],
                                   message.infotype['iNOP']])
 
 
-class SpadicServer(Spadic):
+class SpadicServer:
+    # TODO use proper logging
+    def _debug(self, *text):
+        self._spadic._debug(*text)
+
     def __init__(self, reset=False, load=None, port_base=None, **kwargs):
-        Spadic.__init__(self, reset, load, **kwargs)
+        self._spadic = Spadic(reset, load, **kwargs)
+        self._stop = self._spadic._stop
 
         def _run_gen(cls, *args, **kwargs):
             with cls(*args, **kwargs) as serv:
@@ -42,19 +47,19 @@ class SpadicServer(Spadic):
             debug = None
 
         def _run_rf_server():
-            _run_gen(SpadicRFServer, self._registerfile, port_base, debug)
+            _run_gen(SpadicRFServer, self._spadic._registerfile, port_base, debug)
 
         def _run_sr_server():
-            _run_gen(SpadicSRServer, self._shiftregister, port_base, debug)
+            _run_gen(SpadicSRServer, self._spadic._shiftregister, port_base, debug)
 
         def _run_dlm_server():
-            _run_gen(SpadicDLMServer, self.send_dlm, port_base, debug)
+            _run_gen(SpadicDLMServer, self._spadic.send_dlm, port_base, debug)
 
         def _run_dataA_server():
-            _run_gen(SpadicDataServer, "A", self.read_groupA, port_base, debug)
+            _run_gen(SpadicDataServer, "A", self._spadic.read_groupA, port_base, debug)
 
         def _run_dataB_server():
-            _run_gen(SpadicDataServer, "B", self.read_groupB, port_base, debug)
+            _run_gen(SpadicDataServer, "B", self._spadic.read_groupB, port_base, debug)
 
         self._rf_server = threading.Thread(name="RF server")
         self._rf_server.run = _run_rf_server
@@ -81,9 +86,12 @@ class SpadicServer(Spadic):
         self._dataB_server.daemon = True
         self._dataB_server.start()
 
+    def __enter__(self):
+        self._spadic.__enter__()
+        return self
 
     def __exit__(self, *args):
-        Spadic.__exit__(self)
+        self._spadic.__exit__(*args)
         if not self._stop.is_set():
             self._stop.set()
         for s in [self._rf_server, self._sr_server, self._dlm_server,
