@@ -26,32 +26,43 @@ class FtdiCbmnet:
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
+    def __init__(self):
+        try:
+            self._ftdi = Ftdi.Ftdi()
+        except IOError:
+            raise
+        self._ftdi.__enter__()
+
+        self._send_queue = Queue.Queue()
+        self._comm_tasks = Queue.PriorityQueue()
+        self._send_data = Queue.Queue()
+        self._recv_queue = Queue.Queue()
+        self._setup_threads()
+        self._start_threads()
+
+    def __del__(self):
+        self.__exit__()
+
     def __enter__(self):
         return self
 
-    def _write(self, addr, words):
-        """Access CBMnet send interface through FTDI write port.
-        
-        addr: Address of the CBMnet send port
-        words: List of 16-bit words to be sent
+    def __exit__(self, *args):
+        """Bring all threads to halt."""
+        self._stop_threads()
+        self._ftdi.__exit__(*args)
 
-        This method builds a data packet for the CBMnet send interface and
-        transfers the individual bytes in the correct order through the
-        FTDI write port.
+
+    def read(self):
+        """Read words from the CBMnet receive interface.
+
+        If there was nothing to read, return None.
         """
-        if addr not in WRITE_LEN:
-            raise ValueError("Cannot write to this CBMnet port.")
-        if len(words) != WRITE_LEN[addr]:
-            raise ValueError("Wrong number of words for this CBMnet port.")
-
-        self._debug("write", "%i,"%addr,
-                    "[%s]"%(" ".join("%X"%w for w in words)))
-
-        header = struct.pack('BB', addr, len(words))
-        data = struct.pack('>%dH' % len(words), *words)
-        ftdi_data = header + data
-        self._ftdi.write(ftdi_data)
-
+        try:
+            (addr, words) = self._recv_queue.get(timeout=0.1)
+        except Queue.Empty:
+            return None
+        self._recv_queue.task_done()
+        return (addr, words)
 
     def _read(self):
         """Access CBMnet receive interface through FTDI read port.
@@ -78,49 +89,37 @@ class FtdiCbmnet:
 
         return (addr, words)
 
-    def __init__(self):
-        try:
-            self._ftdi = Ftdi.Ftdi()
-        except IOError:
-            raise
-        self._ftdi.__enter__()
-
-        self._send_queue = Queue.Queue()
-        self._comm_tasks = Queue.PriorityQueue()
-        self._send_data = Queue.Queue()
-        self._recv_queue = Queue.Queue()
-        self._setup_threads()
-        self._start_threads()
-
-    def __del__(self):
-        self.__exit__()
-
-
-    #--------------------------------------------------------------------
-    # support "with" statement -> __exit__ is guaranteed to be called
-    #--------------------------------------------------------------------
-    def __exit__(self, *args):
-        """Bring all threads to halt."""
-        self._stop_threads()
-        self._ftdi.__exit__(*args)
-
 
     def write(self, addr, words):
         """Write words to the CBMnet send interface."""
         self._send_queue.put((addr, words))
 
-    def read(self):
-        """Read words from the CBMnet receive interface.
-        
-        If there was nothing to read, return None.
-        """
-        try:
-            (addr, words) = self._recv_queue.get(timeout=0.1)
-        except Queue.Empty:
-            return None
-        self._recv_queue.task_done()
-        return (addr, words)
+    def _write(self, addr, words):
+        """Access CBMnet send interface through FTDI write port.
 
+        addr: Address of the CBMnet send port
+        words: List of 16-bit words to be sent
+
+        This method builds a data packet for the CBMnet send interface and
+        transfers the individual bytes in the correct order through the
+        FTDI write port.
+        """
+        if addr not in WRITE_LEN:
+            raise ValueError("Cannot write to this CBMnet port.")
+        if len(words) != WRITE_LEN[addr]:
+            raise ValueError("Wrong number of words for this CBMnet port.")
+
+        self._debug("write", "%i,"%addr,
+                    "[%s]"%(" ".join("%X"%w for w in words)))
+
+        header = struct.pack('BB', addr, len(words))
+        data = struct.pack('>%dH' % len(words), *words)
+        ftdi_data = header + data
+        self._ftdi.write(ftdi_data)
+
+    #--------------------------------------------------------------------
+    # support "with" statement -> __exit__ is guaranteed to be called
+    #--------------------------------------------------------------------
 
     #--------------------------------------------------------------------
     # The following methods are run in separate threads and connect
