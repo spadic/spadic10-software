@@ -86,7 +86,7 @@ class Spadic:
     def _dataA_job(self):
         """Process dataA received from the CBMnet interface."""
         while not self._stop.is_set():
-            words = self._cbmif.read(ftdi_cbmnet.ADDR_DATA_A)
+            words = self._cbmif.read_data(lane=0)
             if not words:
                 continue
             for m in self._dataA_splitter(words):
@@ -95,7 +95,7 @@ class Spadic:
     def _dataB_job(self):
         """Process dataB received from the CBMnet interface."""
         while not self._stop.is_set():
-            words = self._cbmif.read(ftdi_cbmnet.ADDR_DATA_B)
+            words = self._cbmif.read_data(lane=1)
             if not words:
                 continue
             for m in self._dataB_splitter(words):
@@ -104,7 +104,7 @@ class Spadic:
     def _ctrl_job(self):
         """Process control response received from the CBMnet interface."""
         while not self._stop.is_set():
-            words = self._cbmif.read(ftdi_cbmnet.ADDR_CTRL)
+            words = self._cbmif.read_ctrl()
             if not words:
                 continue
             reg_addr, reg_val = words
@@ -129,9 +129,8 @@ class Spadic:
     #----------------------------------------------------------------
     def write_register(self, address, value):
         """Write a value into a register."""
-        addr = ftdi_cbmnet.ADDR_CTRL
         words = [RF_WRITE, address, value]
-        self._cbmif.write(addr, words)
+        self._cbmif.write_ctrl(words)
 
     def read_register(self, address, clear_skip=False,
                       request_skip=False, request_only=False):
@@ -144,9 +143,8 @@ class Spadic:
                 # sure to get the newest value.
                 self._ctrl_queue.clear(address)
                 # End workaround
-            addr = ftdi_cbmnet.ADDR_CTRL
             words = [RF_READ, address, 0]
-            self._cbmif.write(addr, words)
+            self._cbmif.write_ctrl(words)
         if not request_only:
             try:
                 return self._ctrl_queue.get(address, timeout=1)
@@ -159,9 +157,8 @@ class Spadic:
     #----------------------------------------------------------------
     def send_dlm(self, number):
         """Send a DLM."""
-        addr = ftdi_cbmnet.ADDR_DLM
         words = [number]
-        self._cbmif.write(addr, words)
+        self._cbmif.write_command(words)
 
     def readout_enable(self, enable):
         """Start or stop data taking in the chip."""

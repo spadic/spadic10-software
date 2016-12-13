@@ -218,13 +218,21 @@ class FtdiCbmnet:
         self._demux.__exit__()
         self._debug('exit')
 
-    def write(self, addr, words):
-        """Write words to the CBMnet send interface."""
-        self._demux.write(addr, words)
+    def write_ctrl(self, words):
+        """Write words to the control port of the CBMnet send interface."""
+        self._demux.write(ADDR_CTRL, words)
 
-    def read(self, addr, timeout=1):
-        """Read words from the CBMnet receive interface.
+    def write_command(self, words):
+        """Write words to the command port of the CBMnet send interface."""
+        self._demux.write(ADDR_DLM, words)
 
-        If there was nothing to read, return None.
+    def read_data(self, lane, timeout=1):
+        """Read words from the CBMnet data receive interface at the given lane
+        number.
         """
+        addr = [ADDR_DATA_A, ADDR_DATA_B][lane]
         return self._demux.read(addr, timeout)
+
+    def read_ctrl(self, timeout=1):
+        """Read words from the CBMnet control receive interface."""
+        return self._demux.read(ADDR_CTRL, timeout)
