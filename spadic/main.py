@@ -32,7 +32,7 @@ class Spadic:
         except IOError:
             raise # TODO enter offline mode
 
-        self._stop = self._cbmif._stop
+        self._stop = threading.Event()
 
         self.readout_enable(0)
 
