@@ -102,24 +102,24 @@ class FtdiCbmnet:
 
     def __init__(self):
         self._interface = FtdiCbmnetInterface()
-        self._interface.__enter__()
         self._send_queue = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
         self._send_data = Queue.Queue()
         self._recv_queue = Queue.Queue()
         self._setup_threads()
-        self._start_threads()
+        self._debug('init')
 
     def __enter__(self):
+        self._interface.__enter__()
+        self._start_threads()
+        self._debug('enter')
         return self
-
-    def __del__(self):
-        self.__exit__()
 
     def __exit__(self, *args):
         """Bring all threads to halt."""
         self._stop_threads()
         self._interface.__exit__()
+        self._debug('exit')
 
     #--------------------------------------------------------------------
     # overwrite the non-threaded user interface
