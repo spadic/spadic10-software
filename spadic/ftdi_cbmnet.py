@@ -1,16 +1,21 @@
 import Ftdi
+from collections import namedtuple
 import struct
 import threading, Queue
 import time
 
+# CBMnet interface packet consisting of
+# addr: Address of the CBMnet send port
+# words: List of 16-bit words
+FtdiCbmnetPacket = namedtuple('FtdiCbmnetPacket', 'addr words')
 
-# CBMnet port addresses
+# CBMnet interface port addresses
 ADDR_DLM    = 0
 ADDR_CTRL   = 1
 ADDR_DATA_A = 2
 ADDR_DATA_B = 3
 
-# writable CBMnet ports and appropriate number of words
+# writable CBMnet interface ports and appropriate number of words
 WRITE_LEN = {
   ADDR_DLM : 1,
   ADDR_CTRL: 3
@@ -40,41 +45,27 @@ class FtdiCbmnetInterface:
         self._ftdi.__exit__(*args)
         self._debug('exit')
 
-    def write(self, addr, words):
-        """Access CBMnet send interface through FTDI write port.
-
-        addr: Address of the CBMnet send port
-        words: List of 16-bit words to be sent
-
-        This method builds a data packet for the CBMnet send interface and
-        transfers the individual bytes in the correct order through the
-        FTDI write port.
-        """
-        if addr not in WRITE_LEN:
+    def write(self, packet):
+        """Write a packet to the CBMnet send interface."""
+        if packet.addr not in WRITE_LEN:
             raise ValueError('Cannot write to this CBMnet port.')
-        if len(words) != WRITE_LEN[addr]:
+        if len(packet.words) != WRITE_LEN[packet.addr]:
             raise ValueError('Wrong number of words for this CBMnet port.')
 
-        self._debug('write', '%i,' % addr,
-                    '[%s]' % (' '.join('%04X' % w for w in words)))
+        self._debug('write', '%i,' % packet.addr,
+                    '[%s]' % (' '.join('%04X' % w for w in packet.words)))
 
-        header = struct.pack('BB', addr, len(words))
-        data = struct.pack('>%dH' % len(words), *words)
+        header = struct.pack('BB', packet.addr, len(packet.words))
+        data = struct.pack('>%dH' % len(packet.words), *packet.words)
         ftdi_data = header + data
         self._ftdi.write(ftdi_data)
 
 
     def read(self):
-        """Access CBMnet receive interface through FTDI read port.
+        """Read a packet from the CBMnet receive interface.
 
-        This method tries to read data from the FTDI and reconstruct a
-        packet from the CBMnet receive interface.
-
-        If successful, it returns a tuple (addr, words):
-        addr: Address of the CBMnet receive port
-        words: List of received 16-bit words
-
-        Otherwise, it does not block, but return None instead.
+        If successful, return an FtdiCbmnetPacket instance.
+        Otherwise, return None.
         """
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
@@ -87,7 +78,7 @@ class FtdiCbmnetInterface:
         self._debug('read', '%i,' % addr,
                     '[%s]' % (' '.join('%04X' % w for w in words)))
 
-        return addr, words
+        return FtdiCbmnetPacket(addr, words)
 
 
 WR_TASK = 0 # lower value -> higher priority
@@ -128,7 +119,7 @@ class FtdiCbmnet:
     #--------------------------------------------------------------------
     def write(self, addr, words):
         """Write words to the CBMnet send interface."""
-        self._send_queue.put((addr, words))
+        self._send_queue.put(FtdiCbmnetPacket(addr, words))
 
     def read(self, addr, timeout=1):
         """Read words from the CBMnet receive interface.
@@ -156,10 +147,10 @@ class FtdiCbmnet:
         """Process objects in the send queue."""
         while not self._stop.is_set() or not self._send_queue.empty():
             try:
-                (addr, words) = self._send_queue.get(timeout=0.1)
+                packet = self._send_queue.get(timeout=0.1)
             except Queue.Empty:
                 continue
-            self._send_data.put((addr, words))
+            self._send_data.put(packet)
             self._comm_tasks.put(WR_TASK)
             self._send_queue.task_done()
 
@@ -178,13 +169,13 @@ class FtdiCbmnet:
                 continue
             if task == RD_TASK:
                 try:
-                    (addr, words) = self._interface.read()
-                except TypeError: # read result is None
+                    addr, words = self._interface.read()
+                except TypeError: # result is None
                     continue
                 self._recv_queue[addr].put(words)
             elif task == WR_TASK:
-                (addr, words) = self._send_data.get()
-                self._interface.write(addr, words)
+                packet = self._send_data.get()
+                self._interface.write(packet)
                 self._send_data.task_done()
             if not self._stop.is_set():
                 self._comm_tasks.put(RD_TASK)
