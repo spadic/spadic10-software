@@ -39,7 +39,7 @@ class FtdiCbmnet:
 
     def write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
-        
+
         addr: Address of the CBMnet send port
         words: List of 16-bit words to be sent
 
@@ -48,12 +48,12 @@ class FtdiCbmnet:
         FTDI write port.
         """
         if addr not in WRITE_LEN:
-            raise ValueError("Cannot write to this CBMnet port.")
+            raise ValueError('Cannot write to this CBMnet port.')
         if len(words) != WRITE_LEN[addr]:
-            raise ValueError("Wrong number of words for this CBMnet port.")
+            raise ValueError('Wrong number of words for this CBMnet port.')
 
-        self._debug("write", "%i,"%addr,
-                    "[%s]"%(" ".join("%X"%w for w in words)))
+        self._debug('write', '%i,' % addr,
+                    '[%s]' % (' '.join('%04X' % w for w in words)))
 
         header = struct.pack('BB', addr, len(words))
         data = struct.pack('>%dH' % len(words), *words)
@@ -76,19 +76,19 @@ class FtdiCbmnet:
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
             return None
-        
-        [addr, num_words] = struct.unpack('BB', header)
-        data = self._ftdi.read(2*num_words)
+
+        addr, num_words = struct.unpack('BB', header)
+        data = self._ftdi.read(2 * num_words)
         words = struct.unpack('>%dH' % num_words, data)
 
-        self._debug("read", "%i,"%addr,
-                    "[%s]"%(" ".join("%X"%w for w in words)))
+        self._debug('read', '%i,' % addr,
+                    '[%s]' % (' '.join('%04X' % w for w in words)))
 
-        return (addr, words)
+        return addr, words
 
 
-WR_TASK = 0 # higher priority
-RD_TASK = 1 # lower priority
+WR_TASK = 0 # lower value -> higher priority
+RD_TASK = 1 # higher value -> lower priority
 
 class FtdiCbmnetThreaded(FtdiCbmnet):
     """FTDI <-> CBMnet interface communication with threads."""
@@ -108,15 +108,10 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def __del__(self):
         self.__exit__()
 
-
-    #--------------------------------------------------------------------
-    # support "with" statement -> __exit__ is guaranteed to be called
-    #--------------------------------------------------------------------
     def __exit__(self, *args):
         """Bring all threads to halt."""
         self._stop_threads()
         FtdiCbmnet.__exit__(self)
-
 
     #--------------------------------------------------------------------
     # overwrite the non-threaded user interface
@@ -127,7 +122,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
 
     def read(self):
         """Read words from the CBMnet receive interface.
-        
+
         If there was nothing to read, return None.
         """
         try:
@@ -136,7 +131,6 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
             return None
         self._recv_queue.task_done()
         return (addr, words)
-
 
     #--------------------------------------------------------------------
     # The following methods are run in separate threads and connect
@@ -163,7 +157,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         while not self._stop.is_set():
             self._comm_tasks.put(RD_TASK)
             time.sleep(0.1)
-                
+
     def _comm_job(self):
         """Process write/read tasks and put data in the receive queue."""
         while not self._stop.is_set() or not self._comm_tasks.empty():
@@ -188,11 +182,11 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def _setup_threads(self):
         self._stop = threading.Event()
 
-        names = ["send worker", "read worker", "comm worker"]
+        names = ['send worker', 'read worker', 'comm worker']
         jobs = [self._send_job, self._read_job, self._comm_job]
         self._threads = {n: threading.Thread(name=n) for n in names}
 
-        for (name, job) in zip(names, jobs):
+        for name, job in zip(names, jobs):
             t = self._threads[name]
             t.run = job
             t.daemon = True
@@ -200,7 +194,7 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
     def _start_threads(self):
         for t in self._threads.values():
             t.start()
-            self._debug(t.name, "started")
+            self._debug(t.name, 'started')
 
     def _stop_threads(self):
         if not self._stop.is_set():
@@ -208,4 +202,4 @@ class FtdiCbmnetThreaded(FtdiCbmnet):
         for t in self._threads.values():
             while t.is_alive():
                 t.join(timeout=1)
-            self._debug(t.name, "finished")
+            self._debug(t.name, 'finished')
