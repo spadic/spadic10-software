@@ -53,7 +53,14 @@ class FtdiCbmnet:
 
 
     def read(self, addr, timeout=1):
-        """Access CBMnet receive interface through FTDI read port."""
+        """Access CBMnet receive interface through FTDI read port.
+
+        addr: Address of the CBMnet receive port
+
+        Return value:
+        List of received 16-bit unsigned integer values, if available.
+        Otherwise, None.
+        """
         q = self._recv_queue[addr]
         try:
             words = q.get(timeout=timeout)
@@ -63,17 +70,6 @@ class FtdiCbmnet:
         return words
 
     def _read(self):
-        """Access CBMnet receive interface through FTDI read port.
-
-        This method tries to read data from the FTDI and reconstruct a
-        packet from the CBMnet receive interface.
-
-        If successful, it returns a tuple (addr, words):
-        addr: Address of the CBMnet receive port
-        words: List of received 16-bit words
-
-        Otherwise, it does not block, but return None instead.
-        """
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
             return None
@@ -89,19 +85,14 @@ class FtdiCbmnet:
 
 
     def write(self, addr, words):
-        """Write words to the CBMnet send interface."""
-        self._send_queue.put((addr, words))
-
-    def _write(self, addr, words):
         """Access CBMnet send interface through FTDI write port.
 
         addr: Address of the CBMnet send port
-        words: List of 16-bit words to be sent
-
-        This method builds a data packet for the CBMnet send interface and
-        transfers the individual bytes in the correct order through the
-        FTDI write port.
+        words: list of 16-bit unsigned integer values to be sent
         """
+        self._send_queue.put((addr, words))
+
+    def _write(self, addr, words):
         if addr not in WRITE_LEN:
             raise ValueError("Cannot write to this CBMnet port.")
         if len(words) != WRITE_LEN[addr]:
@@ -116,12 +107,11 @@ class FtdiCbmnet:
         self._ftdi.write(ftdi_data)
 
     #--------------------------------------------------------------------
-    # The following methods are run in separate threads and connect
-    # overwritten user interface methods to the original methods.
+    # The following methods are run in separate threads.
     #
-    # The read operation is triggered by three sources:
-    # - after each write operation
-    # - after each successful read operation
+    # The FTDI read operation is triggered by three sources:
+    # - after each FTDI write operation
+    # - after each successful FTDI read operation
     # - periodically every 0.1 seconds
     #--------------------------------------------------------------------
     def _send_job(self):
@@ -140,9 +130,9 @@ class FtdiCbmnet:
         while not self._stop.is_set():
             self._comm_tasks.put(RD_TASK)
             time.sleep(0.1)
-                
+
     def _comm_job(self):
-        """Process write/read tasks and put data in the receive queue."""
+        """Process write/read tasks and sort received data into queues."""
         while not self._stop.is_set() or not self._comm_tasks.empty():
             try:
                 task = self._comm_tasks.get(timeout=0.1)
