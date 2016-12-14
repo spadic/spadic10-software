@@ -3,7 +3,6 @@ import struct
 import threading, Queue
 import time
 
-
 # CBMnet port addresses
 ADDR_DLM    = 0
 ADDR_CTRL   = 1
@@ -29,12 +28,11 @@ class FtdiCbmnet:
     def __init__(self):
         """Prepare FTDI connection and threads."""
         self._ftdi = Ftdi.Ftdi()
-
         self._send_queue = Queue.Queue()
+        self._send_data = Queue.Queue()
         self._comm_tasks = Queue.PriorityQueue()
         self._recv_queue = {addr: Queue.Queue()
                             for addr in (ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL)}
-        self._send_data = Queue.Queue()
         self._setup_threads()
         self._debug('init')
 
@@ -73,13 +71,13 @@ class FtdiCbmnet:
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
             return None
-        
-        [addr, num_words] = struct.unpack('BB', header)
-        data = self._ftdi.read(2*num_words)
+
+        addr, num_words = struct.unpack('BB', header)
+        data = self._ftdi.read(2 * num_words)
         words = struct.unpack('>%dH' % num_words, data)
 
-        self._debug("read", "%i,"%addr,
-                    "[%s]"%(" ".join("%X"%w for w in words)))
+        self._debug('read', '%i,' % addr,
+                    '[%s]' % (' '.join('%04X' % w for w in words)))
 
         return (addr, words)
 
@@ -94,12 +92,12 @@ class FtdiCbmnet:
 
     def _write(self, addr, words):
         if addr not in WRITE_LEN:
-            raise ValueError("Cannot write to this CBMnet port.")
+            raise ValueError('Cannot write to this CBMnet port.')
         if len(words) != WRITE_LEN[addr]:
-            raise ValueError("Wrong number of words for this CBMnet port.")
+            raise ValueError('Wrong number of words for this CBMnet port.')
 
-        self._debug("write", "%i,"%addr,
-                    "[%s]"%(" ".join("%X"%w for w in words)))
+        self._debug('write', '%i,' % addr,
+                    '[%s]' % (' '.join('%04X' % w for w in words)))
 
         header = struct.pack('BB', addr, len(words))
         data = struct.pack('>%dH' % len(words), *words)
@@ -155,7 +153,7 @@ class FtdiCbmnet:
     def _setup_threads(self):
         self._stop = threading.Event()
 
-        names = ["send worker", "read worker", "comm worker"]
+        names = ['send worker', 'read worker', 'comm worker']
         jobs = [self._send_job, self._read_job, self._comm_job]
         self._threads = {n: threading.Thread(name=n) for n in names}
 
@@ -167,7 +165,7 @@ class FtdiCbmnet:
     def _start_threads(self):
         for t in self._threads.values():
             t.start()
-            self._debug(t.name, "started")
+            self._debug(t.name, 'started')
 
     def _stop_threads(self):
         if not self._stop.is_set():
@@ -175,4 +173,4 @@ class FtdiCbmnet:
         for t in self._threads.values():
             while t.is_alive():
                 t.join(timeout=1)
-            self._debug(t.name, "finished")
+            self._debug(t.name, 'finished')
