@@ -91,8 +91,6 @@ class Spadic:
         self._ctrl_worker.start()
 
     def _stop_threads(self):
-        if not hasattr(self, '_stop'):
-            return
         if not self._stop.is_set():
             self._stop.set()
         for t in [self._dataA_worker, self._dataB_worker, self._ctrl_worker]:
