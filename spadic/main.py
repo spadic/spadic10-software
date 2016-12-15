@@ -29,34 +29,16 @@ class Spadic:
     def __init__(self, reset=False, load=None, **kwargs):
         self._cbmif = ftdi_cbmnet.FtdiCbmnet()
 
-        self._stop = threading.Event()
-
         self.readout_enable(0)
 
-        # message splitters and output queues for groups A and B
         self._dataA_splitter = MessageSplitter()
         self._dataB_splitter = MessageSplitter()
         self._dataA_queue = queue.Queue()
         self._dataB_queue = queue.Queue()
-
-        # register read result Queue (indexable)
         self._ctrl_queue = IndexQueue()
 
-        # data reader threads
-        self._dataA_worker = threading.Thread(name="dataA worker")
-        self._dataA_worker.run = self._dataA_job
-        self._dataA_worker.daemon = True
-        self._dataA_worker.start()
-
-        self._dataB_worker = threading.Thread(name="dataB worker")
-        self._dataB_worker.run = self._dataB_job
-        self._dataB_worker.daemon = True
-        self._dataB_worker.start()
-
-        self._ctrl_worker = threading.Thread(name="ctrl worker")
-        self._ctrl_worker.run = self._ctrl_job
-        self._ctrl_worker.daemon = True
-        self._ctrl_worker.start()
+        self._setup_threads()
+        self._start_threads()
 
         # higher level register file access
         def rf_write_gen(name, addr):
@@ -82,6 +64,42 @@ class Spadic:
     def __enter__(self):
         self._cbmif.__enter__()
         return self
+
+    def __exit__(self, *args):
+        self._stop_threads()
+        self._cbmif.__exit__(*args)
+
+
+    def _setup_threads(self):
+        self._stop = threading.Event()
+
+        self._dataA_worker = threading.Thread(name="dataA worker")
+        self._dataA_worker.run = self._dataA_job
+        self._dataA_worker.daemon = True
+
+        self._dataB_worker = threading.Thread(name="dataB worker")
+        self._dataB_worker.run = self._dataB_job
+        self._dataB_worker.daemon = True
+
+        self._ctrl_worker = threading.Thread(name="ctrl worker")
+        self._ctrl_worker.run = self._ctrl_job
+        self._ctrl_worker.daemon = True
+
+    def _start_threads(self):
+        self._dataA_worker.start()
+        self._dataB_worker.start()
+        self._ctrl_worker.start()
+
+    def _stop_threads(self):
+        if not hasattr(self, '_stop'):
+            return
+        if not self._stop.is_set():
+            self._stop.set()
+        for t in [self._dataA_worker, self._dataB_worker, self._ctrl_worker]:
+            while t.is_alive():
+                t.join(timeout=1)
+            self._debug("[main]", t.name, "finished")
+
 
     def _dataA_job(self):
         """Process dataA received from the CBMnet interface."""
@@ -109,19 +127,6 @@ class Spadic:
                 continue
             reg_addr, reg_val = words
             self._ctrl_queue.put(reg_addr, reg_val)
-
-
-    def __exit__(self, *args):
-        """Bring all threads to halt."""
-        if not hasattr(self, '_stop'):
-            return
-        if not self._stop.is_set():
-            self._stop.set()
-        self._cbmif.__exit__(*args)
-        for t in [self._dataA_worker, self._dataB_worker, self._ctrl_worker]:
-            while t.is_alive():
-                t.join(timeout=1)
-            self._debug("[main]", t.name, "finished")
 
 
     #----------------------------------------------------------------
