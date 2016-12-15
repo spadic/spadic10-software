@@ -5,11 +5,7 @@ import logging
 import sys
 import time
 
-try:
-    from spadic import SpadicServer
-except ImportError:
-    raise SystemExit("Could not import SpadicServer. "
-                     "Do you have libFTDI installed properly?")
+from spadic import SpadicServer
 
 #--------------------------------------------------------------------
 # parse options
