@@ -47,9 +47,9 @@ if LIBFTDI_OLD:
 # If we have the older version, we have to redefine the method:
 if LIBFTDI_OLD:
     def read_data(context, size):
-        buf = '\x00' * size
+        buf = b'\x00' * size
         code = ftdi.ftdi_read_data(context, buf, size)
-        result = '' if code < 0 else buf
+        result = b'' if code < 0 else buf
         return [code, result]
     # here we are lucky that the names have changed...
     ftdi.read_data = read_data
