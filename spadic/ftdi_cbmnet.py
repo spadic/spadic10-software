@@ -1,73 +1,72 @@
 import Ftdi
+from collections import namedtuple
 import struct
 import threading, Queue
 import time
 
-# CBMnet port addresses
+# CBMnet interface packet consisting of
+# addr: Address of the CBMnet send port
+# words: List of 16-bit words
+FtdiCbmnetPacket = namedtuple('FtdiCbmnetPacket', 'addr words')
+
+# CBMnet interface port addresses
 ADDR_DLM    = 0
 ADDR_CTRL   = 1
 ADDR_DATA_A = 2
 ADDR_DATA_B = 3
 
-# writable CBMnet ports and appropriate number of words
+# writable CBMnet interface ports and appropriate number of words
 WRITE_LEN = {
   ADDR_DLM : 1,
   ADDR_CTRL: 3
 }
 
-WR_TASK = 0 # lower value -> higher priority
-RD_TASK = 1 # higher value -> lower priority
 
-class FtdiCbmnet:
-    """Wrapper for FTDI <-> CBMnet interface communication."""
+class FtdiCbmnetInterface:
+    """Representation of the FTDI <-> CBMnet interface."""
 
     from util import log as _log
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self):
-        """Prepare FTDI connection and threads."""
+        """Prepare FTDI connection."""
         self._ftdi = Ftdi.Ftdi()
-        self._send_queue = Queue.Queue()
-        self._send_data = Queue.Queue()
-        self._comm_tasks = Queue.PriorityQueue()
-        self._recv_queue = {addr: Queue.Queue()
-                            for addr in (ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL)}
-        self._setup_threads()
         self._debug('init')
 
     def __enter__(self):
-        """Open FTDI connection and start threads."""
+        """Open FTDI connection."""
         self._ftdi.__enter__()
-        self._start_threads()
         self._debug('enter')
         return self
 
     def __exit__(self, *args):
-        """Close FTDI connection and stop threads."""
-        self._stop_threads()
+        """Close FTDI connection."""
         self._ftdi.__exit__(*args)
         self._debug('exit')
 
+    def write(self, packet):
+        """Write a packet to the CBMnet send interface."""
+        packet = FtdiCbmnetPacket(*packet)
+        if packet.addr not in WRITE_LEN:
+            raise ValueError('Cannot write to this CBMnet port.')
+        if len(packet.words) != WRITE_LEN[packet.addr]:
+            raise ValueError('Wrong number of words for this CBMnet port.')
 
-    def read(self, addr, timeout=1):
-        """Access CBMnet receive interface through FTDI read port.
+        self._debug('write', '%i,' % packet.addr,
+                    '[%s]' % (' '.join('%04X' % w for w in packet.words)))
 
-        addr: Address of the CBMnet receive port
+        header = struct.pack('BB', packet.addr, len(packet.words))
+        data = struct.pack('>%dH' % len(packet.words), *packet.words)
+        ftdi_data = header + data
+        self._ftdi.write(ftdi_data)
 
-        Return value:
-        List of received 16-bit unsigned integer values, if available.
-        Otherwise, None.
+    def read(self):
+        """Read a packet from the CBMnet receive interface.
+
+        If successful, return an FtdiCbmnetPacket instance.
+        Otherwise, return None.
         """
-        q = self._recv_queue[addr]
-        try:
-            words = q.get(timeout=timeout)
-        except Queue.Empty:
-            return None
-        q.task_done()
-        return words
-
-    def _read(self):
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
             return None
@@ -79,47 +78,67 @@ class FtdiCbmnet:
         self._debug('read', '%i,' % addr,
                     '[%s]' % (' '.join('%04X' % w for w in words)))
 
-        return (addr, words)
+        return FtdiCbmnetPacket(addr, words)
 
 
-    def write(self, addr, words):
-        """Access CBMnet send interface through FTDI write port.
+WR_TASK = 0 # lower value -> higher priority
+RD_TASK = 1 # higher value -> lower priority
 
-        addr: Address of the CBMnet send port
-        words: list of 16-bit unsigned integer values to be sent
+class StreamDemultiplexer:
+    """Adaptor to convert an interface where (key, value) tuples are read and
+    written sequentially to an interface where values are read from or written
+    to individual keys.
+    """
+
+    from util import log as _log
+    def _debug(self, *text):
+        self._log.info(' '.join(text)) # TODO use proper log levels
+
+    def __init__(self, interface, keys):
+        self._interface = interface
+        self._send_queue = Queue.Queue()
+        self._comm_tasks = Queue.PriorityQueue()
+        self._recv_queue = {key: Queue.Queue() for key in keys}
+        self._send_data = Queue.Queue()
+        self._setup_threads()
+        self._debug('init')
+
+    def __enter__(self):
+        self._interface.__enter__()
+        self._start_threads()
+        self._debug('enter')
+        return self
+
+    def __exit__(self, *args):
+        self._stop_threads()
+        self._interface.__exit__()
+        self._debug('exit')
+
+    def write(self, key, value):
+        """Write the value to the given key."""
+        self._send_queue.put((key, value))
+
+    def read(self, key, timeout=1):
+        """Read a value from the given key.
+
+        If there was nothing to read, return None.
         """
-        self._send_queue.put((addr, words))
+        q = self._recv_queue[key]
+        try:
+            value = q.get(timeout=timeout)
+        except Queue.Empty:
+            return None
+        q.task_done()
+        return value
 
-    def _write(self, addr, words):
-        if addr not in WRITE_LEN:
-            raise ValueError('Cannot write to this CBMnet port.')
-        if len(words) != WRITE_LEN[addr]:
-            raise ValueError('Wrong number of words for this CBMnet port.')
-
-        self._debug('write', '%i,' % addr,
-                    '[%s]' % (' '.join('%04X' % w for w in words)))
-
-        header = struct.pack('BB', addr, len(words))
-        data = struct.pack('>%dH' % len(words), *words)
-        ftdi_data = header + data
-        self._ftdi.write(ftdi_data)
-
-    #--------------------------------------------------------------------
-    # The following methods are run in separate threads.
-    #
-    # The FTDI read operation is triggered by three sources:
-    # - after each FTDI write operation
-    # - after each successful FTDI read operation
-    # - periodically every 0.1 seconds
-    #--------------------------------------------------------------------
     def _send_job(self):
-        """Process objects in the send queue."""
+        """Process items in the send queue."""
         while not self._stop.is_set() or not self._send_queue.empty():
             try:
-                (addr, words) = self._send_queue.get(timeout=0.1)
+                item = self._send_queue.get(timeout=0.1)
             except Queue.Empty:
                 continue
-            self._send_data.put((addr, words))
+            self._send_data.put(item)
             self._comm_tasks.put(WR_TASK)
             self._send_queue.task_done()
 
@@ -130,7 +149,7 @@ class FtdiCbmnet:
             time.sleep(0.1)
 
     def _comm_job(self):
-        """Process write/read tasks and sort received data into queues."""
+        """Process write/read tasks and put values in the receive queue."""
         while not self._stop.is_set() or not self._comm_tasks.empty():
             try:
                 task = self._comm_tasks.get(timeout=0.1)
@@ -138,13 +157,13 @@ class FtdiCbmnet:
                 continue
             if task == RD_TASK:
                 try:
-                    addr, words = self._read()
-                except TypeError: # read result is None
+                    key, value = self._interface.read()
+                except TypeError: # result is None
                     continue
-                self._recv_queue[addr].put(words)
+                self._recv_queue[key].put(value)
             elif task == WR_TASK:
-                (addr, words) = self._send_data.get()
-                self._write(addr, words)
+                item = self._send_data.get()
+                self._interface.write(item)
                 self._send_data.task_done()
             if not self._stop.is_set():
                 self._comm_tasks.put(RD_TASK)
@@ -157,7 +176,7 @@ class FtdiCbmnet:
         jobs = [self._send_job, self._read_job, self._comm_job]
         self._threads = {n: threading.Thread(name=n) for n in names}
 
-        for (name, job) in zip(names, jobs):
+        for name, job in zip(names, jobs):
             t = self._threads[name]
             t.run = job
             t.daemon = True
@@ -174,3 +193,46 @@ class FtdiCbmnet:
             while t.is_alive():
                 t.join(timeout=1)
             self._debug(t.name, 'finished')
+
+
+class FtdiCbmnet:
+    """Representation of the CBMnet interface over FTDI."""
+
+    from util import log as _log
+    def _debug(self, *text):
+        self._log.info(' '.join(text)) # TODO use proper log levels
+
+    def __init__(self):
+        self._demux = StreamDemultiplexer(
+            interface=FtdiCbmnetInterface(),
+            keys=[ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL]
+        )
+        self._debug('init')
+
+    def __enter__(self):
+        self._demux.__enter__()
+        self._debug('enter')
+        return self
+
+    def __exit__(self, *args):
+        self._demux.__exit__()
+        self._debug('exit')
+
+    def write_ctrl(self, words):
+        """Write words to the control port of the CBMnet send interface."""
+        self._demux.write(ADDR_CTRL, words)
+
+    def write_command(self, words):
+        """Write words to the command port of the CBMnet send interface."""
+        self._demux.write(ADDR_DLM, words)
+
+    def read_data(self, lane, timeout=1):
+        """Read words from the CBMnet data receive interface at the given lane
+        number.
+        """
+        addr = [ADDR_DATA_A, ADDR_DATA_B][lane]
+        return self._demux.read(addr, timeout)
+
+    def read_ctrl(self, timeout=1):
+        """Read words from the CBMnet control receive interface."""
+        return self._demux.read(ADDR_CTRL, timeout)
