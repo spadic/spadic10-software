@@ -73,27 +73,23 @@ class Spadic:
     def _setup_threads(self):
         self._stop = threading.Event()
 
-        self._dataA_worker = threading.Thread(name="dataA worker")
-        self._dataA_worker.run = self._dataA_job
-        self._dataA_worker.daemon = True
+        names = ['dataA worker', 'dataB worker', 'ctrl worker']
+        jobs = [self._dataA_job, self._dataB_job, self._ctrl_job]
+        self._threads = {n: threading.Thread(name=n) for n in names}
 
-        self._dataB_worker = threading.Thread(name="dataB worker")
-        self._dataB_worker.run = self._dataB_job
-        self._dataB_worker.daemon = True
-
-        self._ctrl_worker = threading.Thread(name="ctrl worker")
-        self._ctrl_worker.run = self._ctrl_job
-        self._ctrl_worker.daemon = True
+        for name, job in zip(names, jobs):
+            t = self._threads[name]
+            t.run = job
+            t.daemon = True
 
     def _start_threads(self):
-        self._dataA_worker.start()
-        self._dataB_worker.start()
-        self._ctrl_worker.start()
+        for t in self._threads.values():
+            t.start()
 
     def _stop_threads(self):
         if not self._stop.is_set():
             self._stop.set()
-        for t in [self._dataA_worker, self._dataB_worker, self._ctrl_worker]:
+        for t in self._threads.values():
             while t.is_alive():
                 t.join(timeout=1)
             self._debug(t.name, 'finished')
