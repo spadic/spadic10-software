@@ -1,14 +1,14 @@
 import curses
 import mutti
-from base import SpadicToggle
-from adcbias import AdcBiasFrame
-from channelgroup import ChannelSettingsFrame
-from dlmtrigger import DlmTriggerFrame
-from filter import FilterFrame
-from frontend import FrontendFrame
-from hitlogic import HitLogicFrame
-from led import LedFrame
-from monitor import MonitorFrame
+from .base import SpadicToggle
+from .adcbias import AdcBiasFrame
+from .channelgroup import ChannelSettingsFrame
+from .dlmtrigger import DlmTriggerFrame
+from .filter import FilterFrame
+from .frontend import FrontendFrame
+from .hitlogic import HitLogicFrame
+from .led import LedFrame
+from .monitor import MonitorFrame
 
 #--------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 import logging
 import threading
-import Queue
+import queue
 
 
 class IndexQueue:
@@ -12,16 +12,16 @@ class IndexQueue:
     def put(self, key, value):
         with self.data_lock:
             if not key in self.data:
-                self.data[key] = Queue.Queue()
+                self.data[key] = queue.Queue()
         self.data[key].put(value)
 
     def get(self, key, timeout=None):
         with self.data_lock:
             if not key in self.data:
-                self.data[key] = Queue.Queue()
+                self.data[key] = queue.Queue()
         try:
             value = self.data[key].get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             raise IOError("could not read %X" % key)
         return value
 

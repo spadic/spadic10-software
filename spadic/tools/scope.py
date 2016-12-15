@@ -1,7 +1,7 @@
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore
-import Queue
+import queue
 import scipy
 
 
@@ -11,7 +11,7 @@ def mask_to_x(mask):
 
     Example: 0xF -> [28, 29, 30, 31]
     """
-    return [31-i for i in reversed(range(32)) if (mask>>i)&1]
+    return [31-i for i in reversed(list(range(32))) if (mask>>i)&1]
 
 
 class SpadicScope:
@@ -48,7 +48,7 @@ class SpadicScope:
         c.setPen(width=1, color='b')
         self.curve_res = c
         self.curves = []
-        for i in reversed(range(10)):
+        for i in reversed(list(range(10))):
             curve = self.plot.plot(antialias=True)
             if i == 0: # generated last -> on top
                 curve.setPen(width=2, color='r')
@@ -85,7 +85,7 @@ class SpadicScope:
             return a * np.maximum((x-b)*np.exp(-(x-b)/t), 0) + c
 
         popt, _ = scipy.optimize.curve_fit(model, xfit, yfit, p0=[200, 2, -100, 2])
-        print popt
+        print(popt)
         xcorr = popt[1]-x0
         fit = model(x, *popt)
         res = np.array(y)-fit
@@ -96,7 +96,7 @@ class SpadicScope:
         """Display the latest data."""
         try:
             (y, mask) = self.monitor.get_last_data(self.channel, block=False)
-        except Queue.Empty:
+        except queue.Empty:
             return
         x = mask_to_x(mask)[:len(y)]
         newdata = self.correct_jitter((x, y))

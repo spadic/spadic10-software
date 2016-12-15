@@ -1,4 +1,4 @@
-import Queue
+import queue
 import threading
 import time
 
@@ -20,9 +20,9 @@ class SpadicDataMonitor:
         self._period = 1.0/rate
 
         # data, mask, expiration date
-        self.data_buffer = [Queue.Queue() for _ in range(32)]
+        self.data_buffer = [queue.Queue() for _ in range(32)]
         self.data_expires = [-INF for _ in range(32)]
-        self.last_data = [Queue.Queue(maxsize=1) for _ in range(32)]
+        self.last_data = [queue.Queue(maxsize=1) for _ in range(32)]
         self._stop = threading.Event()
         self.groupA_reader = threading.Thread(name="groupA_reader")
         self.groupB_reader = threading.Thread(name="groupB_reader")
@@ -48,7 +48,7 @@ class SpadicDataMonitor:
                 if self.last_data[c].full():
                     try:
                         self.last_data[c].get(block=False)
-                    except Queue.Empty:
+                    except queue.Empty:
                         pass
                 self.last_data[c].put((m.data(), mask))
         return read_group_task

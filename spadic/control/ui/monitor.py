@@ -1,6 +1,6 @@
 import curses.ascii
 import mutti
-from base import SpadicDial, SpadicToggle
+from .base import SpadicDial, SpadicToggle
         
 #--------------------------------------------------------------------
 

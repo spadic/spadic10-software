@@ -1,4 +1,4 @@
-from base import *
+from .base import *
 
 _LED_USERPIN1 = 0
 _LED_USERPIN2 = 0

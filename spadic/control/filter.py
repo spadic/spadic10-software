@@ -1,4 +1,4 @@
-from base import *
+from .base import *
 
 _FILTER_COEFFA = 0
 _FILTER_COEFFB = 0
@@ -77,16 +77,16 @@ class Filter(ControlUnitBase):
             checkvalue(offset, -256, 255, 'offset')
             self._offset = offset
 
-        value_a = sum(c%64 << 6*(i-1) for (i, c) in self._coeffa.iteritems())
+        value_a = sum(c%64 << 6*(i-1) for (i, c) in self._coeffa.items())
         # aCoeffFilter does not contain a value for stage 0 --> (i-1)
         self._registerfile['aCoeffFilter_h'].set(value_a >> 16)
         self._registerfile['aCoeffFilter_l'].set(value_a & 0xFFFF)
 
-        value_b = sum(c%64 << 6*i for (i, c) in self._coeffb.iteritems())
+        value_b = sum(c%64 << 6*i for (i, c) in self._coeffb.items())
         self._registerfile['bCoeffFilter_h'].set(value_b >> 16)
         self._registerfile['bCoeffFilter_l'].set(value_b & 0xFFFF)
 
-        value_enable = sum(en << i for (i, en) in self._enable.iteritems())
+        value_enable = sum(en << i for (i, en) in self._enable.items())
         self._registerfile['bypassFilterStage'].set((~value_enable) % 32)
 
         self._registerfile['offsetFilter'].set(self._offset % 512)

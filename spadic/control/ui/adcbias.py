@@ -1,5 +1,5 @@
 import mutti
-from base import SpadicDial
+from .base import SpadicDial
 
 class AdcBiasFrame(mutti.Frame):
     def __init__(self, spadic_controller, statusbar, _log=None):

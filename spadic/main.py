@@ -1,11 +1,11 @@
-import threading, Queue
-from util import IndexQueue
+import threading, queue
+from .util import IndexQueue
 
-import ftdi_cbmnet
-from message import MessageSplitter, Message
-from registerfile import SpadicRegisterFile
-from shiftregister import SpadicShiftRegister
-from control import SpadicController
+from . import ftdi_cbmnet
+from .message import MessageSplitter, Message
+from .registerfile import SpadicRegisterFile
+from .shiftregister import SpadicShiftRegister
+from .control import SpadicController
 
 
 # CBMnet control port <-> register file read/write commands
@@ -22,7 +22,7 @@ class Spadic:
     load  - name of .spc configuration file to be loaded
     """
 
-    from util import log as _log
+    from .util import log as _log
     def _debug(self, *text):
         self._log.info(' '.join(text))
 
@@ -36,8 +36,8 @@ class Spadic:
         # message splitters and output queues for groups A and B
         self._dataA_splitter = MessageSplitter()
         self._dataB_splitter = MessageSplitter()
-        self._dataA_queue = Queue.Queue()
-        self._dataB_queue = Queue.Queue()
+        self._dataA_queue = queue.Queue()
+        self._dataB_queue = queue.Queue()
 
         # register read result Queue (indexable)
         self._ctrl_queue = IndexQueue()
@@ -173,7 +173,7 @@ class Spadic:
         """Get one message from group A, if available."""
         try:
             data = self._dataA_queue.get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             return None
         return (data if raw else Message(data))
 
@@ -181,7 +181,7 @@ class Spadic:
         """Get one message from group B, if available."""
         try:
             data = self._dataB_queue.get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             return None
         return (data if raw else Message(data))
 

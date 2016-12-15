@@ -1,7 +1,7 @@
-import Ftdi
+from . import Ftdi
 from collections import namedtuple
 import struct
-import threading, Queue
+import threading, queue
 import time
 
 # CBMnet interface packet consisting of
@@ -25,7 +25,7 @@ WRITE_LEN = {
 class FtdiCbmnetInterface:
     """Representation of the FTDI <-> CBMnet interface."""
 
-    from util import log as _log
+    from .util import log as _log
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
@@ -90,16 +90,16 @@ class StreamDemultiplexer:
     to individual keys.
     """
 
-    from util import log as _log
+    from .util import log as _log
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self, interface, keys):
         self._interface = interface
-        self._send_queue = Queue.Queue()
-        self._comm_tasks = Queue.PriorityQueue()
-        self._recv_queue = {key: Queue.Queue() for key in keys}
-        self._send_data = Queue.Queue()
+        self._send_queue = queue.Queue()
+        self._comm_tasks = queue.PriorityQueue()
+        self._recv_queue = {key: queue.Queue() for key in keys}
+        self._send_data = queue.Queue()
         self._setup_threads()
         self._debug('init')
 
@@ -126,7 +126,7 @@ class StreamDemultiplexer:
         q = self._recv_queue[key]
         try:
             value = q.get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             return None
         q.task_done()
         return value
@@ -136,7 +136,7 @@ class StreamDemultiplexer:
         while not self._stop.is_set() or not self._send_queue.empty():
             try:
                 item = self._send_queue.get(timeout=0.1)
-            except Queue.Empty:
+            except queue.Empty:
                 continue
             self._send_data.put(item)
             self._comm_tasks.put(WR_TASK)
@@ -153,13 +153,13 @@ class StreamDemultiplexer:
         while not self._stop.is_set() or not self._comm_tasks.empty():
             try:
                 task = self._comm_tasks.get(timeout=0.1)
-            except Queue.Empty:
+            except queue.Empty:
                 continue
             if task == RD_TASK:
-                try:
-                    key, value = self._interface.read()
-                except TypeError: # result is None
+                item = self._interface.read()
+                if item is None:
                     continue
+                key, value = item
                 self._recv_queue[key].put(value)
             elif task == WR_TASK:
                 item = self._send_data.get()
@@ -182,14 +182,14 @@ class StreamDemultiplexer:
             t.daemon = True
 
     def _start_threads(self):
-        for t in self._threads.values():
+        for t in list(self._threads.values()):
             t.start()
             self._debug(t.name, 'started')
 
     def _stop_threads(self):
         if not self._stop.is_set():
             self._stop.set()
-        for t in self._threads.values():
+        for t in list(self._threads.values()):
             while t.is_alive():
                 t.join(timeout=1)
             self._debug(t.name, 'finished')
@@ -198,7 +198,7 @@ class StreamDemultiplexer:
 class FtdiCbmnet:
     """Representation of the CBMnet interface over FTDI."""
 
-    from util import log as _log
+    from .util import log as _log
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 

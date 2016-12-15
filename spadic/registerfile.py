@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 import threading
 
 #====================================================================
@@ -116,17 +117,23 @@ class Register:
         return self.get()
 
 
-class RegisterFile:
+class RegisterFile(Mapping):
     """Representation of a generic register file."""
 
     def __init__(self, registers):
         """Set up all registers."""
         self._registers = registers
 
-        # emulate dictionary behaviour (read-only)
-        self.__contains__ = self._registers.__contains__
-        self.__iter__     = self._registers.__iter__
-        self.__getitem__  = self._registers.__getitem__
+    # collections.abc.Mapping provides __contains__, keys, items, values, get,
+    # __eq__, and __ne__
+    def __getitem__(self, key):
+        return self._registers.__getitem__(key)
+
+    def __iter__(self):
+        return self._registers.__iter__()
+
+    def __len__(self):
+        return self._registers.__len__()
 
 
     def set(self, config):
@@ -260,7 +267,7 @@ class SpadicRegisterFile(RegisterFile):
         registers = {}
         register_map = register_map or SPADIC_RF
 
-        for (name, (addr, size)) in register_map.iteritems():
+        for (name, (addr, size)) in register_map.items():
             r = Register(size, use_cache)
             r._write = write_gen(name, addr)
             r._read = read_gen(name, addr)

@@ -1,4 +1,4 @@
-from base import *
+from .base import *
 
 #----------------------------------------------------------------
 # Channel-specific settings
@@ -195,19 +195,19 @@ class Digital:
     def reset(self):
         for ch in self.channel:
             ch.reset()
-        for nb in self.neighbor.itervalues():
+        for nb in self.neighbor.values():
             nb.reset()
 
     def apply(self):
         for ch in self.channel:
             ch.apply()
-        for nb in self.neighbor.itervalues():
+        for nb in self.neighbor.values():
             nb.apply()
 
     def update(self):
         for ch in self.channel:
             ch.update()
-        for nb in self.neighbor.itervalues():
+        for nb in self.neighbor.values():
             nb.update()
 
     def __str__(self):
