@@ -92,7 +92,7 @@ USB_ERROR_CODE = {
 class Ftdi:
     """Wrapper for simple FTDI communication."""
 
-    from util import log as _log
+    from .util import log as _log
     def _debug(self, *text):
         self._log.debug(' '.join(text))
 

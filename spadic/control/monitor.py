@@ -1,4 +1,4 @@
-from base import *
+from .base import *
 
 _MON_SOURCE = 1 # ADC=0, CSA=1
 _MON_CHANNEL = 0

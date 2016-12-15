@@ -1,6 +1,6 @@
 import mutti
-from filter import FilterLabel # TODO more generic name...
-from base import SpadicDial, SpadicToggle
+from .filter import FilterLabel # TODO more generic name...
+from .base import SpadicDial, SpadicToggle
 
 class NeighborMatrixToggle(SpadicToggle):
     def __init__(self, source_ch, target_ch, control_unit, *args, **kwargs):
@@ -34,22 +34,22 @@ class ChannelSettingsFrame(mutti.Frame):
         grid = mutti.Grid(num_rows, num_cols)
 
         t, b = 0, upper
-        upper_rows = range(t, b)
+        upper_rows = list(range(t, b))
         t, b = b, b+16
-        channel_rows = range(t, b)
+        channel_rows = list(range(t, b))
         t, b = b, b+lower 
-        lower_rows = range(t, b)
+        lower_rows = list(range(t, b))
 
         l, r = 0, 5
-        setting_cols = range(l, r)
+        setting_cols = list(range(l, r))
         l, r = r, r+col_label
-        label_cols = range(l, r)
+        label_cols = list(range(l, r))
         l, r = r, r+upper
-        neighbor_upper_cols = range(l, r)
+        neighbor_upper_cols = list(range(l, r))
         l, r = r, r+16
-        neighbor_channel_cols = range(l, r)
+        neighbor_channel_cols = list(range(l, r))
         l, r = r, r+lower
-        neighbor_lower_cols = range(l, r)
+        neighbor_lower_cols = list(range(l, r))
 
         g = self.group
         # channel settings

@@ -1,13 +1,13 @@
 import gzip
 import os
 
-from led import Led
-from hitlogic import HitLogic
-from filter import Filter
-from monitor import Monitor
-from frontend import Frontend
-from adcbias import AdcBias
-from digital import Digital
+from .led import Led
+from .hitlogic import HitLogic
+from .filter import Filter
+from .monitor import Monitor
+from .frontend import Frontend
+from .adcbias import AdcBias
+from .digital import Digital
 
 AUTOSAVE_FILE = "/tmp/spadic/spadic_autosave.spc"
 
@@ -68,12 +68,12 @@ class SpadicController:
 
     def reset(self):
         """Reset all control units."""
-        for unit in self._units.itervalues():
+        for unit in self._units.values():
             unit.reset()
 
     def apply(self):
         """Update register values from control units and write RF/SR."""
-        for unit in self._units.itervalues():
+        for unit in self._units.values():
             unit.apply()
 
     def update(self):
@@ -81,12 +81,12 @@ class SpadicController:
         # do this first, it is faster
         self.registerfile.update()
         self.shiftregister.update()
-        for unit in self._units.itervalues():
+        for unit in self._units.values():
             unit.update()
 
     def __str__(self):
         return '\n\n'.join(frame(name)+'\n'+str(unit)
-                           for (name, unit) in self._units.iteritems())
+                           for (name, unit) in self._units.items())
 
     def save(self, filename=None, compress=True):
         filename = filename or AUTOSAVE_FILE
@@ -124,7 +124,7 @@ class SpadicController:
             ln += fmtnumber(self.shiftregister[name].get(), sz)
             srlines.append(ln)
         lines += sorted(srlines, key=str.lower)
-        print >> f, '\n'.join(lines)
+        print('\n'.join(lines), file=f)
 
     def load(self, filename):
         fopen = gzip.open if filename.endswith('.gz') else open

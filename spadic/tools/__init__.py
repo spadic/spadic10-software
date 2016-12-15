@@ -1,5 +1,5 @@
-from monitor import SpadicDataMonitor
-from scope import SpadicScope
+from .monitor import SpadicDataMonitor
+from .scope import SpadicScope
 
 del monitor
 del scope

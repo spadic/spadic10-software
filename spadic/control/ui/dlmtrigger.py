@@ -1,5 +1,5 @@
 import mutti
-from base import SpadicToggle
+from .base import SpadicToggle
 
 class DlmTriggerFrame(mutti.Frame):
     def __init__(self, spadic_controller, statusbar, _log=None):

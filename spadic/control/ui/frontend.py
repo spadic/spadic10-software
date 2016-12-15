@@ -1,7 +1,7 @@
 import curses
 import curses.ascii
 import mutti
-from base import SpadicDial, SpadicToggle
+from .base import SpadicDial, SpadicToggle
 
 class FrontendToggle(SpadicToggle):
     def __init__(self, xfbpanel, *args, **kwargs):

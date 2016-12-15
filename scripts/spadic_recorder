@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example script to record data from SPADIC 1.0 to stdout.
@@ -7,7 +7,7 @@ Uses SpadicDataMonitor as convenience layer to access the data, instead of
 creating a SpadicDataClient directly.
 """
 
-import Queue
+import queue
 import sys
 
 # import like this to save space in with-statements...
@@ -39,7 +39,7 @@ def stdout(d):
 def record(monitor, channel, num, ctrl_client, dlm_trigger=False):
     try:
         pulse, mask = monitor.get_last_data(channel, block=False)
-    except Queue.Empty:
+    except queue.Empty:
         pass
     # now any old data is gone
     pulses = []
@@ -93,5 +93,5 @@ if __name__=='__main__':
     # "pulses", you can do whatever you want with it. Here we simply write
     # the data to stdout (one pulse per line).
     for p in pulses:
-        print ' '.join([str(x) for x in p])
+        print(' '.join([str(x) for x in p]))
     

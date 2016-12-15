@@ -4,15 +4,15 @@ import socket
 import struct
 import threading
 import time
-import Queue
+import queue
 
-from util import IndexQueue
-from control import SpadicController
-from control.ui import SpadicControlUI
-from message import MessageSplitter, Message
-from registerfile import SpadicRegisterFile
-from server_ports import PORT_BASE, PORT_OFFSET
-from shiftregister import SPADIC_SR
+from .util import IndexQueue
+from .control import SpadicController
+from .control.ui import SpadicControlUI
+from .message import MessageSplitter, Message
+from .registerfile import SpadicRegisterFile
+from .server_ports import PORT_BASE, PORT_OFFSET
+from .shiftregister import SPADIC_SR
 
 
 # inheritance tree:
@@ -72,7 +72,7 @@ class BaseRegisterClient(BaseReceiveClient):
 
     def _update_cache(self, register_values):
         self._cache.update({name: (value, time.time()+self._expires)
-                            for (name, value) in register_values.iteritems()})
+                            for (name, value) in register_values.items()})
 
     def write_registers(self, register_values):
         """
@@ -118,7 +118,7 @@ class BaseRegisterClient(BaseReceiveClient):
                     registers = json.loads(chunk)
                 except ValueError:
                     continue
-                for (name, value) in registers.iteritems():
+                for (name, value) in registers.items():
                     self._recv_queue.put(name, value)
 
 
@@ -180,7 +180,7 @@ class SpadicControlClient:
         # we only have to override the default register map using SPADIC_SR.
         # format: {name: (address, size), ...}, (address not used here)
         sr_map = {name: (0, len(bits))
-                  for (name, bits) in SPADIC_SR.iteritems()}
+                  for (name, bits) in SPADIC_SR.items()}
         self._shiftregister = SpadicRegisterFile(
                                   gen_write_gen(self.sr_client),
                                   gen_read_gen(self.sr_client),
@@ -217,7 +217,7 @@ class SpadicControlClient:
 class SpadicDataClient(BaseReceiveClient):
     def __init__(self, group, server_address, port_base=None):
         BaseReceiveClient.__init__(self)
-        self._recv_queue = Queue.Queue()
+        self._recv_queue = queue.Queue()
         self._splitter = MessageSplitter()
 
         if not group in 'aAbB':
@@ -229,7 +229,7 @@ class SpadicDataClient(BaseReceiveClient):
     def read_message(self, timeout=1, raw=False):
         try:
             data = self._recv_queue.get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             return None
         return (data if raw else Message(data))
 

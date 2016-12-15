@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import socket
@@ -50,5 +50,5 @@ except:
     if full_error:
         raise
     else:
-        sys.exit(sys.exc_value)
+        sys.exit(sys.exc_info()[1])
 

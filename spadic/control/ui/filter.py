@@ -1,6 +1,6 @@
 import curses
 import mutti
-from base import SpadicDial, SpadicToggle
+from .base import SpadicDial, SpadicToggle
 
 #--------------------------------------------------------------------
 
@@ -92,7 +92,7 @@ class FilterFrame(mutti.Frame):
         self.control_panels.append(d)
         grid.adopt(d, 1, 5)
 
-        for (col, w) in zip(range(1, 1+5), [5, 5, 5, 5, 15]):
+        for (col, w) in zip(list(range(1, 1+5)), [5, 5, 5, 5, 15]):
             i = col-1
             d = EnableStage(i, u, "enable",
                             ("Stage %i" % i) if i<4 else "Scaling/Offset",

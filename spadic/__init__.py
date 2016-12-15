@@ -5,8 +5,8 @@ __all__ = []
 # installed, this will fail, but we allow the spadic package to be
 # imported without them.
 try:
-    from main import Spadic
-    from server import SpadicServer
+    from .main import Spadic
+    from .server import SpadicServer
     del main
     del server
     __all__ += ['Spadic', 'SpadicServer']
@@ -16,7 +16,7 @@ except ImportError:
 # Move the clients from their module namespace to the top-level spadic
 # package namespace. They don't need libFTDI and will be available in any
 # case.
-from client import SpadicControlClient, SpadicDataClient
+from .client import SpadicControlClient, SpadicDataClient
 del client
 __all__ += ['SpadicControlClient', 'SpadicDataClient']
 

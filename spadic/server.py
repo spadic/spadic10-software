@@ -5,9 +5,9 @@ import struct
 import threading
 import time
 
-from main import Spadic
-from util import InfiniteSemaphore
-import message
+from .main import Spadic
+from .util import InfiniteSemaphore
+from . import message
 
 
 # inheritance tree:
@@ -21,14 +21,14 @@ import message
 #    SpadicRFServer  SpadicSRServer
 
 
-from server_ports import PORT_BASE, PORT_OFFSET
+from .server_ports import PORT_BASE, PORT_OFFSET
 
 WNOP = sum((v & m) for (v, m) in [message.preamble['wINF'],
                                   message.infotype['iNOP']])
 
 
 class SpadicServer:
-    from util import log as _log
+    from .util import log as _log
     def _debug(self, *text):
         self._log.info(' '.join(map(str, text)))
 

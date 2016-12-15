@@ -260,7 +260,7 @@ class SpadicRegisterFile(RegisterFile):
         registers = {}
         register_map = register_map or SPADIC_RF
 
-        for (name, (addr, size)) in register_map.iteritems():
+        for (name, (addr, size)) in register_map.items():
             r = Register(size, use_cache)
             r._write = write_gen(name, addr)
             r._read = read_gen(name, addr)

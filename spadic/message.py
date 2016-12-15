@@ -1,5 +1,6 @@
-def match_word(word, (value, mask)):
+def match_word(word, xxx_todo_changeme):
     """Test if a part of a word matches a given value."""
+    (value, mask) = xxx_todo_changeme
     return word & mask == value
 
 
