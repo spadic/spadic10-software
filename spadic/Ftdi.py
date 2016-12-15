@@ -172,7 +172,7 @@ class Ftdi:
         while bytes_left:
             if iter_left == 0:
                 break
-            n = ftdi.write_data(self._context, bytes_left, len(bytes_left))
+            n = ftdi.write_data(self._context, bytes_left)
             if n < 0:
                 raise IOError('USB write error (error code %i: %s)'
                               % (n, USB_ERROR_CODE.get(n, 'unknown')))
