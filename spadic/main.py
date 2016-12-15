@@ -65,16 +65,19 @@ class SpadicCbmnetRegisterAccess:
         """Read the value from a register."""
         if not request_skip:
             if not clear_skip:
-                # Workaround for retransmit bug in SPADIC 1.0 CBMnet:
-                # Sometimes old register reads are retransmitted -> Clear
-                # software read buffer before sending the read request to be
-                # sure to get the newest value.
-                self._ctrl_queue.clear(address)
-                # End workaround
+                self._retransmit_workaround(address)
             words = [type(self).READ, address, 0]
             self._cbmnet.write_ctrl(words)
         if not request_only:
             return self._ctrl_queue.get(address, timeout=1)
+
+    def _retransmit_workaround(self, address):
+        """Workaround for the retransmit bug in SPADIC 1.0 CBMnet.
+
+        Sometimes old register reads are retransmitted. Clear the read buffer
+        before sending the read request to be sure to get the newest value.
+        """
+        self._ctrl_queue.clear(address)
 
 
 class Spadic:
