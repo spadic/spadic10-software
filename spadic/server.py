@@ -34,7 +34,7 @@ class SpadicServer:
 
     def __init__(self, reset=False, load=None, port_base=None, **kwargs):
         self._spadic = Spadic(reset, load, **kwargs)
-        self._stop = self._spadic._stop
+        self._stop = threading.Event()
 
         def _run_gen(cls, *args, **kwargs):
             with cls(*args, **kwargs) as serv:
@@ -107,7 +107,6 @@ class BaseServer:
         self.sem_conn = (
             InfiniteSemaphore() if self.max_connections is None
             else threading.BoundedSemaphore(self.max_connections))
-        self._stop = None # needs to be overwritten by a threading.Event()
         if not _debug_func:
             def _debug_func(*args):
                 pass
