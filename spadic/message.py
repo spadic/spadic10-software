@@ -1,3 +1,7 @@
+import logging
+import queue
+import threading
+
 def match_word(word, xxx_todo_changeme):
     """Test if a part of a word matches a given value."""
     (value, mask) = xxx_todo_changeme
@@ -97,7 +101,7 @@ hittype_str = {
 #--------------------------------------------------------------------
 # split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
-class MessageSplitter:
+class _MessageSplitter:
     """Splits a stream of message words into individual messages."""
     def __init__(self):
         self._remainder = []
@@ -266,4 +270,62 @@ class Message():
     #                        for (x, y) in zip(t, self.data))
 
 
+class MessageSplitter:
+    """Split messages from received words in the background."""
 
+    def _debug(self, *text):
+        logger = logging.getLogger(self.__class__.__name__ + 'AB'[self._lane])
+        logger.info(' '.join(text))
+
+    def __init__(self, backend, lane):
+        self._backend = backend
+        self._lane = lane
+        self._splitter = _MessageSplitter()
+        self._queue = queue.Queue()
+        self._setup_thread()
+
+    def __enter__(self):
+        self._start_thread()
+        return self
+
+    def __exit__(self, *args):
+        self._stop_thread()
+
+    def _setup_thread(self):
+        self._stop = threading.Event()
+        name = 'data{} worker'.format('AB'[self._lane])
+        self._thread = threading.Thread(name=name)
+        self._thread.run = self._split_job
+        self._thread.daemon = True
+
+    def _start_thread(self):
+        self._thread.start()
+
+    def _stop_thread(self):
+        if not self._stop.is_set():
+            self._stop.set()
+        while self._thread.is_alive():
+            self._thread.join(timeout=1)
+        self._debug(self._thread.name, 'finished')
+
+    def _split_job(self):
+        """Give received words the message splitter, put resulting messages
+        into the output queue."""
+        while not self._stop.is_set():
+            words = self._backend.read_data(lane=self._lane)
+            if not words:
+                continue
+            for m in self._splitter(words):
+                self._queue.put(m)
+
+    def read_message(self, timeout=1, raw=False):
+        """Return one message from the output queue, if available.
+
+        Resulting value is a Message object, or the corresponding list of words
+        if the `raw` flag is set.
+        """
+        try:
+            data = self._queue.get(timeout=timeout)
+        except queue.Empty:
+            return None
+        return (data if raw else Message(data))

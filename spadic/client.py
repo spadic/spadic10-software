@@ -9,7 +9,7 @@ import queue
 from .util import IndexQueue
 from .control import SpadicController
 from .control.ui import SpadicControlUI
-from .message import MessageSplitter, Message
+from .message import _MessageSplitter, Message
 from .registerfile import SpadicRegisterFile
 from .server_ports import PORT_BASE, PORT_OFFSET
 from .shiftregister import SPADIC_SR
@@ -224,7 +224,7 @@ class SpadicDataClient(BaseReceiveClient):
     def __init__(self, group, server_address, port_base=None):
         BaseReceiveClient.__init__(self)
         self._recv_queue = queue.Queue()
-        self._splitter = MessageSplitter()
+        self._splitter = _MessageSplitter()
 
         if not group in 'aAbB':
             raise ValueError
