@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 # In this module, the "binary representation" of an n-bit number will be a
 # string of '0' and '1' characters, with the MSB at position 0 (to the
 # left) and the LSB at position n-1 (to the right).
@@ -74,7 +76,7 @@ class ShiftRegisterEntry:
         return self.get()
 
 
-class ShiftRegister:
+class ShiftRegister(Mapping):
     """Representation of a generic shift register."""
 
     def __init__(self, length, register_map):
@@ -91,10 +93,16 @@ class ShiftRegister:
         self._last_bits = None
         self._known = False
 
-        # emulate dictionary behaviour (read-only)
-        self.__contains__ = self._registers.__contains__
-        self.__iter__     = self._registers.__iter__
-        self.__getitem__  = self._registers.__getitem__
+    # collections.abc.Mapping provides __contains__, keys, items, values, get,
+    # __eq__, and __ne__
+    def __getitem__(self, key):
+        return self._registers.__getitem__(key)
+
+    def __iter__(self):
+        return self._registers.__iter__()
+
+    def __len__(self):
+        return self._registers.__len__()
 
 
     def _write(self, bits):
