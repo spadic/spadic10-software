@@ -81,9 +81,8 @@ class SpadicCbmnetRegisterAccess:
 
 
 class Spadic:
-    """
-    Wrapper for CBMnet interface <-> SPADIC communication.
-    
+    """Representation of a SPADIC chip.
+
     Arguments:
     reset - flag for initial reset of the chip configuration
     load  - name of .spc configuration file to be loaded
@@ -147,7 +146,7 @@ class Spadic:
         """Start or stop data taking in the chip."""
         dlm = 8 if enable else 9
         self.send_dlm(dlm)
-        
+
 
     #----------------------------------------------------------------
     # read messages from groups A and B
