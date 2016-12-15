@@ -96,7 +96,7 @@ class SpadicController:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         fopen = gzip.open if compress else open
-        with fopen(filename, 'w') as f:
+        with fopen(filename, 'wt') as f:
             self._save(f)
 
     def _save(self, f=None, nonzero=False):
@@ -128,7 +128,7 @@ class SpadicController:
 
     def load(self, filename):
         fopen = gzip.open if filename.endswith('.gz') else open
-        with fopen(filename) as f:
+        with fopen(filename, 'rt') as f:
             self._load(f)
 
     def _load(self, f):

@@ -189,8 +189,8 @@ class BaseServer:
 
 class BaseRequestServer(BaseServer):
     def _serve_job(self, connection):
-        buf = ''
-        p = re.compile('\n')
+        buf = b''
+        p = re.compile(b'\n')
         while not self._stop.is_set():
             # TODO this cannot be aborted until data is received
             # if the connection was closed, '' is returned
@@ -207,13 +207,13 @@ class BaseRequestServer(BaseServer):
                 i = m.end()
                 chunk, data = data[:i], data[i:]
                 try:
-                    decoded = json.loads(chunk)
+                    decoded = json.loads(str(chunk, 'utf-8'))
                 except ValueError:
                     continue
                 try:
                     response = self.process(decoded)
                     if response:
-                        connection.sendall(response)
+                        connection.sendall(bytes(response, 'utf-8'))
                     self._debug("processed", decoded)
                 except:
                     self._debug("failed to process", decoded)

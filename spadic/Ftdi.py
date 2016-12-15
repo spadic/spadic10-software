@@ -157,7 +157,7 @@ class Ftdi:
     @_require_context
     def write(self, byte_str, max_iter=None):
         """
-        Write a sequence of bytes (encoded as a string) to the FTDI chip.
+        Write a sequence of bytes to the FTDI chip.
 
         `max_iter`: Maximum number of retries, should not all the data
             be written at once. `None` means unlimited retries.
@@ -166,7 +166,7 @@ class Ftdi:
         of `byte_str`).
         """
         self._debug("write",
-                    "[%s]"%(" ".join("%02X" % ord(b) for b in byte_str)))
+                    "[%s]"%(" ".join("%02X" % b for b in byte_str)))
         bytes_left = byte_str
         iter_left = max_iter
         while bytes_left:
@@ -196,7 +196,7 @@ class Ftdi:
         `num_bytes`).
         """
         bytes_left = num_bytes
-        bytes_read = ''
+        bytes_read = b''
         iter_left = max_iter
         while bytes_left:
             if iter_left == 0:
@@ -212,5 +212,5 @@ class Ftdi:
                 iter_left -= 1
         if bytes_read:
             self._debug("read",
-                        "[%s]"%(" ".join("%02X" % ord(b) for b in bytes_read)))
+                        "[%s]"%(" ".join("%02X" % b for b in bytes_read)))
         return bytes_read

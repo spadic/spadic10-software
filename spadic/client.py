@@ -80,7 +80,9 @@ class BaseRegisterClient(BaseReceiveClient):
 
         register_values must be a dictionary {name: value, ...}
         """
-        self.socket.sendall(json.dumps(['w', register_values])+'\n')
+        self.socket.sendall(bytes(
+            json.dumps(['w', register_values]) + '\n',
+            'utf-8'))
         self._update_cache(register_values)
 
     def read_registers(self, registers):
@@ -93,14 +95,16 @@ class BaseRegisterClient(BaseReceiveClient):
                   if (not name in self._cache or
                       time.time() > self._cache[name][1])]
         if needed:
-            self.socket.sendall(json.dumps(['r', needed])+'\n')
+            self.socket.sendall(bytes(
+                json.dumps(['r', needed]) + '\n',
+                'utf-8'))
             read = {name: self._recv_queue.get(name) for name in needed}
             self._update_cache(read)
         return {name: self._cache[name][0] for name in registers}
 
     def _recv_job(self):
-        buf = ''
-        p = re.compile('\n')
+        buf = b''
+        p = re.compile(b'\n')
         while not self._stop.is_set():
             try:
                 received = self.socket.recv(1024)
@@ -115,7 +119,7 @@ class BaseRegisterClient(BaseReceiveClient):
                 i = m.end()
                 chunk, data = data[:i], data[i:]
                 try:
-                    registers = json.loads(chunk)
+                    registers = json.loads(str(chunk, 'utf-8'))
                 except ValueError:
                     continue
                 for (name, value) in registers.items():
@@ -134,7 +138,9 @@ class SpadicDLMClient(BaseClient):
     port_offset = PORT_OFFSET["DLM"]
 
     def send_dlm(self, value):
-        self.socket.sendall(json.dumps(value)+'\n')
+        self.socket.sendall(bytes(
+            json.dumps(value) + '\n',
+            'utf-8'))
 
 #--------------------------------------------------------------------
 
