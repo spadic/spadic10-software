@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 import threading
 import queue
@@ -6,21 +7,18 @@ import queue
 class IndexQueue:
     "Thread-safe dictionary-like (used for register file reading)."
     def __init__(self):
-        self.data = {}
-        self.data_lock = threading.Lock()
+        self.data = defaultdict(queue.Queue)
+        self.create_queue_lock = threading.Lock()
 
     def put(self, key, value):
-        with self.data_lock:
-            if not key in self.data:
-                self.data[key] = queue.Queue()
-        self.data[key].put(value)
+        with self.create_queue_lock:
+            self.data[key].put(value)
 
     def get(self, key, timeout=None):
-        with self.data_lock:
-            if not key in self.data:
-                self.data[key] = queue.Queue()
+        with self.create_queue_lock:
+            q = self.data[key]
         try:
-            value = self.data[key].get(timeout=timeout)
+            value = q.get(timeout=timeout)
         except queue.Empty:
             raise IOError("could not read %X" % key)
         return value
