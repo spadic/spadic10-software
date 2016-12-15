@@ -74,10 +74,7 @@ class SpadicCbmnetRegisterAccess:
             words = [type(self).READ, address, 0]
             self._cbmnet.write_ctrl(words)
         if not request_only:
-            try:
-                return self._ctrl_queue.get(address, timeout=1)
-            except IOError:
-                raise
+            return self._ctrl_queue.get(address, timeout=1)
 
 
 class Spadic:
