@@ -47,7 +47,7 @@ if LIBFTDI_OLD:
 # If we have the older version, we have to redefine the method:
 if LIBFTDI_OLD:
     def read_data(context, size):
-        buf = '\x00'*size
+        buf = '\x00' * size
         code = ftdi.ftdi_read_data(context, buf, size)
         result = '' if code < 0 else buf
         return [code, result]
@@ -104,7 +104,7 @@ class Ftdi:
         self._VID = VID
         self._PID = PID
         self._context = None
-        self._debug("init")
+        self._debug('init')
 
     def __enter__(self):
         """Open USB connection and initialize FTDI context."""
@@ -116,7 +116,7 @@ class Ftdi:
             ftdi.free(context)
             raise IOError('Could not set FTDI synchronous FIFO mode.')
         self._context = context
-        self._debug("enter")
+        self._debug('enter')
         return self
 
     def __exit__(self, *args):
@@ -126,7 +126,7 @@ class Ftdi:
         if self._context:
             ftdi.free(self._context)
             # free -> deinit -> usb_close_internal -> usb_close
-        self._debug("exit")
+        self._debug('exit')
 
     def _require_context(function):
         @wraps(function)
@@ -155,19 +155,18 @@ class Ftdi:
     # data transfer methods
     #----------------------------------------------------------------
     @_require_context
-    def write(self, byte_str, max_iter=None):
-        """
-        Write a sequence of bytes to the FTDI chip.
+    def write(self, data, max_iter=None):
+        """Write data (a bytes object) to the FTDI chip.
 
         `max_iter`: Maximum number of retries, should not all the data
             be written at once. `None` means unlimited retries.
 
-        Returns the number of bytes written (can be less than the length
-        of `byte_str`).
+        Return the number of bytes written (can be less than the length
+        of `data`).
         """
-        self._debug("write",
-                    "[%s]"%(" ".join("%02X" % b for b in byte_str)))
-        bytes_left = byte_str
+        self._debug('write',
+                    '[%s]' % (' '.join('%02X' % byte for byte in data)))
+        bytes_left = data
         iter_left = max_iter
         while bytes_left:
             if iter_left == 0:
@@ -180,20 +179,18 @@ class Ftdi:
             if iter_left is not None:
                 iter_left -= 1
         # number of bytes that were written
-        return len(byte_str) - len(bytes_left)
+        return len(data) - len(bytes_left)
 
     @_require_context
     def read(self, num_bytes, max_iter=None):
-        """
-        Read a sequence of bytes (encoded as a string) from the FTDI chip.
+        """Read data from the FTDI chip.
 
         `num_bytes`: Requested number of bytes to read.
         `max_iter`: Maximum number of retries, should the requested
             number of bytes not be available at once. `None` means
             unlimited retries.
 
-        Returns the read bytes encoded as a string (can be fewer than
-        `num_bytes`).
+        Return a bytes object (its length can be less than `num_bytes`).
         """
         bytes_left = num_bytes
         bytes_read = b''
@@ -211,6 +208,6 @@ class Ftdi:
             if iter_left is not None:
                 iter_left -= 1
         if bytes_read:
-            self._debug("read",
-                        "[%s]"%(" ".join("%02X" % b for b in bytes_read)))
+            self._debug('read',
+                        '[%s]' % (' '.join('%02X' % b for b in bytes_read)))
         return bytes_read
