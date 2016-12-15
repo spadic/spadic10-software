@@ -215,7 +215,7 @@ class BaseRequestServer(BaseServer):
                     if response:
                         connection.sendall(bytes(response, 'utf-8'))
                     self._debug("processed", decoded)
-                except:
+                except: # TODO this masks bugs, handle only specific exceptions
                     self._debug("failed to process", decoded)
                     continue # don't crash on invalid input
 

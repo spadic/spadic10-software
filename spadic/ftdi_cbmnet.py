@@ -156,10 +156,10 @@ class StreamDemultiplexer:
             except queue.Empty:
                 continue
             if task == RD_TASK:
-                try:
-                    key, value = self._interface.read()
-                except TypeError: # result is None
+                item = self._interface.read()
+                if item is None:
                     continue
+                key, value = item
                 self._recv_queue[key].put(value)
             elif task == WR_TASK:
                 item = self._send_data.get()
