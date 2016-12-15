@@ -57,7 +57,7 @@
 
 ## Requirements:
 
-* Python 2.7 or newer (but not Python 3.x)
+* Python 3.x  (x = ?)
 
 
 * libFTDI v0.20 or newer with Python bindings
