@@ -245,7 +245,7 @@ class SpadicDataClient(BaseReceiveClient):
                 received = self.socket.recv(1024)
             except socket.timeout:
                 continue
-            words = struct.unpack('!'+str(len(received)/2)+'H', received)
+            words = struct.unpack('!' + str(len(received) // 2) + 'H', received)
             for m in self._splitter(words):
                 self._recv_queue.put(m)
 
