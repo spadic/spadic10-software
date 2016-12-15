@@ -96,7 +96,7 @@ class Spadic:
         for t in [self._dataA_worker, self._dataB_worker, self._ctrl_worker]:
             while t.is_alive():
                 t.join(timeout=1)
-            self._debug("[main]", t.name, "finished")
+            self._debug(t.name, 'finished')
 
 
     def _dataA_job(self):
