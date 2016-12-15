@@ -2,6 +2,8 @@
 libFTDI Python bindings.
 """
 
+from functools import wraps
+
 # libFTDI was renamed when version 1.0 was released -- try to get the
 # newer version first.
 try:
@@ -126,16 +128,22 @@ class Ftdi:
             # free -> deinit -> usb_close_internal -> usb_close
         self._debug("exit")
 
+    def _require_context(function):
+        @wraps(function)
+        def function_with_context(self, *args, **kwargs):
+            if not self._context:
+                raise RuntimeError('FTDI context not initialized.')
+            return function(self, *args, **kwargs)
+        return function_with_context
+
+    @_require_context
     def purge(self):
         """Purge all FTDI buffers."""
-        if not self._context:
-            raise RuntimeError('FTDI context not initialized.')
         ftdi.usb_purge_buffers(self._context)
 
+    @_require_context
     def reset(self):
         """Reset the FTDI chip."""
-        if not self._context:
-            raise RuntimeError('FTDI context not initialized.')
         ftdi.usb_reset(self._context)
 
     def reconnect(self):
@@ -146,6 +154,7 @@ class Ftdi:
     #----------------------------------------------------------------
     # data transfer methods
     #----------------------------------------------------------------
+    @_require_context
     def write(self, byte_str, max_iter=None):
         """
         Write a sequence of bytes (encoded as a string) to the FTDI chip.
@@ -156,9 +165,6 @@ class Ftdi:
         Returns the number of bytes written (can be less than the length
         of `byte_str`).
         """
-        if not self._context:
-            raise RuntimeError('FTDI context not initialized.')
-
         self._debug("write",
                     "[%s]"%(" ".join("%02X" % ord(b) for b in byte_str)))
         bytes_left = byte_str
@@ -176,6 +182,7 @@ class Ftdi:
         # number of bytes that were written
         return len(byte_str) - len(bytes_left)
 
+    @_require_context
     def read(self, num_bytes, max_iter=None):
         """
         Read a sequence of bytes (encoded as a string) from the FTDI chip.
@@ -188,9 +195,6 @@ class Ftdi:
         Returns the read bytes encoded as a string (can be fewer than
         `num_bytes`).
         """
-        if not self._context:
-            raise RuntimeError('FTDI context not initialized.')
-
         bytes_left = num_bytes
         bytes_read = ''
         iter_left = max_iter
