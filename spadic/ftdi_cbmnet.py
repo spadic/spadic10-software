@@ -182,14 +182,14 @@ class StreamDemultiplexer:
             t.daemon = True
 
     def _start_threads(self):
-        for t in list(self._threads.values()):
+        for t in self._threads.values():
             t.start()
             self._debug(t.name, 'started')
 
     def _stop_threads(self):
         if not self._stop.is_set():
             self._stop.set()
-        for t in list(self._threads.values()):
+        for t in self._threads.values():
             while t.is_alive():
                 t.join(timeout=1)
             self._debug(t.name, 'finished')
