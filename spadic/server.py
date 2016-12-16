@@ -16,7 +16,7 @@ from . import message
 # \                                       \
 #  BaseRequestServer-----                  BaseStreamServer
 #  \                     \                 \
-#   BaseRegisterServer    SpadicDLMServer   SpadicDataServer
+#   BaseRegisterServer    SpadicCmdServer   SpadicDataServer
 #   \               \
 #    SpadicRFServer  SpadicSRServer
 
@@ -49,8 +49,8 @@ class SpadicServer:
         def _run_sr_server():
             _run_gen(SpadicSRServer, self._spadic._shiftregister, port_base, debug)
 
-        def _run_dlm_server():
-            _run_gen(SpadicDLMServer, self._spadic.send_dlm, port_base, debug)
+        def _run_cmd_server():
+            _run_gen(SpadicCmdServer, self._spadic.send_command, port_base, debug)
 
         def _run_dataA_server():
             _run_gen(SpadicDataServer, "A", self._spadic.read_groupA, port_base, debug)
@@ -68,10 +68,10 @@ class SpadicServer:
         self._sr_server.daemon = True
         self._sr_server.start()
 
-        self._dlm_server = threading.Thread(name="DLM server")
-        self._dlm_server.run = _run_dlm_server
-        self._dlm_server.daemon = True
-        self._dlm_server.start()
+        self._cmd_server = threading.Thread(name="Cmd server")
+        self._cmd_server.run = _run_cmd_server
+        self._cmd_server.daemon = True
+        self._cmd_server.start()
 
         self._dataA_server = threading.Thread(name="DataA server")
         self._dataA_server.run = _run_dataA_server
@@ -91,7 +91,7 @@ class SpadicServer:
         self._spadic.__exit__(*args)
         if not self._stop.is_set():
             self._stop.set()
-        for s in [self._rf_server, self._sr_server, self._dlm_server,
+        for s in [self._rf_server, self._sr_server, self._cmd_server,
                   self._dataA_server, self._dataB_server]:
             s.join()
 
@@ -224,20 +224,20 @@ class BaseRequestServer(BaseServer):
 
 #---------------------------------------------------------------------------
 
-class SpadicDLMServer(BaseRequestServer):
-    port_offset = PORT_OFFSET["DLM"]
+class SpadicCmdServer(BaseRequestServer):
+    port_offset = PORT_OFFSET["CMD"]
 
-    def __init__(self, dlm_send_func, port_base=None, debug=None):
+    def __init__(self, cmd_send_func, port_base=None, debug=None):
         if debug:
             def _debug(*args):
-                debug("[DLM]", *args)
+                debug("[Cmd]", *args)
         else:
             _debug = None
         BaseRequestServer.__init__(self, port_base, _debug)
-        self.send_dlm = dlm_send_func
+        self.send_command = cmd_send_func
 
     def process(self, decoded):
-        self.send_dlm(decoded) # must be a number
+        self.send_command(decoded) # must be a number
 
 
 #---------------------------------------------------------------------------

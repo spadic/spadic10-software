@@ -19,7 +19,7 @@ from .shiftregister import SPADIC_SR
 # 
 # BaseClient-----------------
 # \                          \
-#  BaseReceiveClient-----     SpadicDLMClient
+#  BaseReceiveClient-----     SpadicCmdClient
 #  \                     \
 #   BaseRegisterClient    SpadicDataClient
 #   \               \
@@ -134,10 +134,10 @@ class SpadicSRClient(BaseRegisterClient):
 
 #--------------------------------------------------------------------
 
-class SpadicDLMClient(BaseClient):
-    port_offset = PORT_OFFSET["DLM"]
+class SpadicCmdClient(BaseClient):
+    port_offset = PORT_OFFSET["CMD"]
 
-    def send_dlm(self, value):
+    def send_command(self, value):
         self.socket.sendall(bytes(
             json.dumps(value) + '\n',
             'utf-8'))
@@ -145,13 +145,13 @@ class SpadicDLMClient(BaseClient):
 #--------------------------------------------------------------------
 
 class SpadicControlClient:
-    """Client for the RF/SR/DLM parts of the SpadicServer."""
+    """Client for the RF/SR/Cmd parts of the SpadicServer."""
 
     def __init__(self, server_address, port_base=None,
                        reset=False, load=None, ui=False):
         self.rf_client = SpadicRFClient()
         self.sr_client = SpadicSRClient()
-        self.dlm_client = SpadicDLMClient()
+        self.cmd_client = SpadicCmdClient()
 
         # nested function generators!
         def gen_write_gen(client):
@@ -169,7 +169,7 @@ class SpadicControlClient:
 
         self.rf_client.connect(server_address, port_base)
         self.sr_client.connect(server_address, port_base)
-        self.dlm_client.connect(server_address, port_base)
+        self.cmd_client.connect(server_address, port_base)
 
         # Create registerfile and shiftregister representations providing
         # the appropriate read and write methods.
@@ -207,8 +207,8 @@ class SpadicControlClient:
             self._ui = SpadicControlUI(self.control)
         self._ui.run()
 
-    def send_dlm(self, value):
-        self.dlm_client.send_dlm(value)
+    def send_command(self, value):
+        self.cmd_client.send_command(value)
 
     def __enter__(self):
         return self
@@ -216,7 +216,7 @@ class SpadicControlClient:
     def __exit__(self, *args, **kwargs):
         self.rf_client.__exit__(*args, **kwargs)
         self.sr_client.__exit__(*args, **kwargs)
-        self.dlm_client.__exit__(*args, **kwargs)
+        self.cmd_client.__exit__(*args, **kwargs)
 
 #--------------------------------------------------------------------
 

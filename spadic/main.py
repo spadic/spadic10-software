@@ -60,19 +60,14 @@ class Spadic:
         self._reg_access.__exit__()
         self._cbmif.__exit__(*args)
 
-    #----------------------------------------------------------------
-    # send DLMs
-    #----------------------------------------------------------------
-    def send_dlm(self, number):
-        """Send a DLM."""
-        words = [number]
-        self._cbmif.write_command(words)
+    def send_command(self, value):
+        """Send the command with the given value."""
+        self._cbmif.send_dlm(value)
 
     def readout_enable(self, enable):
         """Start or stop data taking in the chip."""
         dlm = 8 if enable else 9
-        self.send_dlm(dlm)
-
+        self.send_command(dlm)
 
     #----------------------------------------------------------------
     # read messages from groups A and B

@@ -108,9 +108,9 @@ class FtdiCbmnet:
         """Write words to the control port of the CBMnet send interface."""
         self._demux.write(ADDR_CTRL, words)
 
-    def write_command(self, words):
-        """Write words to the command port of the CBMnet send interface."""
-        self._demux.write(ADDR_DLM, words)
+    def send_dlm(self, number):
+        """Send a DLM."""
+        self._demux.write(ADDR_DLM, [number])
 
     def read_data(self, lane, timeout=1):
         """Read words from the CBMnet data receive interface at the given lane
