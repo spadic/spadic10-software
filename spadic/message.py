@@ -101,16 +101,12 @@ hittype_str = {
 #--------------------------------------------------------------------
 # split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
-class _MessageSplitter:
+def _MessageSplitter():
     """Splits a stream of message words into individual messages."""
-    def __init__(self):
-        self._remainder = []
+    message = []
 
-    def __call__(self, message_words):
+    def split(message_words):
         """Feed new message words."""
-        # recall remainder from the last time
-        message = self._remainder
-
         for w in message_words:
             # first check if info word and discard NOP words
             if match_word(w, preamble['wINF']):
@@ -132,8 +128,7 @@ class _MessageSplitter:
                 yield list(message)
                 message.clear()
 
-        # store remainder for the next time
-        self._remainder = message
+    return split
 
 
 #--------------------------------------------------------------------
