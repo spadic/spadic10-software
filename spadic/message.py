@@ -116,11 +116,11 @@ class _MessageSplitter:
             if match_word(w, preamble['wINF']):
                 if not match_word(w, infotype['iNOP']):
                     yield [w]
-                    message = []
+                    message.clear()
                 continue
             # start new message at start of message marker
             elif match_word(w, preamble['wSOM']):
-                message = []
+                message.clear()
 
             # build up message
             message.append(w)
@@ -129,8 +129,8 @@ class _MessageSplitter:
             # also clear it so it is not stored as remainder
             if any(match_word(w, preamble[p])
                    for p in ['wEOM', 'wBOM', 'wEPM']):
-                yield message
-                message = []
+                yield list(message)
+                message.clear()
 
         # store remainder for the next time
         self._remainder = message
