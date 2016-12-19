@@ -102,11 +102,20 @@ hittype_str = {
 # split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
 def _MessageSplitter():
-    """Splits a stream of message words into individual messages."""
+    """Return a generator function for splitting words into chunks that form
+    one message, remembering unprocessed input until the next call.
+
+    >>> s = _MessageSplitter()
+    >>> list(s([0x8000, 0x9000, 0xA000, 0x1234]))
+    []
+    >>> messages = s([0x2345, 0xF500, 0xB000, 0x8001])
+    >>> ['{:04X}'.format(w) for w in next(messages)]
+    ['8000', '9000', 'A000', '1234', '2345', 'B000']
+    """
     message = []
 
     def split(message_words):
-        """Feed new message words."""
+        """Consume words and generate chunks that form one message."""
         for w in message_words:
             # first check if info word and discard NOP words
             if match_word(w, preamble['wINF']):
