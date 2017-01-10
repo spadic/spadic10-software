@@ -1,3 +1,8 @@
+from numbers import Integral
+
+def _plural_bits(n):
+    return '1 bit' if n == 1 else '{} bits'.format(n)
+
 class Bits:
     """Represent integer values as a sequence of bits."""
 
@@ -9,6 +14,16 @@ class Bits:
         """
         if size is None:
             size = value.bit_length()
+        for x in [value, size]:
+            if not isinstance(x, Integral):
+                raise TypeError('Expected integer argument: {}'.format(x))
+        if size < 0:
+            raise ValueError('Size must not be negative.')
+        if value < 0:
+            raise ValueError('Cannot represent negative values.')
+        elif value >= 2 ** size:
+            raise ValueError('Cannot represent {} using {}.'
+                             .format(value, _plural_bits(size)))
         self.value, self.size = value, size
 
     def append(self, other):
@@ -33,8 +48,8 @@ class Bits:
         """
         remaining_size = self.size - n
         if remaining_size < 0:
-            raise ValueError('Cannot split {} bits from {}-bit value.'
-                             .format(n, self.size))
+            raise ValueError('Cannot split {} from {}-bit value.'
+                             .format(_plural_bits(n), self.size))
 
         result_value = (self.value >> remaining_size) % (1 << n)
         self.value %= (1 << remaining_size)
