@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 def get_bit(value, position):
     """Return the digit of the binary representation of the value at the given
     position, where position 0 is the LSB.
@@ -18,29 +21,35 @@ def reverse_bits(value, bits):
                for i in range(bits))
 
 
-def normalize_poly(value, bits, representation='reversed reciprocal'):
-    """Convert different numerical representations of a polynomial to
-    a canonical ('normal') representation.
+class PolyRepresentation(Enum):
+    NORMAL = 1
+    REVERSED = 2
+    REVERSED_RECIPROCAL = 3
+    KOOPMAN = REVERSED_RECIPROCAL
+
+
+def normalize_poly(value, bits, src=PolyRepresentation.REVERSED_RECIPROCAL):
+    """Convert a polynomial from any source representation to the normal
+    representation.
 
     See https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Specification
     and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
 
-    >>> '{:04b}'.format(normalize_poly(0b0011, 4, 'normal'))
+    >>> '{:04b}'.format(normalize_poly(0b0011, 4, PolyRepresentation.NORMAL))
     '0011'
-    >>> '{:04b}'.format(normalize_poly(0b1010, 4, 'reversed'))
+    >>> '{:04b}'.format(normalize_poly(0b1010, 4, PolyRepresentation.REVERSED))
     '0101'
-    >>> '{:04b}'.format(normalize_poly(0b1100, 4, 'reversed reciprocal'))
+    >>> '{:04b}'.format(normalize_poly(0b1100, 4, PolyRepresentation.KOOPMAN))
     '1001'
     """
-    if representation == 'normal':
+    if src is PolyRepresentation.NORMAL:
         return value % (2 ** bits)
-    elif representation == 'reversed':
+    elif src is PolyRepresentation.REVERSED:
         return reverse_bits(value, bits)
-    elif representation in ['reversed reciprocal', 'koopman']:
+    elif src is PolyRepresentation.REVERSED_RECIPROCAL:
         return ((value << 1) % (2 ** bits)) + 1
     else:
-        raise NotImplementedError(
-            'Unknown representation: {}'.format(representation))
+        raise ValueError('Unknown representation: {}'.format(src))
 
 
 def crc(data, data_bits, poly, poly_bits, init='1'):
