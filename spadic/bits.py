@@ -1,9 +1,10 @@
+from collections.abc import Sequence
 from numbers import Integral
 
 def _plural_bits(n):
     return '1 bit' if n == 1 else '{} bits'.format(n)
 
-class Bits:
+class Bits(Sequence):
     """Represent integer values as a sequence of bits."""
 
     def __init__(self, value=0, size=None):
@@ -71,8 +72,7 @@ class Bits:
         >>> '{:04b}'.format(int(b))
         '1011'
         """
-        value = sum(2 ** i * self[self._size - i - 1]
-                    for i in range(self._size))
+        value = sum(2 ** i * b for i, b in enumerate(reversed(self)))
         return Bits(value, self._size)
 
     def append(self, other):

@@ -84,8 +84,8 @@ def crc(data, poly, init='1'):
 
     reg = Bits(init, len(poly))
 
-    for i in reversed(range(len(data))):
-        high_bit = int(reg.popleft(1)) ^ data[i]
+    for data_bit in reversed(data):  # MSB to LSB == left to right
+        high_bit = int(reg.popleft(1)) ^ data_bit
         reg.append(Bits(value=0, size=1))
         if high_bit:
             reg ^= poly
