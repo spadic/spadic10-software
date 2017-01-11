@@ -47,6 +47,10 @@ class Bits:
         """Return the integer value of the bits."""
         return self._value
 
+    def __index__(self):
+        """Support hex(), bin(), etc."""
+        return self.__int__()
+
     def reversed(self):
         """Return a reversed copy of the bits.
 
@@ -63,7 +67,7 @@ class Bits:
 
         >>> b = Bits(0x3, 2)
         >>> b.append(Bits(0x10, 8))
-        >>> hex(int(b))
+        >>> hex(b)
         '0x310'
         >>> len(b)
         10
