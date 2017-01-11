@@ -51,6 +51,19 @@ class Bits:
         """Support hex(), bin(), etc."""
         return self.__int__()
 
+    def __xor__(self, other):
+        """Return self ^ other.
+
+        Integer arguments are implicitly converted to Bits.
+        Argument must not have more bits than self.
+        """
+        if isinstance(other, Integral):
+            other = Bits(other)
+        if self._size < len(other):
+            raise ValueError('Other operand has too many bits: {!r}'
+                             .format(other))
+        return Bits(self._value ^ int(other), self._size)
+
     def reversed(self):
         """Return a reversed copy of the bits.
 

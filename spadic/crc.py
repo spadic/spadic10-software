@@ -88,6 +88,6 @@ def crc(data, poly, init='1'):
         high_bit = int(reg.popleft(1)) ^ data[i]
         reg.append(Bits(value=0, size=1))
         if high_bit:
-            reg._value ^= int(poly)
+            reg ^= poly
 
     return reg
