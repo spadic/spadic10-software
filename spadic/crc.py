@@ -22,11 +22,20 @@ class Polynomial:
         self._bits = Bits(value, size)
         self.representation = representation
 
+    def __int__(self):
+        return int(self._bits)
+
+    def __index__(self):
+        return self.__int__()
+
+    def __len__(self):
+        return len(self._bits)
+
     def __repr__(self):
         return (
             self.__class__.__name__
             + '(value={!r}, size={!r}, representation={!r}'
-              .format(self._bits.value, self._bits.size, self.representation)
+              .format(self.__int__(), self.__len__(), self.representation)
         )
 
     def normalized(self):
@@ -35,14 +44,14 @@ class Polynomial:
         See https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Specification
         and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
 
-        >>> '{:04b}'.format(Polynomial(0b0011, 4, PolyRepresentation.NORMAL)
-        ...                 .normalized()._bits.value)
+        >>> '{:04b}'.format(int(Polynomial(0b0011, 4, PolyRepresentation.NORMAL)
+        ...                     .normalized()))
         '0011'
-        >>> '{:04b}'.format(Polynomial(0b1010, 4, PolyRepresentation.REVERSED)
-        ...                 .normalized()._bits.value)
+        >>> '{:04b}'.format(int(Polynomial(0b1010, 4, PolyRepresentation.REVERSED)
+        ...                     .normalized()))
         '0101'
-        >>> '{:04b}'.format(Polynomial(0b1100, 4, PolyRepresentation.KOOPMAN)
-        ...                 .normalized()._bits.value)
+        >>> '{:04b}'.format(int(Polynomial(0b1100, 4, PolyRepresentation.KOOPMAN)
+        ...                     .normalized()))
         '1001'
         """
         src = self.representation
@@ -56,7 +65,7 @@ class Polynomial:
             new_bits.append(Bits(1, 1))
         else:
             assert False, 'Forgot to implement a representation.'
-        return Polynomial(new_bits.value, new_bits.size,
+        return Polynomial(int(new_bits), len(new_bits),
                           PolyRepresentation.NORMAL)
 
 
@@ -64,21 +73,21 @@ def crc(data, poly, init='1'):
     """Calculate the CRC value of the data using the given polynomial.
 
     >>> p = Polynomial(value=0x62cc, size=15)  # known as CRC-15-CAN
-    >>> '{:04x}'.format(crc(data=Bits(value=0x00384c0, size=25), poly=p).value)
+    >>> '{:04x}'.format(int(crc(data=Bits(value=0x00384c0, size=25), poly=p)))
     '007c'
     """
     poly = poly.normalized()
 
     if init == '1':
-        init = 2 ** poly._bits.size - 1
-        assert '{:b}'.format(init) == '1' * poly._bits.size
+        init = 2 ** len(poly) - 1
+        assert '{:b}'.format(init) == '1' * len(poly)
 
-    reg = Bits(init, poly._bits.size)
+    reg = Bits(init, len(poly))
 
-    for i in reversed(range(data.size)):
-        high_bit = reg.popleft(1).value ^ data[i]
+    for i in reversed(range(len(data))):
+        high_bit = int(reg.popleft(1)) ^ data[i]
         reg.append(Bits(value=0, size=1))
         if high_bit:
-            reg.value ^= poly._bits.value
+            reg._value ^= int(poly)
 
     return reg
