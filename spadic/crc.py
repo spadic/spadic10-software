@@ -1,25 +1,7 @@
-from collections import namedtuple
+from copy import copy
 from enum import Enum
 
-
-def get_bit(value, position):
-    """Return the digit of the binary representation of the value at the given
-    position, where position 0 is the LSB.
-
-    >>> [get_bit(0b1101, position=i) for i in reversed(range(4))]
-    [1, 1, 0, 1]
-    """
-    return (value >> position) & 1
-
-
-def reverse_bits(value, bits):
-    """Return the value obtained by reversing the binary representation.
-
-    >>> '{:04b}'.format(reverse_bits(0b1101, 4))
-    '1011'
-    """
-    return sum(2 ** i * get_bit(value, bits - i - 1)
-               for i in range(bits))
+from .bits import Bits
 
 
 class PolyRepresentation(Enum):
@@ -29,15 +11,23 @@ class PolyRepresentation(Enum):
     KOOPMAN = REVERSED_RECIPROCAL
 
 
-class Polynomial(namedtuple('PolynomialRecord', 'value bits representation')):
+class Polynomial:
     """A polynomial used for CRC calculations."""
 
-    def __new__(cls, value, bits,
-                     representation=PolyRepresentation.REVERSED_RECIPROCAL):
+    def __init__(self, value, size,
+                       representation=PolyRepresentation.REVERSED_RECIPROCAL):
         if representation not in PolyRepresentation:
             raise ValueError('Unknown representation: {}'
                              .format(representation))
-        return super().__new__(cls, value % (2 ** bits), bits, representation)
+        self._bits = Bits(value, size)
+        self.representation = representation
+
+    def __repr__(self):
+        return (
+            self.__class__.__name__
+            + '(value={!r}, size={!r}, representation={!r}'
+              .format(self._bits.value, self._bits.size, self.representation)
+        )
 
     def normalized(self):
         """Return an equivalent polynomial in the normal representation.
@@ -46,46 +36,49 @@ class Polynomial(namedtuple('PolynomialRecord', 'value bits representation')):
         and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
 
         >>> '{:04b}'.format(Polynomial(0b0011, 4, PolyRepresentation.NORMAL)
-        ...                 .normalized().value)
+        ...                 .normalized()._bits.value)
         '0011'
         >>> '{:04b}'.format(Polynomial(0b1010, 4, PolyRepresentation.REVERSED)
-        ...                 .normalized().value)
+        ...                 .normalized()._bits.value)
         '0101'
         >>> '{:04b}'.format(Polynomial(0b1100, 4, PolyRepresentation.KOOPMAN)
-        ...                 .normalized().value)
+        ...                 .normalized()._bits.value)
         '1001'
         """
         src = self.representation
         if src is PolyRepresentation.NORMAL:
             return self
         elif src is PolyRepresentation.REVERSED:
-            value = reverse_bits(self.value, self.bits)
+            new_bits = self._bits.reversed()
         elif src is PolyRepresentation.REVERSED_RECIPROCAL:
-            value = ((self.value << 1) % (2 ** self.bits)) + 1
+            new_bits = copy(self._bits)
+            new_bits.popleft(1)
+            new_bits.append(Bits(1, 1))
         else:
             assert False, 'Forgot to implement a representation.'
-        return Polynomial(value, self.bits, PolyRepresentation.NORMAL)
+        return Polynomial(new_bits.value, new_bits.size,
+                          PolyRepresentation.NORMAL)
 
 
-def crc(data, data_bits, poly, init='1'):
+def crc(data, poly, init='1'):
     """Calculate the CRC value of the data using the given polynomial.
 
-    >>> p = Polynomial(value=0x62cc, bits=15)  # known as CRC-15-CAN
-    >>> '{:04x}'.format(crc(data=0x00384c0, data_bits=25, poly=p))
+    >>> p = Polynomial(value=0x62cc, size=15)  # known as CRC-15-CAN
+    >>> '{:04x}'.format(crc(data=Bits(value=0x00384c0, size=25), poly=p).value)
     '007c'
     """
     poly = poly.normalized()
 
     if init == '1':
-        reg = 2 ** poly.bits - 1
-        assert '{:b}'.format(reg) == '1' * poly.bits
-    else:
-        reg = init
+        init = 2 ** poly._bits.size - 1
+        assert '{:b}'.format(init) == '1' * poly._bits.size
 
-    for i in reversed(range(data_bits)):
-        high_bit = get_bit(reg, poly.bits - 1) ^ get_bit(data, i)
-        reg <<= 1
+    reg = Bits(init, poly._bits.size)
+
+    for i in reversed(range(data.size)):
+        high_bit = reg.popleft(1).value ^ data[i]
+        reg.append(Bits(value=0, size=1))
         if high_bit:
-            reg ^= poly.value
+            reg.value ^= poly._bits.value
 
-    return reg % (2 ** poly.bits)
+    return reg

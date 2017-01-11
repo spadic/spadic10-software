@@ -26,6 +26,30 @@ class Bits:
                              .format(value, _plural_bits(size)))
         self.value, self.size = value, size
 
+    def __getitem__(self, i):
+        """Return the i'th bit from the right (i = 0 -> LSB).
+
+        >>> b = Bits(0b1101, 4)
+        >>> [b[i] for i in reversed(range(4))]
+        [1, 1, 0, 1]
+        """
+        if self.size == 0 or i >= self.size:
+            raise IndexError('Bad index for {}-bit value: {}'
+                             .format(self.size, i))
+        i %= self.size  # support negative indexes
+        return (self.value >> i) & 1
+
+    def reversed(self):
+        """Return a reversed copy of the bits.
+
+        >>> b = Bits(0b1101, 4).reversed()
+        >>> '{:04b}'.format(b.value)
+        '1011'
+        """
+        value = sum(2 ** i * self[self.size - i - 1]
+                    for i in range(self.size))
+        return Bits(value, self.size)
+
     def append(self, other):
         """Append other bits to the right.
 
