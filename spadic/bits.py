@@ -141,6 +141,18 @@ class Bits(Sequence):
         self._size = remaining_size
         return Bits(result_value, n)
 
+    def to_bytes(self, byteorder):
+        """Return a bytes object representing the bits.
+
+        >>> b = Bits(value=0x1abc, size=13)
+        >>> b.to_bytes(byteorder='big').hex()
+        '1abc'
+        >>> b.to_bytes(byteorder='little').hex()
+        'bc1a'
+        """
+        num_bytes = -(-self._size // 8)  # rounding up
+        return self._value.to_bytes(num_bytes, byteorder)
+
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
             self.__class__.__name__, self._value, self._size)
