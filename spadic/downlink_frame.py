@@ -1,22 +1,22 @@
 from .bits import Bits
 from . import crc
 
-DOWNLINK_CRC_POLY = crc.Polynomial(
-    value=0x62cc, degree=15,
-    representation=crc.PolyRepresentation.REVERSED_RECIPROCAL)
 
 
 def calc_crc(data):
-    """Calculate the 15-bit CRC for 25 bits of downlink frame data."""
-    assert len(data) == 25
-    return crc.crc(data, poly=DOWNLINK_CRC_POLY)
+    """Calculate a CRC value using the polynomial defined in the protocol."""
+    p = crc.Polynomial(
+        value=0x62cc, degree=15,
+        representation=crc.PolyRepresentation.REVERSED_RECIPROCAL
+    )
+    return crc.crc(data, poly=p)
 
 
 def has_correct_crc(frame):
     """Return True iff the 15-bit CRC contained in the 40-bit frame is
     correct."""
     assert len(frame) == 40
-    return int(crc.crc(frame, poly=DOWNLINK_CRC_POLY)) == 0
+    return int(calc_crc(frame)) == 0
 
 
 def downlink_frame(chip_address, sequence_number, request_type, payload):
@@ -33,6 +33,7 @@ def downlink_frame(chip_address, sequence_number, request_type, payload):
     data.append(Bits(sequence_number, size=4))
     data.append(Bits(request_type, size=2))
     data.append(Bits(payload, size=15))
+    assert len(data) == 25
 
     frame = data
     frame.append(calc_crc(data))
