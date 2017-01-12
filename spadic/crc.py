@@ -69,7 +69,7 @@ class Polynomial:
                           PolyRepresentation.NORMAL)
 
 
-def crc(data, poly, init='1'):
+def crc(data, poly, init=None):
     """Calculate the CRC value of the data using the given polynomial.
 
     >>> p = Polynomial(value=0x62cc, size=15)  # known as CRC-15-CAN
@@ -78,11 +78,12 @@ def crc(data, poly, init='1'):
     """
     poly = poly.normalized()
 
-    if init == '1':
-        init = 2 ** len(poly) - 1
-        assert '{:b}'.format(init) == '1' * len(poly)
+    reg_size = len(poly)
 
-    reg = Bits(init, len(poly))
+    if init is None:
+        reg = Bits.all_ones(reg_size)
+    else:
+        reg = Bits(value=int(init), size=reg_size)
 
     for data_bit in reversed(data):  # MSB to LSB == left to right
         high_bit = int(reg.popleft(1)) ^ data_bit

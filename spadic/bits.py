@@ -27,6 +27,18 @@ class Bits(Sequence):
                              .format(value, _plural_bits(size)))
         self._value, self._size = value, size
 
+    @classmethod
+    def all_ones(cls, n):
+        """Return the n-bit value where every bit is 1.
+
+        >>> b = Bits.all_ones(5)
+        >>> len(b)
+        5
+        >>> bin(b)
+        '0b11111'
+        """
+        return cls(value=2 ** n - 1, size=n)
+
     def __getitem__(self, i):
         """Return the i'th bit from the right (i = 0 -> LSB).
 
