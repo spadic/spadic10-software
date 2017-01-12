@@ -47,3 +47,46 @@ class BitFieldSuffixCRC(BitField):
         crc_bits = bits.split(cls._crc_poly.degree)
         data = super().from_bits(bits)
         return cls(*data, crc=crc_bits)
+
+#---------------------------------------------------------------------
+
+class DownlinkFrame(BitFieldSuffixCRC):
+    """A downlink frame with 5 bytes or 40 bits.
+
+    >>> '{:010x}'.format(int(DownlinkFrame(
+    ...     chip_address=9, sequence_number=7,
+    ...     request_type=2, payload=0x7654
+    ... ).to_bits()))
+    '97bb2a615c'
+
+    >>> f = DownlinkFrame.from_bits(Bits(0x97bb2a615c, 40))
+    >>> int(f.chip_address)
+    9
+    >>> hex(f.payload)
+    '0x7654'
+    >>> f.crc_is_correct
+    True
+    """
+    _fields = [
+        ('chip_address', 4),
+        ('sequence_number', 4),
+        ('request_type', 2),
+        ('payload', 15)
+    ]
+
+    _crc_poly = crc.Polynomial(
+        value=0x62cc, degree=15,
+        representation=crc.PolyRepresentation.REVERSED_RECIPROCAL
+    )
+
+    def __bytes__(self):
+        """The 40-bit data (including CRC) of the downlink frame as a bytes
+        object.
+
+        >>> bytes(DownlinkFrame(
+        ...     chip_address=9, sequence_number=7,
+        ...     request_type=2, payload=0x7654
+        ... )).hex()
+        '97bb2a615c'
+        """
+        return self.to_bytes(byteorder='big')
