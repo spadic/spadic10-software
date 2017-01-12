@@ -52,6 +52,28 @@ class Bits(Sequence):
         i %= self._size  # support negative indexes
         return (self._value >> i) & 1
 
+    @property
+    def msb(self):
+        """Return the most significant bit.
+
+        >>> Bits(0b1000, 4).msb
+        1
+        >>> Bits(0b0111, 4).msb
+        0
+        """
+        return self[-1]
+
+    @property
+    def lsb(self):
+        """Return the least significant bit.
+
+        >>> Bits(0b0001, 4).lsb
+        1
+        >>> Bits(0b1110, 4).lsb
+        0
+        """
+        return self[0]
+
     def __len__(self):
         """Return the number of bits."""
         return self._size
