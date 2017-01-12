@@ -14,12 +14,26 @@ class PolyRepresentation(Enum):
 class Polynomial:
     """A polynomial used for CRC calculations."""
 
-    def __init__(self, value, size,
+    def __init__(self, value, degree,
                        representation=PolyRepresentation.REVERSED_RECIPROCAL):
+        bits = Bits(value, degree)
         if representation not in PolyRepresentation:
             raise ValueError('Unknown representation: {}'
                              .format(representation))
-        self._bits = Bits(value, size)
+        if degree > 0:
+            # In each CRC polynomial, the coefficients for the x^0 and x^degree
+            # terms must be 1. The integer value representing the polynomial
+            # omits only one of those coefficients, while the other one is
+            # redundant. Here it is checked that the redundant bit is also 1.
+            bit, term = {
+                PolyRepresentation.NORMAL: (bits.lsb, 0),
+                PolyRepresentation.REVERSED: (bits.msb, 0),
+                PolyRepresentation.REVERSED_RECIPROCAL: (bits.msb, degree)
+            }[representation]
+            if not bit:
+                raise ValueError('Coefficient of x^{} term must be 1.'
+                                 .format(term))
+        self._bits = bits
         self.representation = representation
 
     def __int__(self):
@@ -28,14 +42,20 @@ class Polynomial:
     def __index__(self):
         return self.__int__()
 
-    def __len__(self):
+    @property
+    def degree(self):
+        """Degree of the polynomial, exponent of the highest term."""
         return len(self._bits)
+
+    def __len__(self):
+        """Number of terms in the polynomial. One higher than the degree."""
+        return self.degree + 1
 
     def __repr__(self):
         return (
             self.__class__.__name__
-            + '(value={!r}, size={!r}, representation={!r}'
-              .format(self.__int__(), self.__len__(), self.representation)
+            + '(value={!r}, degree={!r}, representation={!r}'
+              .format(self.__int__(), self.degree, self.representation)
         )
 
     def normalized(self):
@@ -72,13 +92,12 @@ class Polynomial:
 def crc(data, poly, init=None):
     """Calculate the CRC value of the data using the given polynomial.
 
-    >>> p = Polynomial(value=0x62cc, size=15)  # known as CRC-15-CAN
+    >>> p = Polynomial(value=0x62cc, degree=15)  # known as CRC-15-CAN
     >>> '{:04x}'.format(int(crc(data=Bits(value=0x00384c0, size=25), poly=p)))
     '007c'
     """
-    poly = poly.normalized()
-
-    reg_size = len(poly)
+    reg_size = poly.degree
+    poly = poly.normalized()._bits
 
     if init is None:
         reg = Bits.all_ones(reg_size)
