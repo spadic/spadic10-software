@@ -58,6 +58,34 @@ class Polynomial:
               .format(self.__int__(), self.degree, self.representation)
         )
 
+    def __getitem__(self, i):
+        """Return the coefficient of the x^i term."""
+        if not 0 <= i <= self.degree:
+            raise IndexError('Invalid index for polynomial of degree {}: {}'
+                             .format(self.degree, i))
+        if i in [0, self.degree]:
+            return 1
+        else:
+            return self.normalized()._bits[i]
+
+    def __str__(self):
+        """Return the mathematical notation of the polynomial.
+
+        >>> str(Polynomial(0x3, 4, PolyRepresentation.NORMAL))
+        'x^4 + x + 1'
+        >>> str(Polynomial(0xC, 4, PolyRepresentation.REVERSED))
+        'x^4 + x + 1'
+        >>> str(Polynomial(0x9, 4, PolyRepresentation.KOOPMAN))
+        'x^4 + x + 1'
+        """
+        def format_term(i):
+            if i == 0: return '1'
+            elif i == 1: return 'x'
+            else: return 'x^{}'.format(i)
+
+        return ' + '.join(format_term(i)
+                          for i in reversed(range(len(self))) if self[i])
+
     def normalized(self):
         """Return an equivalent polynomial in the normal representation.
 
