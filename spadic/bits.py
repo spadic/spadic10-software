@@ -233,6 +233,11 @@ class _BitFieldMeta(ABCMeta):
             bases = insert_namedtuple(name, bases, namespace)
         return ABCMeta.__new__(mcls, name, bases, namespace)
 
+    @property
+    def _size(cls):
+        """The total number of bits."""
+        return sum(cls._fields.values())
+
 
 class BitField(metaclass=_BitFieldMeta):
     """Abstract base class for bit fields, which are "namedtuples of Bits".
