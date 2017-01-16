@@ -249,11 +249,11 @@ class BitField(metaclass=_BitFieldMeta):
         # "can't instantiate abstract class" TypeError is a feature of ABCMeta
         if not isinstance(cls._fields, abstractproperty):
             args = [
-                Bits(value, size)
+                Bits(int(value), size)
                 for value, (name, size) in zip(args, cls._fields.items())
             ]
             kwargs = {
-                name: Bits(value, size=cls._fields[name])
+                name: Bits(int(value), size=cls._fields[name])
                 for name, value in kwargs.items()
             }
         return super().__new__(cls, *args, **kwargs)
