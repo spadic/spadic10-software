@@ -1,3 +1,5 @@
+from abc import ABCMeta, abstractproperty
+from collections import namedtuple, OrderedDict
 from collections.abc import Sequence
 from numbers import Integral
 
@@ -197,3 +199,36 @@ class Bits(Sequence):
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
             self.__class__.__name__, self._value, self._size)
+
+
+# derived from http://code.activestate.com/recipes/577629-namedtupleabc
+class _BitFieldMeta(ABCMeta):
+    def __new__(mcls, name, bases, namespace):
+        def find_fields(namespace, bases):
+            """Look for a _fields attribute in the namespace or one of the base
+            classes.
+            """
+            fields = namespace.get('_fields')
+            for base in bases:
+                if fields is not None:
+                    break
+                fields = getattr(base, '_fields', None)
+            return fields
+
+        def insert_namedtuple(name, bases, namespace):
+            """Add a namedtuple based on the given fields to the other base
+            classes.
+            """
+            fields = list(namespace['_fields'])
+            basetuple = namedtuple('{}Fields'.format(name), fields)
+            del basetuple._source  # is no longer accurate
+            bases = (basetuple,) + bases
+            namespace.setdefault('__doc__', basetuple.__doc__)
+            namespace.setdefault('__slots__', ())
+            return bases
+
+        fields = find_fields(namespace, bases)
+        if not isinstance(fields, abstractproperty):
+            namespace['_fields'] = OrderedDict(fields)
+            bases = insert_namedtuple(name, bases, namespace)
+        return ABCMeta.__new__(mcls, name, bases, namespace)
