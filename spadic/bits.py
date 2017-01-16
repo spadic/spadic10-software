@@ -153,6 +153,15 @@ class Bits(Sequence):
         num_bytes = -(-self._size // 8)  # rounding up
         return self._value.to_bytes(num_bytes, byteorder)
 
+    @classmethod
+    def from_bytes(cls, bytes, size, byteorder):
+        """Return a Bits instance with the given size from bytes.
+
+        >>> Bits.from_bytes(bytes([0xbc, 0x1a]), size=13, byteorder='little')
+        Bits(value=6844, size=13)
+        """
+        return cls(value=int.from_bytes(bytes, byteorder), size=size)
+
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
             self.__class__.__name__, self._value, self._size)
