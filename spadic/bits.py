@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractproperty
 from collections import namedtuple, OrderedDict
 from collections.abc import Sequence
+from functools import lru_cache
 from numbers import Integral
 
 def _plural_bits(n):
@@ -262,3 +263,30 @@ class BitField(metaclass=_BitFieldMeta):
                 for name, value in kwargs.items()
             }
         return super().__new__(cls, *args, **kwargs)
+
+    @lru_cache(1)
+    def to_bits(self):
+        bits = Bits()
+        for field in self:
+            bits.extend(field)
+        return bits
+
+    @classmethod
+    def from_bits(cls, bits):
+        expected = cls._size
+        if len(bits) != expected:
+            raise ValueError('Expected {}: {}'
+                             .format(_plural_bits(expected), bits))
+        def fields():
+            b = bits.copy()
+            for size in cls._fields.values():
+                yield b.splitleft(size)
+        return cls(*fields())
+
+    @lru_cache(2) # big, little
+    def to_bytes(self, byteorder):
+        return self.to_bits().to_bytes(byteorder)
+
+    @classmethod
+    def from_bytes(cls, bytes, byteorder):
+        return cls.from_bits(Bits.from_bytes(bytes, cls._size, byteorder))
