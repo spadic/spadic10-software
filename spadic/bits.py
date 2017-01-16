@@ -27,6 +27,10 @@ class Bits(Sequence):
                              .format(value, _plural_bits(size)))
         self._value, self._size = value, size
 
+    def copy(self):
+        """Return a copy of self."""
+        return Bits(value=self._value, size=self._size)
+
     @classmethod
     def all_ones(cls, n):
         """Return the n-bit value where every bit is 1.

@@ -1,4 +1,3 @@
-from copy import copy
 from enum import Enum
 
 from .bits import Bits
@@ -108,7 +107,7 @@ class Polynomial:
         elif src is PolyRepresentation.REVERSED:
             new_bits = self._bits.reversed()
         elif src is PolyRepresentation.REVERSED_RECIPROCAL:
-            new_bits = copy(self._bits)
+            new_bits = self._bits.copy()
             new_bits.popleft(1)
             new_bits.append(Bits(1, 1))
         else:
