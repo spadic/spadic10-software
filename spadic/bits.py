@@ -3,6 +3,7 @@ from collections import namedtuple, OrderedDict
 from collections.abc import Sequence
 from functools import lru_cache
 from numbers import Integral
+import re
 
 def _plural_bits(n):
     return '1 bit' if n == 1 else '{} bits'.format(n)
@@ -201,6 +202,30 @@ class Bits(Sequence):
         return '{}(value={!r}, size={!r})'.format(
             self.__class__.__name__, self._value, self._size)
 
+# inspired by http://lucumr.pocoo.org/2015/11/18/pythons-hidden-re-gems/
+def parse_fields(field_spec):
+    """Parse the (name, size) pairs from a field specification string.
+
+    Name and size can be separated by `:`, `=` or whitespace.
+    Pairs can be separated by `,`, `;` or whitespace.
+
+    >>> list(parse_fields('a: 3, b  5 ; c =6  '))
+    [('a', 3), ('b', 5), ('c', 6)]
+    """
+    p = re.compile(r'''
+        \s*
+        (\w+) \s*[:=\s]\s* (\d+)  # (name, size) pair
+        \s*
+        (?: [,;\s]\s* | $ )       # separator between pairs or end
+    ''', re.VERBOSE)
+    sc = p.scanner(field_spec)
+    match = None
+    for match in iter(sc.match, None):
+        name, size = match.groups()
+        yield name, int(size)
+    if not match or match.end() < len(field_spec):
+        raise ValueError('Bad field formatting: {!r} (last match: {!r})'
+                         .format(field_spec, match.group()))
 
 # derived from http://code.activestate.com/recipes/577629-namedtupleabc
 class _BitFieldMeta(ABCMeta):
@@ -230,7 +255,10 @@ class _BitFieldMeta(ABCMeta):
 
         fields = find_fields(namespace, bases)
         if not isinstance(fields, abstractproperty):
-            namespace['_fields'] = OrderedDict(fields)
+            try:
+                namespace['_fields'] = OrderedDict(fields)
+            except ValueError:
+                namespace['_fields'] = OrderedDict(parse_fields(fields))
             bases = insert_namedtuple(name, bases, namespace)
         return ABCMeta.__new__(mcls, name, bases, namespace)
 
@@ -243,19 +271,21 @@ class _BitFieldMeta(ABCMeta):
 class BitField(metaclass=_BitFieldMeta):
     """Abstract base class for bit fields, which are "namedtuples of Bits".
 
-    Concrete classes must define a list of (name, size) pairs as the _fields
-    attribute.
+    Concrete classes must have a _fields attribute defining an ordered
+    (name -> size) mapping.
+
+    _fields can be a formatted string, see help(parse_fields).
 
     Example usage:
 
     >>> class IPv4Header(BitField):
-    ...     _fields = [
-    ...         ('version', 4), ('ihl', 4), ('dscp', 6), ('ecn', 2),
-    ...         ('total_length', 16), ('identification', 16),
-    ...         ('reserved_flag', 1), ('df_flag', 1), ('mf_flag', 1),
-    ...         ('fragment_offset', 13), ('ttl', 8), ('protocol', 8),
-    ...         ('checksum', 16), ('source_addr', 32), ('dest_addr', 32)
-    ...     ]
+    ...     _fields = '''
+    ...         version: 4, ihl: 4, dscp: 6, ecn: 2,
+    ...         total_length: 16, identification: 16,
+    ...         reserved_flag: 1, df_flag: 1, mf_flag: 1,
+    ...         fragment_offset: 13, ttl: 8, protocol: 8,
+    ...         checksum: 16, source_addr: 32, dest_addr: 32
+    ...     '''
     ...
     >>> IPv4Header._size
     160
