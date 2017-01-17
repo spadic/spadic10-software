@@ -27,9 +27,13 @@ class Bits(Sequence):
                              .format(value, _plural_bits(size)))
         self._value, self._size = value, size
 
+    def copy(self):
+        """Return a copy of self."""
+        return Bits(value=self._value, size=self._size)
+
     @classmethod
     def all_ones(cls, n):
-        """Return the n-bit value where every bit is 1.
+        """Return an instance with n bits where every bit is 1.
 
         >>> b = Bits.all_ones(5)
         >>> len(b)
@@ -45,6 +49,9 @@ class Bits(Sequence):
         >>> b = Bits(0b1101, 4)
         >>> [b[i] for i in reversed(range(4))]
         [1, 1, 0, 1]
+        >>> all(int(x) == sum(b * 2**i for i, b in enumerate(Bits(x, 4)))
+        ...     for x in range(16))
+        True
         """
         if self._size == 0 or i >= self._size:
             raise IndexError('Bad index for {}-bit value: {}'
@@ -100,20 +107,22 @@ class Bits(Sequence):
         return Bits(self._value ^ int(other), self._size)
 
     def reversed(self):
-        """Return a reversed copy of the bits.
+        """Return an instance with the bits in reverse order.
 
-        >>> b = Bits(0b1101, 4).reversed()
+        >>> b = Bits(0b1011, 4).reversed()
+        >>> b
+        Bits(value=13, size=4)
         >>> '{:04b}'.format(int(b))
-        '1011'
+        '1101'
         """
         value = sum(2 ** i * b for i, b in enumerate(reversed(self)))
         return Bits(value, self._size)
 
-    def append(self, other):
-        """Append other bits to the right.
+    def extend(self, other):
+        """Extend self on the right side by other bits.
 
         >>> b = Bits(0x3, 2)
-        >>> b.append(Bits(0x10, 8))
+        >>> b.extend(Bits(0x10, 8))
         >>> hex(b)
         '0x310'
         >>> len(b)
@@ -122,11 +131,23 @@ class Bits(Sequence):
         self._value = (self._value << len(other)) + int(other)
         self._size += len(other)
 
-    def popleft(self, n):
+    def append(self, bit):
+        """Append a single bit on the right side.
+
+        >>> b = Bits(0x3, 2)
+        >>> b.append(1)
+        >>> int(b)
+        7
+        >>> len(b)
+        3
+        """
+        self.extend(Bits(int(bit), size=1))
+
+    def splitleft(self, n):
         """Remove and return the n leftmost bits.
 
         >>> b = Bits(0x310, 12)
-        >>> b.popleft(4)
+        >>> b.splitleft(4)
         Bits(value=3, size=4)
         >>> b
         Bits(value=16, size=8)
@@ -141,8 +162,19 @@ class Bits(Sequence):
         self._size = remaining_size
         return Bits(result_value, n)
 
+    def popleft(self):
+        """Remove and return the leftmost bit.
+
+        >>> b = Bits(value=4, size=3)
+        >>> b.popleft()
+        Bits(value=1, size=1)
+        >>> b
+        Bits(value=0, size=2)
+        """
+        return self.splitleft(1)
+
     def to_bytes(self, byteorder):
-        """Return a bytes object representing the bits.
+        """Return an array of bytes representing the bits.
 
         >>> b = Bits(value=0x1abc, size=13)
         >>> b.to_bytes(byteorder='big').hex()
@@ -152,6 +184,15 @@ class Bits(Sequence):
         """
         num_bytes = -(-self._size // 8)  # rounding up
         return self._value.to_bytes(num_bytes, byteorder)
+
+    @classmethod
+    def from_bytes(cls, bytes, size, byteorder):
+        """Create an instance with the given size from an array of bytes.
+
+        >>> Bits.from_bytes(bytes([0xbc, 0x1a]), size=13, byteorder='little')
+        Bits(value=6844, size=13)
+        """
+        return cls(value=int.from_bytes(bytes, byteorder), size=size)
 
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
