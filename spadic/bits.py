@@ -234,35 +234,35 @@ def parse_fields(field_spec):
 # derived from http://code.activestate.com/recipes/577629-namedtupleabc
 class _BitFieldMeta(ABCMeta):
     def __new__(mcls, name, bases, namespace):
-        def find_fields(namespace, bases):
+        def find_field_spec(namespace, bases):
             """Look for a _fields attribute in the namespace or one of the base
             classes.
             """
-            fields = namespace.get('_fields')
+            field_spec = namespace.get('_fields')
             for base in bases:
-                if fields is not None:
+                if field_spec is not None:
                     break
-                fields = getattr(base, '_fields', None)
-            return fields
+                field_spec = getattr(base, '_fields', None)
+            return field_spec
 
         def insert_namedtuple(name, bases, namespace):
             """Insert a namedtuple based on the given fields *after* the other
             base classes, so that calls to its methods can be intercepted.
             """
-            fields = list(namespace['_fields'])
-            basetuple = namedtuple('{}Fields'.format(name), fields)
+            field_names = list(namespace['_fields'])
+            basetuple = namedtuple('{}Fields'.format(name), field_names)
             del basetuple._source  # is no longer accurate
             bases = bases + (basetuple,)
             namespace.setdefault('__doc__', basetuple.__doc__)
             namespace.setdefault('__slots__', ())
             return bases
 
-        fields = find_fields(namespace, bases)
-        if not isinstance(fields, abstractproperty):
+        field_spec = find_field_spec(namespace, bases)
+        if not isinstance(field_spec, abstractproperty):
             try:
-                namespace['_fields'] = OrderedDict(fields)
+                namespace['_fields'] = OrderedDict(field_spec)
             except ValueError:
-                namespace['_fields'] = OrderedDict(parse_fields(fields))
+                namespace['_fields'] = OrderedDict(parse_fields(field_spec))
             bases = insert_namedtuple(name, bases, namespace)
         return ABCMeta.__new__(mcls, name, bases, namespace)
 
