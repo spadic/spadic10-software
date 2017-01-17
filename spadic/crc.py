@@ -109,7 +109,7 @@ class Polynomial:
         elif src is PolyRepresentation.REVERSED_RECIPROCAL:
             new_bits = self._bits.copy()
             new_bits.popleft(1)
-            new_bits.append(Bits(1, 1))
+            new_bits.append(1)
         else:
             assert False, 'Forgot to implement a representation.'
         return Polynomial(int(new_bits), len(new_bits),
@@ -133,7 +133,7 @@ def crc(data, poly, init=None):
 
     for data_bit in reversed(data):  # MSB to LSB == left to right
         high_bit = int(reg.popleft(1)) ^ data_bit
-        reg.append(Bits(value=0, size=1))
+        reg.append(0)
         if high_bit:
             reg ^= poly
 

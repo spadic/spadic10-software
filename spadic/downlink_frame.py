@@ -29,13 +29,13 @@ def downlink_frame(chip_address, sequence_number, request_type, payload):
     '1001011110111011001010100'
     """
     data = Bits()
-    data.append(Bits(chip_address, size=4))
-    data.append(Bits(sequence_number, size=4))
-    data.append(Bits(request_type, size=2))
-    data.append(Bits(payload, size=15))
+    data.extend(Bits(chip_address, size=4))
+    data.extend(Bits(sequence_number, size=4))
+    data.extend(Bits(request_type, size=2))
+    data.extend(Bits(payload, size=15))
 
     frame = data
-    frame.append(calc_crc(data))
+    frame.extend(calc_crc(data))
     assert has_correct_crc(frame)
     return int(frame)
 

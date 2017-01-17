@@ -113,11 +113,11 @@ class Bits(Sequence):
         value = sum(2 ** i * b for i, b in enumerate(reversed(self)))
         return Bits(value, self._size)
 
-    def append(self, other):
-        """Append other bits to the right.
+    def extend(self, other):
+        """Extend self on the right side by other bits.
 
         >>> b = Bits(0x3, 2)
-        >>> b.append(Bits(0x10, 8))
+        >>> b.extend(Bits(0x10, 8))
         >>> hex(b)
         '0x310'
         >>> len(b)
@@ -125,6 +125,18 @@ class Bits(Sequence):
         """
         self._value = (self._value << len(other)) + int(other)
         self._size += len(other)
+
+    def append(self, bit):
+        """Append a single bit on the right side.
+
+        >>> b = Bits(0x3, 2)
+        >>> b.append(1)
+        >>> int(b)
+        7
+        >>> len(b)
+        3
+        """
+        self.extend(Bits(int(bit), size=1))
 
     def popleft(self, n):
         """Remove and return the n leftmost bits.
