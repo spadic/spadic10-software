@@ -138,11 +138,11 @@ class Bits(Sequence):
         """
         self.extend(Bits(int(bit), size=1))
 
-    def popleft(self, n):
+    def splitleft(self, n):
         """Remove and return the n leftmost bits.
 
         >>> b = Bits(0x310, 12)
-        >>> b.popleft(4)
+        >>> b.splitleft(4)
         Bits(value=3, size=4)
         >>> b
         Bits(value=16, size=8)
@@ -156,6 +156,17 @@ class Bits(Sequence):
         self._value %= (1 << remaining_size)
         self._size = remaining_size
         return Bits(result_value, n)
+
+    def popleft(self):
+        """Remove and return the leftmost bit.
+
+        >>> b = Bits(value=4, size=3)
+        >>> b.popleft()
+        Bits(value=1, size=1)
+        >>> b
+        Bits(value=0, size=2)
+        """
+        return self.splitleft(1)
 
     def to_bytes(self, byteorder):
         """Return a bytes object representing the bits.
