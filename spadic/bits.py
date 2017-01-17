@@ -8,6 +8,8 @@ import re
 def _plural_bits(n):
     return '1 bit' if n == 1 else '{} bits'.format(n)
 
+#---- Bits -----------------------------------------------------------
+
 class Bits(Sequence):
     """Represent integer values as a sequence of bits."""
 
@@ -201,6 +203,8 @@ class Bits(Sequence):
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
             self.__class__.__name__, self._value, self._size)
+
+#---- BitField -------------------------------------------------------
 
 # inspired by http://lucumr.pocoo.org/2015/11/18/pythons-hidden-re-gems/
 def parse_fields(field_spec):
