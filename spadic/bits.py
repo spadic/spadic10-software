@@ -243,8 +243,33 @@ class _BitFieldMeta(ABCMeta):
 class BitField(metaclass=_BitFieldMeta):
     """Abstract base class for bit fields, which are "namedtuples of Bits".
 
-    Concrete classes must define an ordered (name -> size) mapping as the
-    _fields attribute.
+    Concrete classes must define a list of (name, size) pairs as the _fields
+    attribute.
+
+    Example usage:
+
+    >>> class IPv4Header(BitField):
+    ...     _fields = [
+    ...         ('version', 4), ('ihl', 4), ('dscp', 6), ('ecn', 2),
+    ...         ('total_length', 16), ('identification', 16),
+    ...         ('reserved_flag', 1), ('df_flag', 1), ('mf_flag', 1),
+    ...         ('fragment_offset', 13), ('ttl', 8), ('protocol', 8),
+    ...         ('checksum', 16), ('source_addr', 32), ('dest_addr', 32)
+    ...     ]
+    ...
+    >>> IPv4Header._size
+    160
+    >>> # http://www.cs.miami.edu/home/burt/learning/Csc524.092/notes/ip_example.html
+    >>> h = IPv4Header.from_bytes((int(x, 16)
+    ...     for x in '45 00 00 44 ad 0b 00 00 40 11 72 72 ac 14 02 fd ac 14 00 06'.split()
+    ... ), byteorder='big')
+    ...
+    >>> int(h.version)
+    4
+    >>> h.ttl
+    Bits(value=64, size=8)
+    >>> hex(h.protocol)
+    '0x11'
     """
     _fields = abstractproperty()
 
@@ -266,6 +291,7 @@ class BitField(metaclass=_BitFieldMeta):
 
     @lru_cache(1)
     def to_bits(self):
+        """Return a Bits instance representing the concatenated fields."""
         bits = Bits()
         for field in self:
             bits.extend(field)
@@ -273,6 +299,9 @@ class BitField(metaclass=_BitFieldMeta):
 
     @classmethod
     def from_bits(cls, bits):
+        """Create an instance from the bits representing the concatenated
+        fields.
+        """
         expected = cls._size
         if len(bits) != expected:
             raise ValueError('Expected {}: {}'
@@ -285,8 +314,10 @@ class BitField(metaclass=_BitFieldMeta):
 
     @lru_cache(2) # big, little
     def to_bytes(self, byteorder):
+        """Return an array of bytes representing the concatenated fields."""
         return self.to_bits().to_bytes(byteorder)
 
     @classmethod
     def from_bytes(cls, bytes, byteorder):
+        """Create an instance from an array of bytes."""
         return cls.from_bits(Bits.from_bytes(bytes, cls._size, byteorder))
