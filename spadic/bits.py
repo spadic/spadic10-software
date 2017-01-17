@@ -232,3 +232,12 @@ class _BitFieldMeta(ABCMeta):
             namespace['_fields'] = OrderedDict(fields)
             bases = insert_namedtuple(name, bases, namespace)
         return ABCMeta.__new__(mcls, name, bases, namespace)
+
+
+class BitField(metaclass=_BitFieldMeta):
+    """Abstract base class for bit fields, which are "namedtuples of Bits".
+
+    Concrete classes must define an ordered (name -> size) mapping as the
+    _fields attribute.
+    """
+    _fields = abstractproperty()
