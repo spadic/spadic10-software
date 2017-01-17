@@ -33,7 +33,7 @@ class Bits(Sequence):
 
     @classmethod
     def all_ones(cls, n):
-        """Return the n-bit value where every bit is 1.
+        """Return an instance with n bits where every bit is 1.
 
         >>> b = Bits.all_ones(5)
         >>> len(b)
@@ -49,6 +49,9 @@ class Bits(Sequence):
         >>> b = Bits(0b1101, 4)
         >>> [b[i] for i in reversed(range(4))]
         [1, 1, 0, 1]
+        >>> all(int(x) == sum(b * 2**i for i, b in enumerate(Bits(x, 4)))
+        ...     for x in range(16))
+        True
         """
         if self._size == 0 or i >= self._size:
             raise IndexError('Bad index for {}-bit value: {}'
@@ -104,11 +107,13 @@ class Bits(Sequence):
         return Bits(self._value ^ int(other), self._size)
 
     def reversed(self):
-        """Return a reversed copy of the bits.
+        """Return an instance with the bits in reverse order.
 
-        >>> b = Bits(0b1101, 4).reversed()
+        >>> b = Bits(0b1011, 4).reversed()
+        >>> b
+        Bits(value=13, size=4)
         >>> '{:04b}'.format(int(b))
-        '1011'
+        '1101'
         """
         value = sum(2 ** i * b for i, b in enumerate(reversed(self)))
         return Bits(value, self._size)
@@ -169,7 +174,7 @@ class Bits(Sequence):
         return self.splitleft(1)
 
     def to_bytes(self, byteorder):
-        """Return a bytes object representing the bits.
+        """Return an array of bytes representing the bits.
 
         >>> b = Bits(value=0x1abc, size=13)
         >>> b.to_bytes(byteorder='big').hex()
@@ -182,7 +187,7 @@ class Bits(Sequence):
 
     @classmethod
     def from_bytes(cls, bytes, size, byteorder):
-        """Return a Bits instance with the given size from bytes.
+        """Create an instance with the given size from an array of bytes.
 
         >>> Bits.from_bytes(bytes([0xbc, 0x1a]), size=13, byteorder='little')
         Bits(value=6844, size=13)
