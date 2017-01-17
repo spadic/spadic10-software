@@ -1,8 +1,14 @@
+from abc import ABCMeta, abstractproperty
+from collections import namedtuple, OrderedDict
 from collections.abc import Sequence
+from functools import lru_cache
 from numbers import Integral
+import re
 
 def _plural_bits(n):
     return '1 bit' if n == 1 else '{} bits'.format(n)
+
+#---- Bits -----------------------------------------------------------
 
 class Bits(Sequence):
     """Represent integer values as a sequence of bits."""
@@ -197,3 +203,155 @@ class Bits(Sequence):
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
             self.__class__.__name__, self._value, self._size)
+
+#---- BitField -------------------------------------------------------
+
+# inspired by http://lucumr.pocoo.org/2015/11/18/pythons-hidden-re-gems/
+def parse_fields(field_spec):
+    """Parse the (name, size) pairs from a field specification string.
+
+    Name and size can be separated by `:`, `=` or whitespace.
+    Pairs can be separated by `,`, `;` or whitespace.
+
+    >>> list(parse_fields('a: 3, b  5 ; c =6  '))
+    [('a', 3), ('b', 5), ('c', 6)]
+    """
+    p = re.compile(r'''
+        \s*
+        (\w+) \s*[:=\s]\s* (\d+)  # (name, size) pair
+        \s*
+        (?: [,;\s]\s* | $ )       # separator between pairs or end
+    ''', re.VERBOSE)
+    sc = p.scanner(field_spec)
+    match = None
+    for match in iter(sc.match, None):
+        name, size = match.groups()
+        yield name, int(size)
+    if not match or match.end() < len(field_spec):
+        raise ValueError('Bad field formatting: {!r} (last match: {!r})'
+                         .format(field_spec, match.group()))
+
+# derived from http://code.activestate.com/recipes/577629-namedtupleabc
+class _BitFieldMeta(ABCMeta):
+    def __new__(mcls, name, bases, namespace):
+        def find_field_spec(namespace, bases):
+            """Look for a _fields attribute in the namespace or one of the base
+            classes.
+            """
+            field_spec = namespace.get('_fields')
+            for base in bases:
+                if field_spec is not None:
+                    break
+                field_spec = getattr(base, '_fields', None)
+            return field_spec
+
+        def insert_namedtuple(name, bases, namespace):
+            """Insert a namedtuple based on the given fields *after* the other
+            base classes, so that calls to its methods can be intercepted.
+            """
+            field_names = list(namespace['_fields'])
+            basetuple = namedtuple('{}Fields'.format(name), field_names)
+            del basetuple._source  # is no longer accurate
+            bases = bases + (basetuple,)
+            namespace.setdefault('__doc__', basetuple.__doc__)
+            namespace.setdefault('__slots__', ())
+            return bases
+
+        field_spec = find_field_spec(namespace, bases)
+        if not isinstance(field_spec, abstractproperty):
+            try:
+                namespace['_fields'] = OrderedDict(field_spec)
+            except ValueError:
+                namespace['_fields'] = OrderedDict(parse_fields(field_spec))
+            bases = insert_namedtuple(name, bases, namespace)
+        return ABCMeta.__new__(mcls, name, bases, namespace)
+
+    @property
+    def _size(cls):
+        """The total number of bits."""
+        return sum(cls._fields.values())
+
+
+class BitField(metaclass=_BitFieldMeta):
+    """Abstract base class for bit fields, which are "namedtuples of Bits".
+
+    Concrete classes must have a _fields attribute defining an ordered
+    (name -> size) mapping.
+
+    _fields can be a formatted string, see help(parse_fields).
+
+    Example usage:
+
+    >>> class IPv4Header(BitField):
+    ...     _fields = '''
+    ...         version: 4, ihl: 4, dscp: 6, ecn: 2,
+    ...         total_length: 16, identification: 16,
+    ...         reserved_flag: 1, df_flag: 1, mf_flag: 1,
+    ...         fragment_offset: 13, ttl: 8, protocol: 8,
+    ...         checksum: 16, source_addr: 32, dest_addr: 32
+    ...     '''
+    ...
+    >>> IPv4Header._size
+    160
+    >>> # http://www.cs.miami.edu/home/burt/learning/Csc524.092/notes/ip_example.html
+    >>> h = IPv4Header.from_bytes((int(x, 16)
+    ...     for x in '45 00 00 44 ad 0b 00 00 40 11 72 72 ac 14 02 fd ac 14 00 06'.split()
+    ... ), byteorder='big')
+    ...
+    >>> int(h.version)
+    4
+    >>> h.ttl
+    Bits(value=64, size=8)
+    >>> hex(h.protocol)
+    '0x11'
+    """
+    _fields = abstractproperty()
+
+    def __new__(cls, *args, **kwargs):
+        """Create an instance, promoting the arguments to Bits if cls is
+        concrete. If cls is abstract, raise TypeError.
+        """
+        # "can't instantiate abstract class" TypeError is a feature of ABCMeta
+        if not isinstance(cls._fields, abstractproperty):
+            args = [
+                Bits(int(value), size)
+                for value, (name, size) in zip(args, cls._fields.items())
+            ]
+            kwargs = {
+                name: Bits(int(value), size=cls._fields[name])
+                for name, value in kwargs.items()
+            }
+        return super().__new__(cls, *args, **kwargs)
+
+    @lru_cache(1)
+    def to_bits(self):
+        """Return a Bits instance representing the concatenated fields."""
+        bits = Bits()
+        for field in self:
+            bits.extend(field)
+        return bits
+
+    @classmethod
+    def from_bits(cls, bits):
+        """Create an instance from the bits representing the concatenated
+        fields.
+        """
+        expected = cls._size
+        if len(bits) != expected:
+            raise ValueError('Expected {}: {}'
+                             .format(_plural_bits(expected), bits))
+        def fields():
+            b = bits.copy()
+            for size in cls._fields.values():
+                yield b.splitleft(size)
+        return cls(*fields())
+
+    @lru_cache(2) # big, little
+    def to_bytes(self, byteorder):
+        """Return an array of bytes representing the concatenated fields."""
+        return self.to_bits().to_bytes(byteorder)
+
+    @classmethod
+    def from_bytes(cls, bytes, byteorder):
+        """Create an instance from an array of bytes."""
+        return cls.from_bits(Bits.from_bytes(bytes, cls._size, byteorder))
