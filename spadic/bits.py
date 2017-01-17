@@ -216,13 +216,13 @@ class _BitFieldMeta(ABCMeta):
             return fields
 
         def insert_namedtuple(name, bases, namespace):
-            """Add a namedtuple based on the given fields to the other base
-            classes.
+            """Insert a namedtuple based on the given fields *after* the other
+            base classes, so that calls to its methods can be intercepted.
             """
             fields = list(namespace['_fields'])
             basetuple = namedtuple('{}Fields'.format(name), fields)
             del basetuple._source  # is no longer accurate
-            bases = (basetuple,) + bases
+            bases = bases + (basetuple,)
             namespace.setdefault('__doc__', basetuple.__doc__)
             namespace.setdefault('__slots__', ())
             return bases
@@ -241,3 +241,19 @@ class BitField(metaclass=_BitFieldMeta):
     _fields attribute.
     """
     _fields = abstractproperty()
+
+    def __new__(cls, *args, **kwargs):
+        """Create an instance, promoting the arguments to Bits if cls is
+        concrete. If cls is abstract, raise TypeError.
+        """
+        # "can't instantiate abstract class" TypeError is a feature of ABCMeta
+        if not isinstance(cls._fields, abstractproperty):
+            args = [
+                Bits(value, size)
+                for value, (name, size) in zip(args, cls._fields.items())
+            ]
+            kwargs = {
+                name: Bits(value, size=cls._fields[name])
+                for name, value in kwargs.items()
+            }
+        return super().__new__(cls, *args, **kwargs)
