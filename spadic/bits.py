@@ -229,7 +229,8 @@ def parse_fields(field_spec):
         yield name, int(size)
     if not match or match.end() < len(field_spec):
         raise ValueError('Bad field formatting: {!r} (last match: {!r})'
-                         .format(field_spec, match.group()))
+                         .format(field_spec,
+                                 getattr(match, 'group', lambda: None)()))
 
 # derived from http://code.activestate.com/recipes/577629-namedtupleabc
 class _BitFieldMeta(ABCMeta):
