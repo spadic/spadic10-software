@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractproperty
-from collections import namedtuple, OrderedDict
+from collections import deque, namedtuple, OrderedDict
 from collections.abc import Sequence
 from functools import lru_cache
 from numbers import Integral
@@ -313,15 +313,34 @@ class BitField(metaclass=_BitFieldMeta):
         concrete. If cls is abstract, raise TypeError.
         """
         # "can't instantiate abstract class" TypeError is a feature of ABCMeta
+
+        def promote_args(args, kwargs, fields):
+            """Return new args and kwargs where arguments that are fields are
+            promoted to Bits and others are kept, so that handling of
+            unexpected arguments can be left to namedtuple.
+
+            >>> fields = OrderedDict([('a', 8), ('b', 9)])
+            >>> promote_args([11, 12, 13], {}, fields)
+            ([Bits(value=11, size=8), Bits(value=12, size=9), 13], {})
+            >>> promote_args([11], dict(b=12, c=13), fields)
+            ([Bits(value=11, size=8)], {'b': Bits(value=12, size=9), 'c': 13})
+            """
+            _args, remaining = list(), deque(args)
+            for value, (name, size) in zip(args, fields.items()):
+                _args.append(Bits(int(value), size))
+                remaining.popleft()
+            _args.extend(remaining)
+
+            _kwargs = dict(kwargs)
+            for name, value in kwargs.items():
+                if name in fields:
+                    _kwargs[name] = Bits(int(value), size=fields[name])
+
+            return _args, _kwargs
+
         if not isinstance(cls._fields, abstractproperty):
-            args = [
-                Bits(int(value), size)
-                for value, (name, size) in zip(args, cls._fields.items())
-            ]
-            kwargs = {
-                name: Bits(int(value), size=cls._fields[name])
-                for name, value in kwargs.items()
-            }
+            args, kwargs = promote_args(args, kwargs, cls._fields)
+
         return super().__new__(cls, *args, **kwargs)
 
     @lru_cache(1)
