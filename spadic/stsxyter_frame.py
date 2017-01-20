@@ -127,6 +127,11 @@ class DownlinkFrame(BitFieldSuffixCRC):
         """
         return self.to_bytes(byteorder='big')
 
+class RequestType(IntEnum):
+    WR_ADDR = 1
+    WR_DATA = 2
+    RD_DATA = 3
+
 #---------------------------------------------------------------------
 
 class UplinkSpadicData(BitFieldPrefix):

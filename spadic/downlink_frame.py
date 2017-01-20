@@ -1,8 +1,4 @@
-from stsxyter_frame import DownlinkFrame
-
-# request types
-WRaddr = 1
-WRdata = 2
+from stsxyter_frame import DownlinkFrame, RequestType
 
 def write_register_words(chip_address, reg_address, value):
     """Return the two frames required for writing a value to a register,
@@ -14,8 +10,8 @@ def write_register_words(chip_address, reg_address, value):
     # Any two consecutive sequence numbers will be accepted by SPADIC 2.0.
     return b''.join(
         bytes(DownlinkFrame(chip_address, seq, request, payload))
-        for seq, request, payload in [
-           (0,   WRaddr,  reg_address),
-           (1,   WRdata,  value)
+        for seq, request,             payload in [
+           (0,   RequestType.WR_ADDR, reg_address),
+           (1,   RequestType.WR_DATA, value)
         ]
     )
