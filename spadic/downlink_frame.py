@@ -15,3 +15,8 @@ def write_register_words(chip_address, reg_address, value):
            (1,   RequestType.WR_DATA, value)
         ]
     )
+
+def write_registers(ftdi, chip_address, operations):
+    """Given an Ftdi instance, send bytes to write registers."""
+    for reg_address, value in operations:
+        ftdi.write(write_register_words(chip_address, reg_address, value))
