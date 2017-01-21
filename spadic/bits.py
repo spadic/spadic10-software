@@ -332,8 +332,8 @@ class _BitFieldMeta(ABCMeta):
         return ABCMeta.__new__(mcls, name, bases, namespace)
 
     @property
-    def _size(cls):
-        """The total number of bits."""
+    def _fields_size(cls):
+        """The number of bits in all fields."""
         return sum(cls._fields.values())
 
 
@@ -356,7 +356,7 @@ class BitField(metaclass=_BitFieldMeta):
     ...         checksum: 16, source_addr: 32, dest_addr: 32
     ...     '''
     ...
-    >>> IPv4Header._size
+    >>> IPv4Header.size()
     160
     >>> # http://www.cs.miami.edu/home/burt/learning/Csc524.092/notes/ip_example.html
     >>> h = IPv4Header.from_bytes((int(x, 16)
@@ -407,6 +407,11 @@ class BitField(metaclass=_BitFieldMeta):
 
         return super().__new__(cls, *args, **kwargs)
 
+    @classmethod
+    def size(cls):
+        """The total number of bits (may be overridden in subclasses)."""
+        return cls._fields_size
+
     def to_bits(self):
         """Return a Bits instance representing the concatenated fields."""
         bits = Bits()
@@ -419,7 +424,7 @@ class BitField(metaclass=_BitFieldMeta):
         """Create an instance from the bits representing the concatenated
         fields.
         """
-        expected = cls._size
+        expected = cls._fields_size
         if len(bits) != expected:
             raise ValueError('Expected {}: {}'
                              .format(_plural_bits(expected), bits))
@@ -436,4 +441,4 @@ class BitField(metaclass=_BitFieldMeta):
     @classmethod
     def from_bytes(cls, bytes, byteorder):
         """Create an instance from an array of bytes."""
-        return cls.from_bits(Bits.from_bytes(bytes, cls._size, byteorder))
+        return cls.from_bits(Bits.from_bytes(bytes, cls.size(), byteorder))
