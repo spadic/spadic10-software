@@ -99,6 +99,14 @@ class Bits(Sequence):
         """Support hex(), bin(), etc."""
         return self.__int__()
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return self._value == int(other) and self._size == len(other)
+
+    def __ne__(self, other):
+        return not self == other
+
     def __xor__(self, other):
         """Return self ^ other.
 
