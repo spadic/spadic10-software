@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractproperty
 from collections import deque, namedtuple, OrderedDict
 from collections.abc import Sequence
-from functools import lru_cache
 from numbers import Integral
 import re
 
@@ -98,6 +97,14 @@ class Bits(Sequence):
     def __index__(self):
         """Support hex(), bin(), etc."""
         return self.__int__()
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return self._value == int(other) and self._size == len(other)
+
+    def __ne__(self, other):
+        return not self == other
 
     def __xor__(self, other):
         """Return self ^ other.
@@ -343,7 +350,6 @@ class BitField(metaclass=_BitFieldMeta):
 
         return super().__new__(cls, *args, **kwargs)
 
-    @lru_cache(1)
     def to_bits(self):
         """Return a Bits instance representing the concatenated fields."""
         bits = Bits()
@@ -366,7 +372,6 @@ class BitField(metaclass=_BitFieldMeta):
                 yield b.splitleft(size)
         return cls(*fields())
 
-    @lru_cache(2) # big, little
     def to_bytes(self, byteorder):
         """Return an array of bytes representing the concatenated fields."""
         return self.to_bits().to_bytes(byteorder)
