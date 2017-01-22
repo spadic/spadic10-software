@@ -108,6 +108,32 @@ class Polynomial:
         return ' + '.join(format_term(i)
                           for i in reversed(range(len(self))) if self[i])
 
+    def to_representation(self, representation):
+        """Return the characteristic value of the polynomial in the given
+        representation.
+
+        >>> '{:04b}'.format(Polynomial(0b0011, 4)
+        ...                 .to_representation(PolyRepresentation.NORMAL))
+        '0011'
+        >>> '{:04b}'.format(Polynomial(0b0101, 4)
+        ...                 .to_representation(PolyRepresentation.REVERSED))
+        '1010'
+        >>> '{:04b}'.format(Polynomial(0b1001, 4)
+        ...                 .to_representation(PolyRepresentation.KOOPMAN))
+        '1100'
+        """
+        if representation is PolyRepresentation.NORMAL:
+            bits = self._bits
+        elif representation is PolyRepresentation.REVERSED:
+            bits = self._bits.reversed()
+        elif representation is PolyRepresentation.REVERSED_RECIPROCAL:
+            bits = self._bits.copy()
+            bits.pop()
+            bits.appendleft(1)
+        else:
+            assert False, 'Forgot to implement a representation.'
+        return int(bits)
+
 
 def crc(data, poly, init=None):
     """Calculate the CRC value of the data using the given polynomial.
