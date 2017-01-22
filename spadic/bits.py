@@ -131,6 +131,9 @@ class Bits(Sequence):
         value = sum(2 ** i * b for i, b in enumerate(reversed(self)))
         return Bits(value, self._size)
 
+    def _extend_value(self, other):
+        return (self._value << len(other)) + int(other)
+
     def extend(self, other):
         """Extend self on the right side by other bits.
 
@@ -141,7 +144,7 @@ class Bits(Sequence):
         >>> len(b)
         10
         """
-        self._value = (self._value << len(other)) + int(other)
+        self._value = self._extend_value(other)
         self._size += len(other)
 
     def extendleft(self, other):
@@ -154,7 +157,7 @@ class Bits(Sequence):
         >>> len(b)
         10
         """
-        self._value += (int(other) << self._size)
+        self._value = other._extend_value(self)
         self._size += len(other)
 
     def append(self, bit):
