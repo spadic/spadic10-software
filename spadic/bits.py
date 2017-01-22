@@ -175,6 +175,25 @@ class Bits(Sequence):
         self._size = remaining_size
         return Bits(result_value, n)
 
+    def split(self, n):
+        """Remove and return the n rightmost bits.
+
+        >>> b = Bits(0x310, 12)
+        >>> b.split(4)
+        Bits(value=0, size=4)
+        >>> b
+        Bits(value=49, size=8)
+        """
+        remaining_size = self._size - n
+        if remaining_size < 0:
+            raise ValueError('Cannot split {} from {}-bit value.'
+                             .format(_plural_bits(n), self._size))
+
+        result_value = self._value % (1 << n)
+        self._value = (self._value >> n) % (1 << remaining_size)
+        self._size = remaining_size
+        return Bits(result_value, n)
+
     def popleft(self):
         """Remove and return the leftmost bit.
 
@@ -185,6 +204,17 @@ class Bits(Sequence):
         Bits(value=0, size=2)
         """
         return self.splitleft(1)
+
+    def pop(self):
+        """Remove and return the rightmost bit.
+
+        >>> b = Bits(value=4, size=3)
+        >>> b.pop()
+        Bits(value=0, size=1)
+        >>> b
+        Bits(value=2, size=2)
+        """
+        return self.split(1)
 
     def to_bytes(self, byteorder):
         """Return an array of bytes representing the bits.
