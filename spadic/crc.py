@@ -90,6 +90,31 @@ class Polynomial:
         else:
             return self._bits[i]
 
+    @property
+    def terms(self):
+        """Return a list containing the exponentials of the terms whose
+        coefficient is 1, in ascending order.
+
+        >>> Polynomial(0x3, 4, PolyRepresentation.NORMAL).terms
+        [0, 1, 4]
+        """
+        return [i for i in range(len(self)) if self[i]]
+
+    @classmethod
+    def from_terms(cls, terms):
+        """Return a polynomial given the exponentials of the terms whose
+        coefficient is 1.
+
+        >>> str(Polynomial.from_terms([0, 2, 5, 7]))
+        'x^7 + x^5 + x^2 + 1'
+        """
+        terms = set(terms)
+        degree = max(terms)
+        value = Bits()
+        for i in range(degree):  # x^degree is omitted in normal representation
+            value.appendleft(i in terms)
+        return Polynomial(int(value), degree, PolyRepresentation.NORMAL)
+
     def __str__(self):
         """Return the mathematical notation of the polynomial.
 
@@ -105,8 +130,7 @@ class Polynomial:
             elif i == 1: return 'x'
             else: return 'x^{}'.format(i)
 
-        return ' + '.join(format_term(i)
-                          for i in reversed(range(len(self))) if self[i])
+        return ' + '.join(map(format_term, reversed(self.terms)))
 
     def to_representation(self, representation):
         """Return the characteristic value of the polynomial in the given
