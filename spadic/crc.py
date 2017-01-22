@@ -14,7 +14,7 @@ class Polynomial:
     """A polynomial used for CRC calculations."""
 
     def __init__(self, value, degree,
-                       representation=PolyRepresentation.REVERSED_RECIPROCAL):
+                       representation=PolyRepresentation.NORMAL):
         """Initialize a polynomial given its degree and the characteristic
         value in a particular representation.
 
@@ -76,8 +76,8 @@ class Polynomial:
     def __repr__(self):
         return (
             self.__class__.__name__
-            + '(value={!r}, degree={!r}, representation={!r}'
-              .format(self.__int__(), self.degree, PolyRepresentation.NORMAL)
+            + '(value={!r}, degree={!r})'
+              .format(self.__int__(), self.degree)
         )
 
     def __getitem__(self, i):
@@ -112,7 +112,9 @@ class Polynomial:
 def crc(data, poly, init=None):
     """Calculate the CRC value of the data using the given polynomial.
 
-    >>> p = Polynomial(value=0x62cc, degree=15)  # known as CRC-15-CAN
+    Example: CRC-15-CAN
+    >>> repr = PolyRepresentation.REVERSED_RECIPROCAL
+    >>> p = Polynomial(value=0x62cc, degree=15, representation=repr)
     >>> '{:04x}'.format(int(crc(data=Bits(value=0x00384c0, size=25), poly=p)))
     '007c'
     """
