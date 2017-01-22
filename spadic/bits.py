@@ -131,6 +131,9 @@ class Bits(Sequence):
         value = sum(2 ** i * b for i, b in enumerate(reversed(self)))
         return Bits(value, self._size)
 
+    def _extend_value(self, other):
+        return (self._value << len(other)) + int(other)
+
     def extend(self, other):
         """Extend self on the right side by other bits.
 
@@ -141,7 +144,20 @@ class Bits(Sequence):
         >>> len(b)
         10
         """
-        self._value = (self._value << len(other)) + int(other)
+        self._value = self._extend_value(other)
+        self._size += len(other)
+
+    def extendleft(self, other):
+        """Extend self on the left side by other bits.
+
+        >>> b = Bits(0x3, 2)
+        >>> b.extendleft(Bits(0x10, 8))
+        >>> hex(b)
+        '0x43'
+        >>> len(b)
+        10
+        """
+        self._value = other._extend_value(self)
         self._size += len(other)
 
     def append(self, bit):
@@ -156,6 +172,28 @@ class Bits(Sequence):
         """
         self.extend(Bits(int(bit), size=1))
 
+    def appendleft(self, bit):
+        """Append a single bit on the left side.
+
+        >>> b = Bits(0x2, 2)
+        >>> b.appendleft(1)
+        >>> int(b)
+        6
+        >>> len(b)
+        3
+        """
+        self.extendleft(Bits(int(bit), size=1))
+
+    def _splitleft(self, n):
+        remaining_size = self._size - n
+        if remaining_size < 0:
+            raise ValueError('Cannot split {} from {}-bit value.'
+                             .format(_plural_bits(n), self._size))
+
+        left = (self._value >> remaining_size)
+        right = self._value % (1 << remaining_size)
+        return left, right, remaining_size
+
     def splitleft(self, n):
         """Remove and return the n leftmost bits.
 
@@ -165,15 +203,23 @@ class Bits(Sequence):
         >>> b
         Bits(value=16, size=8)
         """
-        remaining_size = self._size - n
-        if remaining_size < 0:
-            raise ValueError('Cannot split {} from {}-bit value.'
-                             .format(_plural_bits(n), self._size))
+        left, right, remaining = self._splitleft(n)
+        self._value, self._size = right, remaining
+        return Bits(left, n)
 
-        result_value = (self._value >> remaining_size) % (1 << n)
-        self._value %= (1 << remaining_size)
-        self._size = remaining_size
-        return Bits(result_value, n)
+    def split(self, n):
+        """Remove and return the n rightmost bits.
+
+        >>> b = Bits(0x310, 12)
+        >>> b.split(4)
+        Bits(value=0, size=4)
+        >>> b
+        Bits(value=49, size=8)
+        """
+        remaining = len(self) - n
+        left, right, _ = self._splitleft(remaining)
+        self._value, self._size = left, remaining
+        return Bits(right, n)
 
     def popleft(self):
         """Remove and return the leftmost bit.
@@ -185,6 +231,17 @@ class Bits(Sequence):
         Bits(value=0, size=2)
         """
         return self.splitleft(1)
+
+    def pop(self):
+        """Remove and return the rightmost bit.
+
+        >>> b = Bits(value=4, size=3)
+        >>> b.pop()
+        Bits(value=0, size=1)
+        >>> b
+        Bits(value=2, size=2)
+        """
+        return self.split(1)
 
     def to_bytes(self, byteorder):
         """Return an array of bytes representing the bits.
