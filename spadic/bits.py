@@ -144,6 +144,19 @@ class Bits(Sequence):
         self._value = (self._value << len(other)) + int(other)
         self._size += len(other)
 
+    def extendleft(self, other):
+        """Extend self on the left side by other bits.
+
+        >>> b = Bits(0x3, 2)
+        >>> b.extendleft(Bits(0x10, 8))
+        >>> hex(b)
+        '0x43'
+        >>> len(b)
+        10
+        """
+        self._value += (int(other) << self._size)
+        self._size += len(other)
+
     def append(self, bit):
         """Append a single bit on the right side.
 
@@ -155,6 +168,18 @@ class Bits(Sequence):
         3
         """
         self.extend(Bits(int(bit), size=1))
+
+    def appendleft(self, bit):
+        """Append a single bit on the left side.
+
+        >>> b = Bits(0x2, 2)
+        >>> b.appendleft(1)
+        >>> int(b)
+        6
+        >>> len(b)
+        3
+        """
+        self.extendleft(Bits(int(bit), size=1))
 
     def _splitleft(self, n):
         remaining_size = self._size - n
