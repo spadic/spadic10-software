@@ -101,26 +101,31 @@ hittype_str = {
 #--------------------------------------------------------------------
 # split sequence of message words into messages (or info words)
 #--------------------------------------------------------------------
-class _MessageSplitter:
-    """Splits a stream of message words into individual messages."""
-    def __init__(self):
-        self._remainder = []
+def _MessageSplitter():
+    """Return a generator function for splitting words into chunks that form
+    one message, remembering unprocessed input until the next call.
 
-    def __call__(self, message_words):
-        """Feed new message words."""
-        # recall remainder from the last time
-        message = self._remainder
+    >>> s = _MessageSplitter()
+    >>> list(s([0x8000, 0x9000, 0xA000, 0x1234]))
+    []
+    >>> messages = s([0x2345, 0xF500, 0xB000, 0x8001])
+    >>> ['{:04X}'.format(w) for w in next(messages)]
+    ['8000', '9000', 'A000', '1234', '2345', 'B000']
+    """
+    message = []
 
+    def split(message_words):
+        """Consume words and generate chunks that form one message."""
         for w in message_words:
             # first check if info word and discard NOP words
             if match_word(w, preamble['wINF']):
                 if not match_word(w, infotype['iNOP']):
                     yield [w]
-                    message = []
+                    message.clear()
                 continue
             # start new message at start of message marker
             elif match_word(w, preamble['wSOM']):
-                message = []
+                message.clear()
 
             # build up message
             message.append(w)
@@ -129,11 +134,10 @@ class _MessageSplitter:
             # also clear it so it is not stored as remainder
             if any(match_word(w, preamble[p])
                    for p in ['wEOM', 'wBOM', 'wEPM']):
-                yield message
-                message = []
+                yield list(message)
+                message.clear()
 
-        # store remainder for the next time
-        self._remainder = message
+    return split
 
 
 #--------------------------------------------------------------------

@@ -76,6 +76,10 @@
   $ make install
   ```
 
+  To install into the user's directory instead of the system directory (if you
+  have no admin privileges), add the `-DCMAKE_INSTALL_PREFIX=~/.local` flag to
+  the cmake command.
+
 * mutti (Michael's User Text Terminal Interface)
 
   ```sh
