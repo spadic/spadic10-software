@@ -9,6 +9,17 @@ class PolyRepresentation(Enum):
     REVERSED_RECIPROCAL = 3
     KOOPMAN = REVERSED_RECIPROCAL
 
+def _validate_representation(r):
+    """Return r if it is a member of the PolyRepresentation enumeration,
+    otherwise return the member with the name given by `r`.
+    Raise ValueError if there is no member with that name.
+    """
+    if isinstance(r, PolyRepresentation):
+        return r
+    try:
+        return PolyRepresentation[r]
+    except KeyError:
+        raise ValueError('Unknown representation: {!r}'.format(r))
 
 class Polynomial:
     """A polynomial used for CRC calculations."""
@@ -29,9 +40,7 @@ class Polynomial:
         '1001'
         """
         bits = Bits(value, degree)
-        if representation not in PolyRepresentation:
-            raise ValueError('Unknown representation: {}'
-                             .format(representation))
+        representation = _validate_representation(representation)
         if degree > 0:
             # In each CRC polynomial, the coefficients for the x^0 and x^degree
             # terms must be 1. The integer value representing the polynomial
@@ -146,6 +155,7 @@ class Polynomial:
         ...                 .to_representation(PolyRepresentation.KOOPMAN))
         '1100'
         """
+        representation = _validate_representation(representation)
         if representation is PolyRepresentation.NORMAL:
             bits = self._bits
         elif representation is PolyRepresentation.REVERSED:
