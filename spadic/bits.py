@@ -162,7 +162,7 @@ class Bits(Sequence):
             raise ValueError('Cannot split {} from {}-bit value.'
                              .format(_plural_bits(n), self._size))
 
-        left = (self._value >> remaining_size) % (1 << n)
+        left = (self._value >> remaining_size)
         right = self._value % (1 << remaining_size)
         return left, right, remaining_size
 
