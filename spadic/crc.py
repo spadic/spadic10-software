@@ -32,8 +32,18 @@ class Polynomial:
             if not bit:
                 raise ValueError('Coefficient of x^{} term must be 1.'
                                  .format(term))
-        self._bits = bits
-        self.representation = representation
+
+        if representation is PolyRepresentation.NORMAL:
+            self._bits = bits
+        elif representation is PolyRepresentation.REVERSED:
+            self._bits = bits.reversed()
+        elif representation is PolyRepresentation.REVERSED_RECIPROCAL:
+            _bits = bits.copy()
+            _bits.popleft()
+            _bits.append(1)
+            self._bits = _bits
+        else:
+            assert False, 'Forgot to implement a representation.'
 
     def __int__(self):
         return int(self._bits)
@@ -54,7 +64,7 @@ class Polynomial:
         return (
             self.__class__.__name__
             + '(value={!r}, degree={!r}, representation={!r}'
-              .format(self.__int__(), self.degree, self.representation)
+              .format(self.__int__(), self.degree, PolyRepresentation.NORMAL)
         )
 
     def __getitem__(self, i):
@@ -101,19 +111,7 @@ class Polynomial:
         ...                     .normalized()))
         '1001'
         """
-        src = self.representation
-        if src is PolyRepresentation.NORMAL:
-            return self
-        elif src is PolyRepresentation.REVERSED:
-            new_bits = self._bits.reversed()
-        elif src is PolyRepresentation.REVERSED_RECIPROCAL:
-            new_bits = self._bits.copy()
-            new_bits.popleft()
-            new_bits.append(1)
-        else:
-            assert False, 'Forgot to implement a representation.'
-        return Polynomial(int(new_bits), len(new_bits),
-                          PolyRepresentation.NORMAL)
+        return self
 
 
 def crc(data, poly, init=None):
