@@ -73,6 +73,17 @@ class Polynomial:
     def __index__(self):
         return self.__int__()
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self._bits == other._bits
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((int(self._bits), len(self._bits)))
+
     @property
     def degree(self):
         """Degree of the polynomial, exponent of the highest term."""
