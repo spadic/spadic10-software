@@ -15,6 +15,19 @@ class Polynomial:
 
     def __init__(self, value, degree,
                        representation=PolyRepresentation.REVERSED_RECIPROCAL):
+        """Initialize a polynomial given its degree and the characteristic
+        value in a particular representation.
+
+        See https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Specification
+        and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
+
+        >>> '{:04b}'.format(int(Polynomial(0b0011, 4, PolyRepresentation.NORMAL)))
+        '0011'
+        >>> '{:04b}'.format(int(Polynomial(0b1010, 4, PolyRepresentation.REVERSED)))
+        '0101'
+        >>> '{:04b}'.format(int(Polynomial(0b1100, 4, PolyRepresentation.KOOPMAN)))
+        '1001'
+        """
         bits = Bits(value, degree)
         if representation not in PolyRepresentation:
             raise ValueError('Unknown representation: {}'
@@ -75,7 +88,7 @@ class Polynomial:
         if i in [0, self.degree]:
             return 1
         else:
-            return self.normalized()._bits[i]
+            return self._bits[i]
 
     def __str__(self):
         """Return the mathematical notation of the polynomial.
@@ -95,24 +108,6 @@ class Polynomial:
         return ' + '.join(format_term(i)
                           for i in reversed(range(len(self))) if self[i])
 
-    def normalized(self):
-        """Return an equivalent polynomial in the normal representation.
-
-        See https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Specification
-        and https://en.wikipedia.org/wiki/Mathematics_of_cyclic_redundancy_checks#Polynomial_representations
-
-        >>> '{:04b}'.format(int(Polynomial(0b0011, 4, PolyRepresentation.NORMAL)
-        ...                     .normalized()))
-        '0011'
-        >>> '{:04b}'.format(int(Polynomial(0b1010, 4, PolyRepresentation.REVERSED)
-        ...                     .normalized()))
-        '0101'
-        >>> '{:04b}'.format(int(Polynomial(0b1100, 4, PolyRepresentation.KOOPMAN)
-        ...                     .normalized()))
-        '1001'
-        """
-        return self
-
 
 def crc(data, poly, init=None):
     """Calculate the CRC value of the data using the given polynomial.
@@ -122,7 +117,7 @@ def crc(data, poly, init=None):
     '007c'
     """
     reg_size = poly.degree
-    poly = poly.normalized()._bits
+    poly = poly._bits
 
     if init is None:
         reg = Bits.all_ones(reg_size)
