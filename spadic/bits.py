@@ -156,6 +156,16 @@ class Bits(Sequence):
         """
         self.extend(Bits(int(bit), size=1))
 
+    def _splitleft(self, n):
+        remaining_size = self._size - n
+        if remaining_size < 0:
+            raise ValueError('Cannot split {} from {}-bit value.'
+                             .format(_plural_bits(n), self._size))
+
+        left = (self._value >> remaining_size) % (1 << n)
+        right = self._value % (1 << remaining_size)
+        return left, right, remaining_size
+
     def splitleft(self, n):
         """Remove and return the n leftmost bits.
 
@@ -165,15 +175,9 @@ class Bits(Sequence):
         >>> b
         Bits(value=16, size=8)
         """
-        remaining_size = self._size - n
-        if remaining_size < 0:
-            raise ValueError('Cannot split {} from {}-bit value.'
-                             .format(_plural_bits(n), self._size))
-
-        result_value = (self._value >> remaining_size) % (1 << n)
-        self._value %= (1 << remaining_size)
-        self._size = remaining_size
-        return Bits(result_value, n)
+        left, right, remaining = self._splitleft(n)
+        self._value, self._size = right, remaining
+        return Bits(left, n)
 
     def split(self, n):
         """Remove and return the n rightmost bits.
@@ -184,15 +188,10 @@ class Bits(Sequence):
         >>> b
         Bits(value=49, size=8)
         """
-        remaining_size = self._size - n
-        if remaining_size < 0:
-            raise ValueError('Cannot split {} from {}-bit value.'
-                             .format(_plural_bits(n), self._size))
-
-        result_value = self._value % (1 << n)
-        self._value = (self._value >> n) % (1 << remaining_size)
-        self._size = remaining_size
-        return Bits(result_value, n)
+        remaining = len(self) - n
+        left, right, _ = self._splitleft(remaining)
+        self._value, self._size = left, remaining
+        return Bits(right, n)
 
     def popleft(self):
         """Remove and return the leftmost bit.
