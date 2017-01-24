@@ -42,3 +42,27 @@ class SpadicStsxyterRegisterAccess:
         acks = iter(lambda: self._stsxyter.read_ack(timeout=0.01), None)
 
         # TODO check CRC errors and if acks match requests
+
+    def read_registers(self, addresses):
+        "Generate register read results corresponding to a list of addresses."
+
+        # Send and remember all read requests.
+        def read_register_frame(register_address):
+            return DownlinkFrame(
+                self._chip_address, next(self._sequence_numbers),
+                RequestType.RD_DATA, register_address
+            )
+
+        requests = [read_register_frame(a) for a in addresses]
+
+        # TODO limit number of pending responses - to 8? to 1?
+        for r in requests:
+            self._stsxyter.write(r)
+
+        # Try to read as many responses as requests were sent (with a short
+        # timeout).
+        responses = list(filter(None, (self._stsxyter.read_data(timeout=0.1)
+                                       for _ in requests)))
+
+        for response in responses:
+            yield int(response.data)
