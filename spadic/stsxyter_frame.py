@@ -127,6 +127,24 @@ class DownlinkFrame(BitFieldSuffixCRC):
         """
         return self.to_bytes(byteorder='big')
 
+#---------------------------------------------------------------------
+
+class UplinkSpadicData(BitFieldPrefix):
+    """An uplink hit frame as used in SPADIC 2.0.
+
+    Contains a single 16-bit SPADIC message word.
+
+    >>> d = UplinkSpadicData.from_bytes(bytes([0x78, 0xAB, 0xCD]), 'big')
+    >>> hex(d.word)
+    '0xabcd'
+    """
+    _prefix = (0b0, 1)
+
+    _fields = [
+        ('ignored_data', 7),
+        ('word', 16)
+    ]
+
 class UplinkControlFrame(BitFieldSuffixCRC, BitFieldPrefix):
     """Base class for different uplink frames other than hit frames.
 
