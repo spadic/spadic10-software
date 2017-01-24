@@ -4,6 +4,41 @@ from . import crc
 from .bits import Bits, BitField
 
 
+class PrefixError(ValueError):
+    """Raised when creating a BitFieldPrefix from data with wrong prefix."""
+    pass
+
+class BitFieldPrefix(BitField):
+    """A bit field with an additional prefix.
+
+    Concrete classes must define an attribute "_prefix" which is a pair
+    (value, size).
+    """
+    _prefix = abstractproperty()
+
+    @classmethod
+    def size(cls):
+        _, prefix_size = cls._prefix
+        return prefix_size + super().size()
+
+    def to_bits(self):
+        """All fields including the prefix concatenated to bits."""
+        result = Bits(*self._prefix)
+        result.extend(super().to_bits())
+        return result
+
+    @classmethod
+    def from_bits(cls, bits):
+        """Return an instance given its all bits (including the prefix)."""
+        bits = bits.copy()
+        prefix_value, prefix_size = cls._prefix
+        prefix_seen = bits.splitleft(prefix_size)
+        if not int(prefix_seen) == prefix_value:
+            raise PrefixError('Wrong prefix for {}: {}'
+                              .format(cls.__name__, bin(prefix_seen)))
+        return super().from_bits(bits)
+
+
 class BitFieldSuffixCRC(BitField):
     """A bit field with an additional CRC suffix.
 
@@ -90,3 +125,11 @@ class DownlinkFrame(BitFieldSuffixCRC):
         '97bb2a615c'
         """
         return self.to_bytes(byteorder='big')
+
+class UplinkControlFrame(BitFieldSuffixCRC, BitFieldPrefix):
+    """Base class for different uplink frames other than hit frames.
+
+    Such uplink frames are bit fields with an additional prefix, and a CRC
+    applied to the fields including the prefix.
+    """
+    pass
