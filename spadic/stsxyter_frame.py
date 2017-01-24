@@ -204,10 +204,10 @@ class UplinkAck(UplinkControlFrame):
         ('ack', 2),
         ('sequence_number', 4),
         ('config_parity', 1),  # always 0 in SPADIC 2.0
-        ('throttle_alert', 1),
-        ('sync_alert', 1),
-        ('sequence_error', 1),
         ('other_error', 1),
+        ('sequence_error', 1),
+        ('sync_alert', 1),
+        ('throttle_alert', 1),
         ('timestamp', 6)
     ]
 
