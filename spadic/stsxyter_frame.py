@@ -1,4 +1,5 @@
 from abc import abstractproperty
+from enum import IntEnum
 
 from . import crc
 from .bits import Bits, BitField
@@ -133,3 +134,72 @@ class UplinkControlFrame(BitFieldSuffixCRC, BitFieldPrefix):
     applied to the fields including the prefix.
     """
     pass
+
+class UplinkReadData(UplinkControlFrame):
+    """
+    >>> frame = UplinkReadData(data=2, sequence_number=4)
+    >>> len(frame.to_bits())
+    24
+    >>> '{:06x}'.format(int(frame.to_bits()))
+    'a000a4'
+
+    >>> f = UplinkReadData.from_bytes(bytes([0xa0, 0x00, 0xa4]), 'big')
+    >>> int(f.data)
+    2
+    >>> int(f.sequence_number)
+    4
+    >>> f.crc_is_correct
+    True
+    """
+    _prefix = (0b101, 3)
+
+    _fields = [
+        ('data', 15),
+        ('sequence_number', 3)
+    ]
+
+    _crc_poly = crc.Polynomial(
+        value=0x5, degree=3,
+        representation=crc.PolyRepresentation.REVERSED_RECIPROCAL
+    )
+
+class UplinkAck(UplinkControlFrame):
+    """An uplink Ack frame.
+
+    >>> frame = UplinkAck(ack=1, sequence_number=3, config_parity=0,
+    ...                   throttle_alert=0, sync_alert=0, sequence_error=1,
+    ...                   other_error=0, timestamp=27)
+    >>> len(frame.to_bits())
+    24
+
+    >>> f = UplinkAck.from_bits(Bits(0b100010010101000011110000))
+    >>> int(f.ack)
+    1
+    >>> int(f.sync_alert)
+    1
+    >>> int(f.timestamp)
+    15
+    """
+    _prefix = (0b100, 3)
+
+    _fields = [
+        ('ack', 2),
+        ('sequence_number', 4),
+        ('config_parity', 1),  # always 0 in SPADIC 2.0
+        ('throttle_alert', 1),
+        ('sync_alert', 1),
+        ('sequence_error', 1),
+        ('other_error', 1),
+        ('timestamp', 6)
+    ]
+
+    _crc_poly = crc.Polynomial(
+        value=0x9, degree=4,
+        representation=crc.PolyRepresentation.REVERSED_RECIPROCAL
+    )
+
+class AckType(IntEnum):
+    RESERVED = 0
+    ACK = 1
+    NACK = 2
+    ALERT = 3
