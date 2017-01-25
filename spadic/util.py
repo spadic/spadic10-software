@@ -53,7 +53,7 @@ class StreamDemultiplexer:
     RD_TASK = 1 # higher value -> lower priority
 
     def _debug(self, *text):
-        _log = logging.getLogger(self.__class__.__name__)
+        _log = logging.getLogger(type(self).__name__)
         _log.info(' '.join(text)) # TODO use proper log levels
 
     def __init__(self, interface, keys):
@@ -161,4 +161,4 @@ class StreamDemultiplexer:
 # http://www.artima.com/weblogs/viewpost.jsp?thread=246483
 @property
 def log(self):
-    return logging.getLogger(self.__class__.__name__)
+    return logging.getLogger(type(self).__name__)

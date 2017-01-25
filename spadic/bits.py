@@ -99,7 +99,7 @@ class Bits(Sequence):
         return self.__int__()
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, type(self)):
             return NotImplemented
         return self._value == int(other) and self._size == len(other)
 
@@ -266,7 +266,7 @@ class Bits(Sequence):
 
     def __repr__(self):
         return '{}(value={!r}, size={!r})'.format(
-            self.__class__.__name__, self._value, self._size)
+            type(self).__name__, self._value, self._size)
 
 #---- BitField -------------------------------------------------------
 
