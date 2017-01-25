@@ -442,3 +442,11 @@ class BitField(metaclass=_BitFieldMeta):
     def from_bytes(cls, bytes, byteorder):
         """Create an instance from an array of bytes."""
         return cls.from_bits(Bits.from_bytes(bytes, cls.size(), byteorder))
+
+    def __repr__(self):
+        def format_field(name):
+            return '{}={}'.format(name, int(getattr(self, name)))
+        return '{name}({fields})'.format(
+            name=type(self).__name__,
+            fields=', '.join(map(format_field, self._fields.keys()))
+        )
