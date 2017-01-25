@@ -1,6 +1,8 @@
 from . import stsxyter_frame
 from .Ftdi import FtdiContainer
-from .mux_stream import MultiplexedStreamInterface, NoDataAvailable
+from .mux_stream import (
+    MultiplexedStreamInterface, StreamDemultiplexer, NoDataAvailable
+)
 
 
 class NoUplinkFrame(ValueError):
@@ -49,3 +51,46 @@ class FtdiStsxyterInterface(FtdiContainer, MultiplexedStreamInterface):
 
         self._debug('read {!r}'.format(frame))
         return type_name, frame
+
+
+class FtdiStsxyter:
+    """Representation of the STS-XYTER interface over FTDI."""
+
+    from .util import log as _log
+    def _debug(self, *text):
+        self._log.info(' '.join(text)) # TODO use proper log levels
+
+    def __init__(self, ftdi):
+        self._demux = StreamDemultiplexer(
+            interface=FtdiStsxyterInterface(ftdi),
+            sources=[tp for tp, _ in FtdiStsxyterInterface._uplink_frame_types]
+        )
+        self._debug('init')
+
+    def __enter__(self):
+        self._demux.__enter__()
+        self._debug('enter')
+        return self
+
+    def __exit__(self, *args):
+        self._demux.__exit__()
+        self._debug('exit')
+
+    def write(self, frame):
+        """Send a downlink frame over FTDI."""
+        self._demux.write(frame)
+
+    def read_hit(self, lane, timeout=1):
+        """Read a hit frame from the STS-XYTER interface at the given lane
+        number.
+        """
+        # TODO support "lanes" A and B (need to implement in firmware first)
+        return self._demux.read('HIT', timeout)
+
+    def read_ack(self, timeout=1):
+        """Read an Ack frame from the STS-XYTER interface."""
+        return self._demux.read('ACK', timeout)
+
+    def read_data(self, timeout=1):
+        """Read a RDdata_ack frame from the STS-XYTER interface."""
+        return self._demux.read('READ', timeout)
