@@ -75,7 +75,7 @@ class Polynomial:
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return False
+            return NotImplemented
         return self._bits == other._bits
 
     def __ne__(self, other):
