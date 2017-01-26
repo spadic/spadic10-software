@@ -76,7 +76,7 @@ class StreamDemultiplexer:
         self._interface.__exit__()
         self._debug('exit')
 
-    def write(self, key, value):
+    def write(self, value, key=None):
         """Write the value to the given key."""
         self._send_queue.put((key, value))
 
