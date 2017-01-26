@@ -2,7 +2,7 @@ from collections import namedtuple
 import struct
 
 from .Ftdi import FtdiContainer
-from .util import StreamDemultiplexer, NoDataAvailable
+from .mux_stream import StreamDemultiplexer, NoDataAvailable
 
 # CBMnet interface packet consisting of
 # addr: Address of the CBMnet send port
