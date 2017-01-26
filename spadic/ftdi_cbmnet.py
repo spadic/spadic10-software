@@ -2,7 +2,7 @@ from collections import namedtuple
 import struct
 
 from .Ftdi import FtdiContainer
-from .util import StreamDemultiplexer
+from .util import StreamDemultiplexer, NoDataAvailable
 
 # CBMnet interface packet consisting of
 # addr: Address of the CBMnet send port
@@ -45,11 +45,11 @@ class FtdiCbmnetInterface(FtdiContainer):
         """Read a packet from the CBMnet receive interface.
 
         If successful, return an FtdiCbmnetPacket instance.
-        Otherwise, return None.
+        Otherwise, raise NoDataAvailable.
         """
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
-            return None
+            raise NoDataAvailable
 
         addr, num_words = struct.unpack('BB', header)
         data = self._ftdi.read(2 * num_words)

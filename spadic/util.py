@@ -43,6 +43,10 @@ class InfiniteSemaphore:
         pass
 
 
+class NoDataAvailable(Exception):
+    "Raised when interfaces used by StreamDemultiplexer have no data to read."
+    pass
+
 class StreamDemultiplexer:
     """Adaptor to convert an interface where (key, value) tuples are read and
     written sequentially to an interface where values are read from or written
@@ -118,10 +122,10 @@ class StreamDemultiplexer:
             except queue.Empty:
                 continue
             if task == StreamDemultiplexer.RD_TASK:
-                item = self._interface.read()
-                if item is None:
+                try:
+                    key, value = self._interface.read()
+                except NoDataAvailable:
                     continue
-                key, value = item
                 self._recv_queue[key].put(value)
             elif task == StreamDemultiplexer.WR_TASK:
                 item = self._send_data.get()
