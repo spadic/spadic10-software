@@ -1,8 +1,7 @@
-from . import Ftdi
-from .util import StreamDemultiplexer
-
 from collections import namedtuple
 import struct
+
+from .util import StreamDemultiplexer
 
 # CBMnet interface packet consisting of
 # addr: Address of the CBMnet send port
@@ -29,9 +28,9 @@ class FtdiCbmnetInterface:
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
-    def __init__(self):
+    def __init__(self, ftdi):
         """Prepare FTDI connection."""
-        self._ftdi = Ftdi.Ftdi()
+        self._ftdi = ftdi
         self._debug('init')
 
     def __enter__(self):
@@ -88,9 +87,9 @@ class FtdiCbmnet:
     def _debug(self, *text):
         self._log.info(' '.join(text)) # TODO use proper log levels
 
-    def __init__(self):
+    def __init__(self, ftdi):
         self._demux = StreamDemultiplexer(
-            interface=FtdiCbmnetInterface(),
+            interface=FtdiCbmnetInterface(ftdi),
             keys=[ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL]
         )
         self._debug('init')
