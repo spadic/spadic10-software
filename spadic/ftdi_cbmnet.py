@@ -2,7 +2,9 @@ from collections import namedtuple
 import struct
 
 from .Ftdi import FtdiContainer
-from .mux_stream import StreamDemultiplexer, NoDataAvailable
+from .mux_stream import (
+    MultiplexedStreamInterface, StreamDemultiplexer, NoDataAvailable
+)
 
 # CBMnet interface packet consisting of
 # addr: Address of the CBMnet send port
@@ -22,7 +24,7 @@ WRITE_LEN = {
 }
 
 
-class FtdiCbmnetInterface(FtdiContainer):
+class FtdiCbmnetInterface(FtdiContainer, MultiplexedStreamInterface):
     """Representation of the FTDI <-> CBMnet interface."""
 
     def write(self, value, destination):

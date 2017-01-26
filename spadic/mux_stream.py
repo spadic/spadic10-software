@@ -1,16 +1,44 @@
+from abc import ABCMeta, abstractmethod
 import logging
 import queue
 import threading
 import time
 
+
 class NoDataAvailable(Exception):
     "Raised when interfaces used by StreamDemultiplexer have no data to read."
     pass
 
+
+class MultiplexedStreamInterface(metaclass=ABCMeta):
+    """Representation of a streaming interface where data from different
+    channels is multiplexed over a communication device which supports the
+    context manager protocol.
+
+    Concrete classes must implement write and read methods.
+    """
+    @abstractmethod
+    def write(self, value, destination=None):
+        """Write data to the communication device, consisting of a value and
+        optionally the destination channel.
+        """
+        pass
+
+    @abstractmethod
+    def read(self):
+        """Read data from the communication device and return a tuple
+        (source, value).
+
+        If no data is available to read, raise NoDataAvailable.
+
+        Must be non-blocking.
+        """
+        pass
+
+
 class StreamDemultiplexer:
-    """Adaptor to convert an interface where (key, value) tuples are read and
-    written sequentially to an interface where values are read from or written
-    to individual keys.
+    """Adaptor to convert a MultiplexedStreamInterface to an interface where
+    values are read from or written to individual sources/destinations.
     """
 
     WR_TASK = 0 # lower value -> higher priority
