@@ -5,6 +5,7 @@ from .registerfile import SpadicRegisterFile
 from .shiftregister import SpadicShiftRegister
 from .control import SpadicController
 
+from . import Ftdi
 
 class Spadic:
     """Representation of a SPADIC chip.
@@ -19,7 +20,7 @@ class Spadic:
         self._log.info(' '.join(text))
 
     def __init__(self, reset=False, load=None, **kwargs):
-        self._cbmif = ftdi_cbmnet.FtdiCbmnet()
+        self._cbmif = ftdi_cbmnet.FtdiCbmnet(Ftdi.Ftdi())
         self._reg_access = SpadicCbmnetRegisterAccess(self._cbmif)
         self._splitters = [MessageSplitter(self._cbmif, lane)
                            for lane in [0, 1]]
