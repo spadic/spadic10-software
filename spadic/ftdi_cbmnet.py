@@ -73,7 +73,8 @@ class FtdiCbmnet:
     def __init__(self, ftdi):
         self._demux = StreamDemultiplexer(
             interface=FtdiCbmnetInterface(ftdi),
-            sources=[ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL]
+            sources=[ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL],
+            name='{}Demultiplexer'.format(type(self).__name__)
         )
         self._debug('init')
 

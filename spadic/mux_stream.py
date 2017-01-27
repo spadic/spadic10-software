@@ -45,10 +45,11 @@ class StreamDemultiplexer:
     RD_TASK = 1 # higher value -> lower priority
 
     def _debug(self, *text):
-        _log = logging.getLogger(type(self).__name__)
+        _log = logging.getLogger(self._name)
         _log.info(' '.join(text)) # TODO use proper log levels
 
-    def __init__(self, interface, sources):
+    def __init__(self, interface, sources, name=None):
+        self._name = name or type(self).__name__
         self._interface = interface
         self._send_queue = queue.Queue()
         self._comm_tasks = queue.PriorityQueue()
