@@ -1,6 +1,7 @@
 from collections import namedtuple
 import struct
 
+from .Ftdi import FtdiContainer
 from .util import StreamDemultiplexer
 
 # CBMnet interface packet consisting of
@@ -21,28 +22,8 @@ WRITE_LEN = {
 }
 
 
-class FtdiCbmnetInterface:
+class FtdiCbmnetInterface(FtdiContainer):
     """Representation of the FTDI <-> CBMnet interface."""
-
-    from .util import log as _log
-    def _debug(self, *text):
-        self._log.info(' '.join(text)) # TODO use proper log levels
-
-    def __init__(self, ftdi):
-        """Prepare FTDI connection."""
-        self._ftdi = ftdi
-        self._debug('init')
-
-    def __enter__(self):
-        """Open FTDI connection."""
-        self._ftdi.__enter__()
-        self._debug('enter')
-        return self
-
-    def __exit__(self, *args):
-        """Close FTDI connection."""
-        self._ftdi.__exit__(*args)
-        self._debug('exit')
 
     def write(self, packet):
         """Write a packet to the CBMnet send interface."""
