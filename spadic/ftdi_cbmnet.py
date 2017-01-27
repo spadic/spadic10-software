@@ -2,7 +2,9 @@ from collections import namedtuple
 import struct
 
 from .Ftdi import FtdiContainer
-from .util import StreamDemultiplexer
+from .mux_stream import (
+    MultiplexedStreamInterface, StreamDemultiplexer, NoDataAvailable
+)
 
 # CBMnet interface packet consisting of
 # addr: Address of the CBMnet send port
@@ -22,12 +24,12 @@ WRITE_LEN = {
 }
 
 
-class FtdiCbmnetInterface(FtdiContainer):
+class FtdiCbmnetInterface(FtdiContainer, MultiplexedStreamInterface):
     """Representation of the FTDI <-> CBMnet interface."""
 
-    def write(self, packet):
+    def write(self, value, destination):
         """Write a packet to the CBMnet send interface."""
-        packet = FtdiCbmnetPacket(*packet)
+        packet = FtdiCbmnetPacket(addr=destination, words=value)
         if packet.addr not in WRITE_LEN:
             raise ValueError('Cannot write to this CBMnet port.')
         if len(packet.words) != WRITE_LEN[packet.addr]:
@@ -45,11 +47,11 @@ class FtdiCbmnetInterface(FtdiContainer):
         """Read a packet from the CBMnet receive interface.
 
         If successful, return an FtdiCbmnetPacket instance.
-        Otherwise, return None.
+        Otherwise, raise NoDataAvailable.
         """
         header = self._ftdi.read(2, max_iter=1)
         if len(header) < 2:
-            return None
+            raise NoDataAvailable
 
         addr, num_words = struct.unpack('BB', header)
         data = self._ftdi.read(2 * num_words)
@@ -71,7 +73,8 @@ class FtdiCbmnet:
     def __init__(self, ftdi):
         self._demux = StreamDemultiplexer(
             interface=FtdiCbmnetInterface(ftdi),
-            keys=[ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL]
+            sources=[ADDR_DATA_A, ADDR_DATA_B, ADDR_CTRL],
+            name='{}Demultiplexer'.format(type(self).__name__)
         )
         self._debug('init')
 
@@ -86,18 +89,18 @@ class FtdiCbmnet:
 
     def write_ctrl(self, words):
         """Write words to the control port of the CBMnet send interface."""
-        self._demux.write(ADDR_CTRL, words)
+        self._demux.write(words, destination=ADDR_CTRL)
 
     def send_dlm(self, number):
         """Send a DLM."""
-        self._demux.write(ADDR_DLM, [number])
+        self._demux.write([number], destination=ADDR_DLM)
 
     def read_data(self, lane, timeout=1):
         """Read words from the CBMnet data receive interface at the given lane
         number.
         """
-        addr = [ADDR_DATA_A, ADDR_DATA_B][lane]
-        return self._demux.read(addr, timeout)
+        source = [ADDR_DATA_A, ADDR_DATA_B][lane]
+        return self._demux.read(source, timeout)
 
     def read_ctrl(self, timeout=1):
         """Read words from the CBMnet control receive interface."""
