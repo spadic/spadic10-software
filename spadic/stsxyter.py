@@ -27,6 +27,18 @@ class SpadicStsxyterRegisterAccess:
                     request, payload
                 )
 
-        for reg_address, value in operations:
-            for frame in write_register_frames(reg_address, value):
-                self._stsxyter.write(frame)
+        def all_frames(operations):
+            for reg_address, value in operations:
+                for frame in write_register_frames(reg_address, value):
+                    yield frame
+
+        # Send and remember all write requests.
+        requests = list(all_frames(operations))
+        for r in requests:
+            self._stsxyter.write(r)
+
+        # Collect all Ack frames available, waiting as short as possible for
+        # the last one.
+        acks = iter(lambda: self._stsxyter.read_ack(timeout=0.01), None)
+
+        # TODO check CRC errors and if acks match requests
