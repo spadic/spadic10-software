@@ -1,6 +1,7 @@
 from itertools import cycle
 
-from .stsxyter_frame import DownlinkFrame, RequestType
+from .registerfile import RegisterReadFailure
+from .stsxyter_frame import DownlinkFrame, RequestType, UplinkReadData
 
 class SpadicStsxyterRegisterAccess:
     """Read and write SPADIC registers using the STS-XYTER interface."""
@@ -44,7 +45,11 @@ class SpadicStsxyterRegisterAccess:
         # TODO check CRC errors and if acks match requests
 
     def read_registers(self, addresses):
-        "Generate register read results corresponding to a list of addresses."
+        """Generate register read results corresponding to a list of addresses.
+
+        If the sequence numbers in read requests and responses do not
+        correspond exactly, raise RegisterReadFailure exception.
+        """
 
         # Send and remember all read requests.
         def read_register_frame(register_address):
@@ -59,10 +64,38 @@ class SpadicStsxyterRegisterAccess:
         for r in requests:
             self._stsxyter.write(r)
 
+        def expected_sequence_number(request):
+            """Return the sequence number expected in the response
+            corresponding to the request."""
+            size = UplinkReadData._fields['sequence_number']
+            return int(request.sequence_number) % (2 ** size)
+
+        expected_sequence_numbers = [
+            expected_sequence_number(r) for r in requests
+        ]
+
         # Try to read as many responses as requests were sent (with a short
         # timeout).
         responses = list(filter(None, (self._stsxyter.read_data(timeout=0.1)
                                        for _ in requests)))
 
-        for response in responses:
-            yield int(response.data)
+        # Hope for the easily handled correct case.
+        def returned_sequence_number(response):
+            """Return the sequence number found in the response, or None if
+            the CRC of the response is incorrect."""
+            return (int(response.sequence_number)
+                    if response.crc_is_correct else None)
+
+        returned_sequence_numbers = [
+            returned_sequence_number(r) for r in responses
+        ]
+
+        def read_results_simple(responses):
+            """Generate register read values from responses."""
+            for response in responses:
+                yield int(response.data)
+
+        if returned_sequence_numbers == expected_sequence_numbers:
+            return read_results_simple(responses)
+
+        raise RegisterReadFailure
