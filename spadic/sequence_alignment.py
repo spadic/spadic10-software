@@ -54,23 +54,24 @@ def scoring_matrix(a, b):
 
 def align_local(a, b):
     """Generate pairs of indexes into sequences a and b indicating local
-    alignment in reverse order.
+    alignment.
 
     Implements the Smith-Waterman algorithm
     (see https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm).
 
     >>> list(align_local('TGTTACGG', 'GGTTGACTA'))
-    [(5, 6), (4, 5), (3, 3), (2, 2), (1, 1)]
+    [(1, 1), (2, 2), (3, 3), (4, 5), (5, 6)]
     """
     entries = list(scoring_matrix(a, b))
-    column, row = max(entries, key=lambda e: e.score).pos
-    trace = {e.pos: e.source for e in entries}
-    # traceback:
-    for source in iter(lambda: trace[column, row], None):
-        if source == 'diag':
-            yield column, row
-        column, row = {
-            'diag': (column - 1, row - 1),
-            'top': (column, row - 1),
-            'left': (column - 1, row),
-        }[source]
+    def traceback():
+        column, row = max(entries, key=lambda e: e.score).pos
+        trace = {e.pos: e.source for e in entries}
+        for source in iter(lambda: trace[column, row], None):
+            if source == 'diag':
+                yield column, row
+            column, row = {
+                'diag': (column - 1, row - 1),
+                'top': (column, row - 1),
+                'left': (column - 1, row),
+            }[source]
+    return reversed(list(traceback()))
