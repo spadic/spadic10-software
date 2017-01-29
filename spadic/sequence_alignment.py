@@ -59,6 +59,8 @@ def align_local(a, b):
     Implements the Smith-Waterman algorithm
     (see https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm).
 
+    >>> list(align_local('abc', 'abc'))
+    [(0, 0), (1, 1), (2, 2)]
     >>> list(align_local('TGTTACGG', 'GGTTGACTA'))
     [(1, 1), (2, 2), (3, 3), (4, 5), (5, 6)]
     """
@@ -66,7 +68,7 @@ def align_local(a, b):
     def traceback():
         column, row = max(entries, key=lambda e: e.score).pos
         trace = {e.pos: e.source for e in entries}
-        for source in iter(lambda: trace[column, row], None):
+        for source in iter(lambda: trace.get((column, row), None), None):
             if source == 'diag':
                 yield column, row
             column, row = {
