@@ -1,7 +1,7 @@
 from itertools import cycle
 
 from .registerfile import RegisterReadFailure
-from .stsxyter_frame import DownlinkFrame, RequestType, UplinkReadData
+from .stsxyter_frame import AckType, DownlinkFrame, RequestType, UplinkReadData
 
 class SpadicStsxyterRegisterAccess:
     """Read and write SPADIC registers using the STS-XYTER interface."""
@@ -94,6 +94,35 @@ class SpadicStsxyterRegisterAccess:
             """Generate register read values from responses."""
             for response in responses:
                 yield int(response.data)
+
+        if returned_sequence_numbers == expected_sequence_numbers:
+            return read_results_simple(responses)
+
+        # There could be several reasons why the results are not correct:
+        #
+        # a) Excessive RDdata frames (maybe misidentified other frames)
+        # b) Missing RDdata frames (maybe due to CRC error in request)
+        # c) RDdata frames with wrong sequence numbers and/or CRC errors
+        #
+        # To resolve cases a) and b), try to read all remaining RDdata frames
+        # that are available within a small timeout (for a) this "cleans up"
+        # for future register read operations, for b) maybe the missing
+        # responses are received).
+        #
+        # Additionally read all Ack frames (which are sent with ack code "not
+        # acknowledged") when a register read operation failed due to CRC error
+        # in the request) available within a small timeout, to "clean up" for
+        # future register write operations.
+        responses.extend(
+            iter(lambda: self._stsxyter.read_data(timeout=0.1), None)
+        )
+        all_acks = iter(lambda: self._stsxyter.read_ack(timeout=0.1), None)
+        nacks = [a for a in all_acks if int(a.ack) == AckType.NACK]
+
+        # Hope again for the simple and correct case.
+        returned_sequence_numbers = [
+            returned_sequence_number(r) for r in responses
+        ]
 
         if returned_sequence_numbers == expected_sequence_numbers:
             return read_results_simple(responses)
