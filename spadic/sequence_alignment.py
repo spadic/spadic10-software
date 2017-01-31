@@ -59,11 +59,20 @@ def align_local(a, b):
     Implements the Smith-Waterman algorithm
     (see https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm).
 
+    >>> list(align_local('', 'abc')) == list(align_local('abc', '')) == []
+    True
     >>> list(align_local('abc', 'abc'))
     [(0, 0), (1, 1), (2, 2)]
     >>> list(align_local('TGTTACGG', 'GGTTGACTA'))
     [(1, 1), (2, 2), (3, 3), (4, 5), (5, 6)]
     """
+    # Empty sequences would not be handled later.
+    if not (a and b):
+        return iter([])
+    # Equal sequences would be handled later as well, but this is a shortcut.
+    if a == b:
+        return zip(range(len(a)), range(len(b)))
+
     entries = list(scoring_matrix(a, b))
     def traceback():
         column, row = max(entries, key=lambda e: e.score).pos
