@@ -59,7 +59,7 @@ class SpadicCbmnetRegisterAccess:
             words = [int(ControlRequest.WRITE), address, value]
             self._cbmnet.write_ctrl(words)
 
-    def read_registers(self, addresses):
+    def read_registers(self, addresses, *args, **kwargs):
         """Generate the values from reading registers at a list of addresses."""
         for address in set(addresses):
             self._retransmit_workaround(address)
