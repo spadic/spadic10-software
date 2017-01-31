@@ -1,5 +1,7 @@
 from collections.abc import Mapping
 
+from .registerfile import RegisterReadFailure
+
 # In this module, the "binary representation" of an n-bit number will be a
 # string of '0' and '1' characters, with the MSB at position 0 (to the
 # left) and the LSB at position n-1 (to the right).
@@ -548,7 +550,10 @@ class SpadicShiftRegister(ShiftRegister):
             bits_left -= len_chunk
 
         # read chunks
-        result = self._read_registers([0x300 for c in chunks])
+        try:
+            result = self._read_registers([0x300 for c in chunks])
+        except RegisterReadFailure:
+            raise ShiftRegisterReadFailure
 
         # concatenate chunks, right first
         bits = ''
