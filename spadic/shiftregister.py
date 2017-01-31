@@ -501,6 +501,8 @@ SR_WRITE = 2
 ADDR_CTRL = 0x2f0
 ADDR_DATA = 0x300
 
+CHUNK_SIZE = 16
+
 class ShiftRegisterReadFailure(Exception):
     pass
 
@@ -516,10 +518,10 @@ class SpadicShiftRegister(ShiftRegister):
         ctrl_data = (self._length << 3) + SR_WRITE
         self._write_registers([(ADDR_CTRL, ctrl_data)])
 
-        # divide bit string into 16 bit chunks, right first
+        # divide bit string into chunks, right first
         while bits:
-            chunk = bits[-16:] # take the last 16 bits
-            bits  = bits[:-16] # remove the last 16 bits
+            chunk = bits[-CHUNK_SIZE:] # take the last bits
+            bits  = bits[:-CHUNK_SIZE] # remove the last bits
             # one chunk is written LSB first (from "shift.v"):
             #   sr_write_bitin <= write_buf[0];
             #   write_buf[14:0] <= write_buf[15:1];
@@ -544,11 +546,11 @@ class SpadicShiftRegister(ShiftRegister):
         ctrl_data = (self._length << 3) + SR_READ
         self._write_registers([(ADDR_CTRL, ctrl_data)])
 
-        # collect needed read requests for 16-bit chunks
+        # collect needed read requests for chunks with given size
         bits_left = self._length
         chunks = []
         while bits_left:
-            len_chunk = min(bits_left, 16)
+            len_chunk = min(bits_left, CHUNK_SIZE)
             chunks.append(len_chunk)
             bits_left -= len_chunk
 
