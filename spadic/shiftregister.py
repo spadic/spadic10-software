@@ -172,10 +172,7 @@ class ShiftRegister(Mapping):
     def update(self):
         """Perform the read operation."""
         if not self._known or self._last_bits != self._to_bits():
-            try:
-                bits = self._read()
-            except IOError:
-                raise
+            bits = self._read()
             self._from_bits(bits)
             self._last_bits = bits
             self._known = True
@@ -499,6 +496,9 @@ SPADIC_SR = {
 SR_READ  = 1
 SR_WRITE = 2
 
+class ShiftRegisterReadFailure(Exception):
+    pass
+
 class SpadicShiftRegister(ShiftRegister):
     """Representation of the SPADIC shift register."""
     def __init__(self, write_registers, read_registers):
@@ -521,25 +521,20 @@ class SpadicShiftRegister(ShiftRegister):
             self._write_registers([(0x300, int(chunk, 2))])
 
     def _read(self):
-        """
-        Perform the write operation of the whole shift register.
-        
-        Calls _read_once several times as workaround for the retransmit
-        bug.
+        """Perform the read operation of the whole shift register.
+
+        Calls _read_once until it succeeds.
         """
         while True:
             try:
                 return self._read_once()
-            except IOError: # failed completely
-                raise
-            except RuntimeError: # failed only partly, try again
+            except ShiftRegisterReadFailure:
                 continue
 
     def _read_once(self):
-        """
-        Perform the write operation of the whole shift register.
+        """Read the whole shift register once.
 
-        This method would be sufficient without the retransmit bug.
+        May fail, raise ShiftRegisterReadFailure in that case.
         """
         ctrl_data = (self._length << 3) + SR_READ
         self._write_registers([(0x2F0, ctrl_data)])
