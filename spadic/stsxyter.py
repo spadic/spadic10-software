@@ -1,4 +1,5 @@
 from itertools import cycle
+import logging
 
 from .sequence_alignment import align_local
 from .registerfile import RegisterReadFailure
@@ -14,6 +15,7 @@ class SpadicStsxyterRegisterAccess:
             size = DownlinkFrame._fields['sequence_number']
             return 2 ** size
         self._sequence_numbers = cycle(range(sequence_number_count()))
+        self._log = logging.getLogger(type(self).__name__)
 
     def write_registers(self, operations):
         """Perform register write operations as specified in the given list of
@@ -150,5 +152,10 @@ class SpadicStsxyterRegisterAccess:
                 j = alignment.get(i, None)
                 reg_value = None if j is None else int(responses[j].data)
                 yield reg_value
+
+        self._log.info('Matched {} responses to {}/{} requests. '
+                       'Received {} NACKs.'
+                       .format(len(responses), len(alignment), len(requests),
+                               len(nacks)))
 
         return read_values_aligned(requests, responses, alignment)
