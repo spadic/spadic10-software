@@ -556,7 +556,8 @@ class SpadicShiftRegister(ShiftRegister):
 
         # read chunks
         try:
-            result = self._read_registers([ADDR_DATA for c in chunks])
+            result = self._read_registers([ADDR_DATA for c in chunks],
+                                          attempt_alignment=False)
         except RegisterReadFailure:
             raise ShiftRegisterReadFailure
 
