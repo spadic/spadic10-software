@@ -22,7 +22,7 @@ class FtdiStsxyterInterface(FtdiContainer, MultiplexedStreamInterface):
     def write(self, value, destination=None):
         """Send a downlink frame over FTDI."""
         downlink_frame = value
-        self._debug('write {!r}'.format(downlink_frame))
+        self._debug('write {}'.format(downlink_frame))
         self._ftdi.write(bytes(downlink_frame))
 
     def read(self):
@@ -49,7 +49,7 @@ class FtdiStsxyterInterface(FtdiContainer, MultiplexedStreamInterface):
         except NoUplinkFrame:
             raise NoDataAvailable
 
-        self._debug('read {!r}'.format(frame))
+        self._debug('read {}'.format(frame))
         return type_name, frame
 
 
