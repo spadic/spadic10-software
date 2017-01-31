@@ -1,5 +1,6 @@
 from itertools import cycle
 
+from .sequence_alignment import align_local
 from .registerfile import RegisterReadFailure
 from .stsxyter_frame import AckType, DownlinkFrame, RequestType, UplinkReadData
 
@@ -44,11 +45,16 @@ class SpadicStsxyterRegisterAccess:
 
         # TODO check CRC errors and if acks match requests
 
-    def read_registers(self, addresses):
+    def read_registers(self, addresses, attempt_alignment=True):
         """Generate register read results corresponding to a list of addresses.
 
         If the sequence numbers in read requests and responses do not
-        correspond exactly, raise RegisterReadFailure exception.
+        correspond exactly, attempt to align them. Unmatched read requests will
+        result in a read value of None.
+
+        If it is required that all read requests are successfully handled on
+        the first try, the alignment attempt can be disabled. In this case,
+        a RegisterReadFailure exception is raised.
         """
 
         # Send and remember all read requests.
@@ -127,4 +133,22 @@ class SpadicStsxyterRegisterAccess:
         if returned_sequence_numbers == expected_sequence_numbers:
             return read_results_simple(responses)
 
-        raise RegisterReadFailure
+        # Attempt to align the received responses with the requests, or give up
+        # and raise an exception.
+        if not attempt_alignment:
+            raise RegisterReadFailure
+
+        alignment = dict(align_local(
+            expected_sequence_numbers, returned_sequence_numbers
+        ))
+
+        def read_values_aligned(requests, responses, alignment):
+            """Generate register read results from aligned requests and
+            responses. Use None as value if there is no matching response to
+            a request."""
+            for i, _ in enumerate(requests):
+                j = alignment.get(i, None)
+                reg_value = None if j is None else int(responses[j].data)
+                yield reg_value
+
+        return read_values_aligned(requests, responses, alignment)
