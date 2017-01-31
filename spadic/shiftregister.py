@@ -498,10 +498,10 @@ SPADIC_SR = {
 SR_READ  = 1
 SR_WRITE = 2
 
-ADDR_CTRL = 0x2f0
-ADDR_DATA = 0x300
+ADDR_CTRL = 0x6a << 3  # SPADIC 1.x: 0x2f0
+ADDR_DATA = 0x6c << 3  # SPADIC 1.x: 0x300
 
-CHUNK_SIZE = 16
+CHUNK_SIZE = 15        # SPADIC 1.x: 16
 
 class ShiftRegisterReadFailure(Exception):
     pass
