@@ -498,6 +498,9 @@ SPADIC_SR = {
 SR_READ  = 1
 SR_WRITE = 2
 
+ADDR_CTRL = 0x2f0
+ADDR_DATA = 0x300
+
 class ShiftRegisterReadFailure(Exception):
     pass
 
@@ -511,7 +514,7 @@ class SpadicShiftRegister(ShiftRegister):
     def _write(self, bits):
         """Perform the write operation of the whole shift register."""
         ctrl_data = (self._length << 3) + SR_WRITE
-        self._write_registers([(0x2F0, ctrl_data)])
+        self._write_registers([(ADDR_CTRL, ctrl_data)])
 
         # divide bit string into 16 bit chunks, right first
         while bits:
@@ -520,7 +523,7 @@ class SpadicShiftRegister(ShiftRegister):
             # one chunk is written LSB first (from "shift.v"):
             #   sr_write_bitin <= write_buf[0];
             #   write_buf[14:0] <= write_buf[15:1];
-            self._write_registers([(0x300, int(chunk, 2))])
+            self._write_registers([(ADDR_DATA, int(chunk, 2))])
 
     def _read(self):
         """Perform the read operation of the whole shift register.
@@ -539,7 +542,7 @@ class SpadicShiftRegister(ShiftRegister):
         May fail, raise ShiftRegisterReadFailure in that case.
         """
         ctrl_data = (self._length << 3) + SR_READ
-        self._write_registers([(0x2F0, ctrl_data)])
+        self._write_registers([(ADDR_CTRL, ctrl_data)])
 
         # collect needed read requests for 16-bit chunks
         bits_left = self._length
@@ -551,7 +554,7 @@ class SpadicShiftRegister(ShiftRegister):
 
         # read chunks
         try:
-            result = self._read_registers([0x300 for c in chunks])
+            result = self._read_registers([ADDR_DATA for c in chunks])
         except RegisterReadFailure:
             raise ShiftRegisterReadFailure
 
