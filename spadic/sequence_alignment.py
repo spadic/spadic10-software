@@ -1,19 +1,20 @@
 from collections import namedtuple
 from itertools import product
 
-def similarity_score(a, b):
-    return 3 if a == b else - 3
+def similarity_score(a, b, weight):
+    return weight * (1 if a == b else -1)
 
-def gap_penalty(gap_length):
-    return 2 * gap_length
+def gap_penalty(gap_length, weight):
+    return weight * gap_length
 
 ScoringEntry = namedtuple('ScoringEntry', 'pos source score')
 
-def scoring_matrix(a, b):
+def scoring_matrix(a, b, similarity_weight, gap_weight):
     """Generate entries in the scoring matrix of the Smith-Waterman algorithm
-    for sequences a and b.
+    for sequences a and b, given the weights for the similarity score and the
+    gap penalty.
 
-    >>> entries = scoring_matrix('ba', 'abac')
+    >>> entries = scoring_matrix('ba', 'abac', 3, 2)
     >>> list((e.pos, e.source, e.score) for e in entries) # doctest: +NORMALIZE_WHITESPACE
     [((0, 0), None,   0), ((1, 0), 'diag', 3),
      ((0, 1), 'diag', 3), ((1, 1), 'top',  1),
@@ -24,19 +25,20 @@ def scoring_matrix(a, b):
         column, row = pos
         yield ScoringEntry(
             score=(scores.get((column - 1, row - 1), 0)
-                   + similarity_score(a[column], b[row])
+                   + similarity_score(a[column], b[row],
+                                      weight=similarity_weight)
                   ),
             source='diag', pos=pos
         )
         yield ScoringEntry(
             score=max(scores.get((column, row - gap), 0)
-                      - gap_penalty(gap)
+                      - gap_penalty(gap, weight=gap_weight)
                       for gap in range(1, row + 2)),
             source='top', pos=pos
         )
         yield ScoringEntry(
             score=max(scores.get((column - gap, row), 0)
-                      - gap_penalty(gap)
+                      - gap_penalty(gap, weight=gap_weight)
                       for gap in range(1, column + 2)),
             source='left', pos=pos
         )
@@ -52,7 +54,7 @@ def scoring_matrix(a, b):
         scores[column, row] = entry.score
         yield entry
 
-def align_local(a, b):
+def align_local(a, b, similarity_weight=3, gap_weight=2):
     """Generate pairs of indexes into sequences a and b indicating local
     alignment.
 
@@ -73,7 +75,7 @@ def align_local(a, b):
     if a == b:
         return zip(range(len(a)), range(len(b)))
 
-    entries = list(scoring_matrix(a, b))
+    entries = list(scoring_matrix(a, b, similarity_weight, gap_weight))
     def traceback():
         column, row = max(entries, key=lambda e: e.score).pos
         trace = {e.pos: e.source for e in entries}
