@@ -1,9 +1,9 @@
 from stsxyter_frame import DownlinkFrame, RequestType
 
 def write_register_frames(chip_address, reg_address, value):
-    """Return the two frames required for writing a value to a register.
+    """Generate the two frames required for writing a value to a register.
 
-    >>> frames = write_register_frames(7, 12, 367)
+    >>> frames = list(write_register_frames(7, 12, 367))
     >>> len(frames)
     2
     >>> ['{:02x}'.format(w) for w in bytes(frames[0])]
@@ -12,13 +12,11 @@ def write_register_frames(chip_address, reg_address, value):
     ['71', '80', 'b7', 'f7', 'b9']
     """
     # Any two consecutive sequence numbers will be accepted by SPADIC 2.0.
-    return [
-        DownlinkFrame(chip_address, seq, request, payload)
-        for seq, request,             payload in [
-           (0,   RequestType.WR_ADDR, reg_address),
-           (1,   RequestType.WR_DATA, value)
-        ]
-    ]
+    for seq, request,             payload in [
+       (0,   RequestType.WR_ADDR, reg_address),
+       (1,   RequestType.WR_DATA, value)
+    ]:
+        yield DownlinkFrame(chip_address, seq, request, payload)
 
 def write_registers(ftdi, chip_address, operations):
     """Given an Ftdi instance, send bytes to write registers."""
