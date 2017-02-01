@@ -74,8 +74,8 @@ class Polynomial:
         return self.__int__()
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
+        if not isinstance(other, type(self)):
+            return NotImplemented
         return self._bits == other._bits
 
     def __ne__(self, other):
@@ -95,7 +95,7 @@ class Polynomial:
 
     def __repr__(self):
         return (
-            self.__class__.__name__
+            type(self).__name__
             + '(value={!r}, degree={!r})'
               .format(self.__int__(), self.degree)
         )

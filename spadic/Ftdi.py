@@ -3,6 +3,7 @@ libFTDI Python bindings.
 """
 
 from functools import wraps
+import logging
 
 # libFTDI was renamed when version 1.0 was released -- try to get the
 # newer version first.
@@ -211,3 +212,28 @@ class Ftdi:
             self._debug('read',
                         '[%s]' % (' '.join('%02X' % b for b in bytes_read)))
         return bytes_read
+
+
+class FtdiContainer:
+    """Use as a base class if a derived class should contain an Ftdi instance,
+    rather than being a subclass of Ftdi itself.
+    """
+    def _debug(self, *text):
+        _log = logging.getLogger(type(self).__name__)
+        _log.info(' '.join(text)) # TODO use proper log levels
+
+    def __init__(self, ftdi, *args, **kwargs):
+        """Prepare FTDI connection."""
+        self._ftdi = ftdi
+        self._debug('init')
+        super().__init__(*args, **kwargs)
+
+    def __enter__(self):
+        """Open FTDI connection."""
+        self._ftdi.__enter__()
+        self._debug('enter')
+
+    def __exit__(self, *args):
+        """Close FTDI connection."""
+        self._ftdi.__exit__(*args)
+        self._debug('exit')

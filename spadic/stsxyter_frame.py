@@ -84,6 +84,12 @@ class BitFieldSuffixCRC(BitField):
         data = super().from_bits(bits)
         return cls(*data, crc=crc_bits)
 
+    def __str__(self):
+        return '{}{}'.format(
+            super().__str__(),
+            '' if self.crc_is_correct else ' [CRC!]'
+        )
+
 #---------------------------------------------------------------------
 
 class DownlinkFrame(BitFieldSuffixCRC):

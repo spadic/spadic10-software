@@ -278,7 +278,7 @@ class MessageSplitter:
     """Split messages from received words in the background."""
 
     def _debug(self, *text):
-        logger = logging.getLogger(self.__class__.__name__ + 'AB'[self._lane])
+        logger = logging.getLogger(type(self).__name__ + 'AB'[self._lane])
         logger.info(' '.join(text))
 
     def __init__(self, backend, lane):

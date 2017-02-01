@@ -1,11 +1,14 @@
-from .util import IndexQueue
+from enum import IntEnum
 import threading
+
+from .util import IndexQueue
+
+class ControlRequest(IntEnum):
+    WRITE = 1
+    READ  = 2
 
 class SpadicCbmnetRegisterAccess:
     """Read and write registers using the CBMnet control port."""
-
-    WRITE = 1
-    READ  = 2
 
     from .util import log as _log
     def _debug(self, *text):
@@ -53,7 +56,7 @@ class SpadicCbmnetRegisterAccess:
         (address, value) tuples.
         """
         for address, value in operations:
-            words = [type(self).WRITE, address, value]
+            words = [int(ControlRequest.WRITE), address, value]
             self._cbmnet.write_ctrl(words)
 
     def read_registers(self, addresses):
@@ -62,7 +65,7 @@ class SpadicCbmnetRegisterAccess:
             self._retransmit_workaround(address)
         # send all read requests
         for address in addresses:
-            words = [type(self).READ, address, 0]
+            words = [int(ControlRequest.READ), address, 0]
             self._cbmnet.write_ctrl(words)
         # read all results
         for address in addresses:
