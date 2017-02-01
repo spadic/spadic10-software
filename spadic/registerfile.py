@@ -1,6 +1,9 @@
 from collections.abc import Mapping
 import threading
 
+class RegisterReadFailure(IOError):
+    pass
+
 #====================================================================
 # generic representation of a single register and a register file
 #====================================================================
@@ -90,8 +93,8 @@ class Register:
         """Perform the hardware read operation."""
         try:
             result = self._read()
-        except IOError:
-            return
+        except RegisterReadFailure:
+            return # TODO do something better?
         self._stage = result
         if self._use_cache:
             self._cache = result
