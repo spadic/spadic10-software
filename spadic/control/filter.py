@@ -79,12 +79,12 @@ class Filter(ControlUnitBase):
 
         value_a = sum(c%64 << 6*(i-1) for (i, c) in self._coeffa.items())
         # aCoeffFilter does not contain a value for stage 0 --> (i-1)
-        self._registerfile['aCoeffFilter_h'].set(value_a >> 16)
-        self._registerfile['aCoeffFilter_l'].set(value_a & 0xFFFF)
+        self._registerfile['aCoeffFilter_h'].set(value_a >> 15)
+        self._registerfile['aCoeffFilter_l'].set(value_a & 0x7FFF)
 
         value_b = sum(c%64 << 6*i for (i, c) in self._coeffb.items())
-        self._registerfile['bCoeffFilter_h'].set(value_b >> 16)
-        self._registerfile['bCoeffFilter_l'].set(value_b & 0xFFFF)
+        self._registerfile['bCoeffFilter_h'].set(value_b >> 15)
+        self._registerfile['bCoeffFilter_l'].set(value_b & 0x7FFF)
 
         value_enable = sum(en << i for (i, en) in self._enable.items())
         self._registerfile['bypassFilterStage'].set((~value_enable) % 32)
@@ -104,7 +104,7 @@ class Filter(ControlUnitBase):
     def update(self):
         ra_h = self._registerfile['aCoeffFilter_h'].read() 
         ra_l = self._registerfile['aCoeffFilter_l'].read()
-        ra = (ra_h << 16) + ra_l
+        ra = (ra_h << 15) + ra_l
         for i in self._coeffa:
             # aCoeffFilter does not contain a value for stage 0 --> (i-1)
             a = (ra >> (6*(i-1))) & 0x3F
@@ -112,7 +112,7 @@ class Filter(ControlUnitBase):
 
         rb_h = self._registerfile['bCoeffFilter_h'].read()
         rb_l = self._registerfile['bCoeffFilter_l'].read()
-        rb = (rb_h << 16) + rb_l
+        rb = (rb_h << 15) + rb_l
         for i in self._coeffb:
             b = (rb >> (6*i)) & 0x3F
             self._coeffb[i] = (b if b < 32 else b-64)
