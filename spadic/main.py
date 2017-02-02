@@ -1,7 +1,7 @@
-from . import ftdi_cbmnet
+from . import ftdi_stsxyter
 from .message import MessageSplitter
-from .cbmnet import SpadicCbmnetRegisterAccess
-from .registerfile import SpadicRegisterFile
+from .stsxyter import SpadicStsxyterRegisterAccess
+from .registerfile import SpadicRegisterFile, SPADIC20_RF
 from .shiftregister import SpadicShiftRegister
 from .control import SpadicController
 
@@ -20,9 +20,11 @@ class Spadic:
         self._log.info(' '.join(text))
 
     def __init__(self, reset=False, load=None, **kwargs):
-        self._cbmif = ftdi_cbmnet.FtdiCbmnet(Ftdi.Ftdi())
-        self._reg_access = SpadicCbmnetRegisterAccess(self._cbmif)
-        self._splitters = [MessageSplitter(self._cbmif, lane)
+        self._interface = ftdi_stsxyter.FtdiStsxyter(Ftdi.Ftdi())
+        self._reg_access = SpadicStsxyterRegisterAccess(
+            self._interface, chip_address=7
+        ) # TODO do not hard-code chip address
+        self._splitters = [MessageSplitter(self._interface, lane)
                            for lane in [0, 1]]
 
         self.readout_enable(0)
@@ -36,7 +38,9 @@ class Spadic:
             def read():
                 return next(self._reg_access.read_registers([addr]))
             return read
-        self._registerfile = SpadicRegisterFile(rf_write_gen, rf_read_gen)
+        self._registerfile = SpadicRegisterFile(
+            rf_write_gen, rf_read_gen, register_map=SPADIC20_RF
+        )
 
         # higher level shift register access
         self._shiftregister = SpadicShiftRegister(
@@ -49,7 +53,7 @@ class Spadic:
         self.readout_enable(1)
 
     def __enter__(self):
-        self._cbmif.__enter__()
+        self._interface.__enter__()
         self._reg_access.__enter__()
         for s in self._splitters:
             s.__enter__()
@@ -59,16 +63,15 @@ class Spadic:
         for s in self._splitters:
             s.__exit__()
         self._reg_access.__exit__()
-        self._cbmif.__exit__(*args)
+        self._interface.__exit__(*args)
 
     def send_command(self, value):
         """Send the command with the given value."""
-        self._cbmif.send_dlm(value)
+        raise NotImplementedError # TODO
 
     def readout_enable(self, enable):
         """Start or stop data taking in the chip."""
-        dlm = 8 if enable else 9
-        self.send_command(dlm)
+        self._registerfile['readoutEnabled'].write(1 if enable else 0)
 
     #----------------------------------------------------------------
     # read messages from groups A and B
