@@ -60,9 +60,11 @@ class HitLogic(ControlUnitBase):
         if triggerout is not None:
             self._triggerout = 1 if triggerout else 0
 
-        mask_h = self._mask >> 16;
-        mask_l = self._mask & 0xFFFF;
+        mask_h = self._mask >> 30;
+        mask_m = self._mask >> 15;
+        mask_l = self._mask & 0x7FFF;
         self._registerfile['selectMask_h'].set(mask_h)
+        self._registerfile['selectMask_m'].set(mask_m)
         self._registerfile['selectMask_l'].set(mask_l)
         self._registerfile['hitWindowLength'].set(self._window)
         self._registerfile['threshold1'].set(self._threshold1 % 512)
@@ -73,6 +75,7 @@ class HitLogic(ControlUnitBase):
 
     def apply(self):
         self._registerfile['selectMask_h'].apply()
+        self._registerfile['selectMask_m'].apply()
         self._registerfile['selectMask_l'].apply()
         self._registerfile['hitWindowLength'].apply()
         self._registerfile['threshold1'].apply()
@@ -83,8 +86,9 @@ class HitLogic(ControlUnitBase):
 
     def update(self):
         mask_h = self._registerfile['selectMask_h'].read()
+        mask_m = self._registerfile['selectMask_m'].read()
         mask_l = self._registerfile['selectMask_l'].read()
-        self._mask = (mask_h << 16) + mask_l
+        self._mask = (mask_h << 30) + (mask_m << 15) + mask_l
 
         self._window = self._registerfile['hitWindowLength'].read()
 
