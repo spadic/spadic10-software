@@ -93,6 +93,8 @@ class Register:
         """Perform the hardware read operation."""
         try:
             result = self._read()
+            if result is None:
+                return
         except RegisterReadFailure:
             return # TODO do something better?
         self._stage = result
