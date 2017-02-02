@@ -332,8 +332,12 @@ class SpadicRegisterFile(RegisterFile):
         """
         registers = {}
 
+        def disable_cache(reg_name):
+            "Disable cache for special CMD_* registers."
+            return reg_name.startswith('CMD_')
+
         for (name, (addr, size)) in register_map.items():
-            r = Register(size, use_cache)
+            r = Register(size, use_cache and not disable_cache(name))
             r._write = write_gen(name, addr)
             r._read = read_gen(name, addr)
             registers[name] = r
