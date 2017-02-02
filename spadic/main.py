@@ -27,8 +27,6 @@ class Spadic:
         self._splitters = [MessageSplitter(self._interface, lane)
                            for lane in [0, 1]]
 
-        self.readout_enable(0)
-
         # higher level register file access
         def rf_write_gen(name, addr):
             def write(value):
@@ -45,6 +43,8 @@ class Spadic:
         # higher level shift register access
         self._shiftregister = SpadicShiftRegister(
             self._reg_access.write_registers, self._reg_access.read_registers)
+
+        self.readout_enable(0)
 
         # highest level configuration controller
         self.control = SpadicController(self._registerfile,
