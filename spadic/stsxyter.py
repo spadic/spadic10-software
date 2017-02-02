@@ -90,7 +90,7 @@ class SpadicStsxyterRegisterAccess:
 
         # Try to read as many responses as requests were sent (with a short
         # timeout).
-        responses = list(filter(None, (self._stsxyter.read_data(timeout=0.1)
+        responses = list(filter(None, (self._stsxyter.read_reg_data(timeout=0.1)
                                        for _ in requests)))
 
         # Hope for the easily handled correct case.
@@ -128,7 +128,7 @@ class SpadicStsxyterRegisterAccess:
         # in the request) available within a small timeout, to "clean up" for
         # future register write operations.
         responses.extend(
-            iter(lambda: self._stsxyter.read_data(timeout=0.1), None)
+            iter(lambda: self._stsxyter.read_reg_data(timeout=0.1), None)
         )
         all_acks = iter(lambda: self._stsxyter.read_ack(timeout=0.1), None)
         nacks = [a for a in all_acks if int(a.ack) == AckType.NACK]

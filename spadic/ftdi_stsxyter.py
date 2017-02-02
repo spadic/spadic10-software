@@ -80,7 +80,7 @@ class FtdiStsxyter:
         """Send a downlink frame over FTDI."""
         self._demux.write(frame)
 
-    def read_hit(self, lane, timeout=1):
+    def read_data(self, lane, timeout=1):
         """Read a hit frame from the STS-XYTER interface at the given lane
         number.
         """
@@ -91,6 +91,6 @@ class FtdiStsxyter:
         """Read an Ack frame from the STS-XYTER interface."""
         return self._demux.read('ACK', timeout)
 
-    def read_data(self, timeout=1):
+    def read_reg_data(self, timeout=1):
         """Read a RDdata_ack frame from the STS-XYTER interface."""
         return self._demux.read('READ', timeout)
