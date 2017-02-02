@@ -10,7 +10,7 @@ from .util import IndexQueue
 from .control import SpadicController
 from .control.ui import SpadicControlUI
 from .message import _MessageSplitter, Message
-from .registerfile import SpadicRegisterFile, SPADIC_RF
+from .registerfile import SpadicRegisterFile, SPADIC20_RF
 from .server_ports import PORT_BASE, PORT_OFFSET
 from .shiftregister import SPADIC_SR
 
@@ -180,7 +180,7 @@ class SpadicControlClient:
         self._registerfile = SpadicRegisterFile(
                                  gen_write_gen(self.rf_client),
                                  gen_read_gen(self.rf_client),
-                                 register_map=SPADIC_RF,
+                                 register_map=SPADIC20_RF,
                                  use_cache=False)
 
         # The shiftregister actually behaves like the registerfile here,
