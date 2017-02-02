@@ -256,55 +256,65 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
         SPADIC_RF[name] = (addr, (4 if i==30 else 16))
 
 #--------------------------------------------------------------------
-# map of the user accessible registers in SPADIC 2.0 (not yet correct)
+# map of the user accessible registers in SPADIC 2.0
 #--------------------------------------------------------------------
 SPADIC20_RF = {             # address, size
    "overrides"               : (  0x8,  7),
-   "CbmNetAddr"              : ( 0x10, 16),
-   "EpochCounter"            : ( 0x18, 16),
-   "threshold1"              : ( 0x20,  9),
-   "threshold2"              : ( 0x28,  9),
-   "compDiffMode"            : ( 0x30,  1),
-   "hitWindowLength"         : ( 0x38,  6),
-   "selectMask_l"            : ( 0x40, 16),
-   "selectMask_h"            : ( 0x48, 16),
+   "readoutEnabled"          : ( 0x10,  1),
+   "threshold1"              : ( 0x18,  9),
+   "threshold2"              : ( 0x20,  9),
+   "compDiffMode"            : ( 0x28,  1),
+   "hitWindowLength"         : ( 0x30,  6),
+   "selectMask_l"            : ( 0x38, 15),
+   "selectMask_m"            : ( 0x40, 15),
+   "selectMask_h"            : ( 0x48,  2),
    "bypassFilterStage"       : ( 0x50,  5),
-   "aCoeffFilter_l"          : ( 0x58, 16),
-   "aCoeffFilter_h"          : ( 0x60,  2),
-   "bCoeffFilter_l"          : ( 0x68, 16),
-   "bCoeffFilter_h"          : ( 0x70,  8),
+   "aCoeffFilter_l"          : ( 0x58, 15),
+   "aCoeffFilter_h"          : ( 0x60,  3),
+   "bCoeffFilter_l"          : ( 0x68, 15),
+   "bCoeffFilter_h"          : ( 0x70,  9),
    "scalingFilter"           : ( 0x78,  9),
    "offsetFilter"            : ( 0x80,  9),
    "groupIdA"                : ( 0x88,  8),
    "groupIdB"                : ( 0x90,  8),
-#  "neighborSelectMatrixA_0" : ( 0x98, 16), # generated below
-#  "neighborSelectMatrixA_1" : ( 0xA0, 16),
+#  "neighborSelectMatrixA_0" : ( 0x98, 15), # generated below
+#  "neighborSelectMatrixA_1" : ( 0xA0, 15),
 #  ...
-#  "neighborSelectMatrixA_30": (0x188,  4),
-#  "neighborSelectMatrixB_0" : (0x190, 16),
+#  "neighborSelectMatrixA_32": (0x198,  4),
+#  "neighborSelectMatrixB_0" : (0x1a0, 15),
 #  ...
-#  "neighborSelectMatrixB_30": (0x280,  4),
-   "disableChannelA"         : (0x288, 16),
-   "disableChannelB"         : (0x290, 16),
-   "disableEpochChannelA"    : (0x298,  1),
-   "disableEpochChannelB"    : (0x2a0,  1),
-   "enableTestOutput"        : (0x2a8,  1),
-   "testOutputSelGroup"      : (0x2b0,  1),
-   "enableTestInput"         : (0x2b8,  1),
-   "enableAdcDec_l"          : (0x2c0, 16), # multiplex ADC signals to decoupling
-   "enableAdcDec_h"          : (0x2c8,  5),
-   "triggerMaskA"            : (0x2d0, 16), # enables DLM11 to trigger the hit logic
-   "triggerMaskB"            : (0x2d8, 16),
-   "enableAnalogTrigger"     : (0x2e0,  1), # enables DLM12 to inject an analog pulse into ch. 31
-   "enableTriggerOutput"     : (0x2e8,  1), # enables DLM10 to generate the "TriggerOut" signal
+#  "neighborSelectMatrixB_32": (0x2a0,  4),
+   "disableChannelA_l"       : (0x2a8, 15),
+   "disableChannelA_h"       : (0x2b0,  1),
+   "disableChannelB_l"       : (0x2b8, 15),
+   "disableChannelB_h"       : (0x2c0,  1),
+   "disableEpochChannelA"    : (0x2c8,  1),
+   "disableEpochChannelB"    : (0x2d0,  1),
+   "enableTestOutput"        : (0x2d8,  1),
+   "testOutputSelGroup"      : (0x2e0,  1),
+   "enableTestInput"         : (0x2e8,  1),
+   "enableAdcDec_l"          : (0x2f0, 15), # multiplex ADC signals to decoupling
+   "enableAdcDec_h"          : (0x2f8,  6),
+   "triggerMaskA_l"          : (0x300, 15), # enable triggering the hit logic
+   "triggerMaskA_h"          : (0x308,  1),
+   "triggerMaskB_l"          : (0x310, 15),
+   "triggerMaskB_h"          : (0x318,  1),
+   "enableAnalogTrigger"     : (0x320,  1), # enable injecting an analog pulse into ch. 31
+   "enableTriggerOutput"     : (0x328,  1), # enable generating the "TriggerOut" signal
+   "softReset"               : (0x330,  1),
+   "CMD_trigger"             : (0x338,  2),
+   "CMD_sync"                : (0x340,  1),
+   "MON_status"              : (0x348,  1),
+   # 0x350, 0x358, 0x360 -> shift register control
+   "chipRevision"            : (0x368,  1)  # returns 0 for SPADIC 2.0 rev. 1, 1 for rev. 2
 }
 
 # neighborSelectMatrix registers are generated here
-for (group, base_addr) in [('A', 0x98), ('B', 0x190)]:
-    for i in range(31): # 30*16 + 4 = 484
+for (group, base_addr) in [('A', 0x98), ('B', 0x1a0)]:
+    for i in range(33): # 32*15 + 4 = 484
         name = 'neighborSelectMatrix%s_%i' % (group, i)
         addr = base_addr + 8*i
-        SPADIC20_RF[name] = (addr, (4 if i==30 else 16))
+        SPADIC20_RF[name] = (addr, (4 if i==32 else 15))
 
 
 #--------------------------------------------------------------------
