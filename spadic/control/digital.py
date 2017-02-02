@@ -23,38 +23,54 @@ class DigitalChannel(ControlUnitBase):
         if entrigger is not None:
             self._entrigger = 1 if entrigger else 0
 
-        i = self._id % 16
+        g, i = divmod(self._id, 16)
+        high, ii = divmod(i, 15) # 15 -> (1/high, 0); 0-14 -> (0/low, 0-14)
 
-        reg_disable = {0: 'disableChannelA',
-                       1: 'disableChannelB'}[self._id//16]
-        basevalue = self._registerfile[reg_disable].get() & (0xFFFF-(1<<i))
-        newvalue = basevalue + (0 if self._enable else (1<<i))
-        self._registerfile[reg_disable].set(newvalue)
+        group = {0: 'A', 1: 'B'}[g]
+        highlow_suffix = 'h' if high else 'l'
 
-        reg_trigger = {0: 'triggerMaskA',
-                       1: 'triggerMaskB'}[self._id//16]
-        basevalue = self._registerfile[reg_trigger].get() & (0xFFFF-(1<<i))
-        newvalue = basevalue + ((1<<i) if self._entrigger else 0)
-        self._registerfile[reg_trigger].set(newvalue)
+        reg_disable = self._registerfile[
+            'disableChannel{}_{}'.format(group, highlow_suffix)
+        ]
+        basevalue = reg_disable.get() & (0xFFFF-(1<<ii))
+        newvalue = basevalue + (0 if self._enable else (1<<ii))
+        reg_disable.set(newvalue % (2 ** reg_disable.size))
+
+        reg_trigger = self._registerfile[
+            'triggerMask{}_{}'.format(group, highlow_suffix)
+        ]
+        basevalue = reg_trigger.get() & (0xFFFF-(1<<ii))
+        newvalue = basevalue + ((1<<ii) if self._entrigger else 0)
+        reg_trigger.set(newvalue % (2 ** reg_trigger.size))
 
     def apply(self):
-        self._registerfile['disableChannelA'].apply()
-        self._registerfile['disableChannelB'].apply()
-        self._registerfile['triggerMaskA'].apply()
-        self._registerfile['triggerMaskB'].apply()
+        self._registerfile['disableChannelA_h'].apply()
+        self._registerfile['disableChannelA_l'].apply()
+        self._registerfile['disableChannelB_h'].apply()
+        self._registerfile['disableChannelB_l'].apply()
+        self._registerfile['triggerMaskA_h'].apply()
+        self._registerfile['triggerMaskA_l'].apply()
+        self._registerfile['triggerMaskB_h'].apply()
+        self._registerfile['triggerMaskB_l'].apply()
 
     def update(self):
-        i = self._id % 16
+        g, i = divmod(self._id, 16)
+        high, ii = divmod(i, 15) # 15 -> (1/high, 0); 0-14 -> (0/low, 0-14)
 
-        reg_disable = {0: 'disableChannelA',
-                       1: 'disableChannelB'}[self._id//16]
-        dis = self._registerfile[reg_disable].read()
-        self._enable = (~dis >> i) & 1
+        group = {0: 'A', 1: 'B'}[g]
+        highlow_suffix = 'h' if high else 'l'
 
-        reg_trigger = {0: 'triggerMaskA',
-                       1: 'triggerMaskB'}[self._id//16]
-        trig = self._registerfile[reg_trigger].read()
-        self._entrigger = (trig >> i) & 1
+        reg_disable = self._registerfile[
+            'disableChannel{}_{}'.format(group, highlow_suffix)
+        ]
+        dis = reg_disable.read()
+        self._enable = (~dis >> ii) & 1
+
+        reg_trigger = self._registerfile[
+            'triggerMask{}_{}'.format(group, highlow_suffix)
+        ]
+        trig = reg_trigger.read()
+        self._entrigger = (trig >> ii) & 1
 
     def get(self):
         return {'enable': self._enable,
