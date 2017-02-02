@@ -17,6 +17,12 @@ class SpadicStsxyterRegisterAccess:
         self._sequence_numbers = cycle(range(sequence_number_count()))
         self._log = logging.getLogger(type(self).__name__)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
     def write_registers(self, operations):
         """Perform register write operations as specified in the given list of
         (address, value) tuples.
