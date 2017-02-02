@@ -81,11 +81,14 @@ class FtdiStsxyter:
         self._demux.write(frame)
 
     def read_data(self, lane, timeout=1):
-        """Read a hit frame from the STS-XYTER interface at the given lane
-        number.
+        """Return a list containing a single message word contained in a hit
+        frame read from the STS-XYTER interface at the given lane number.
         """
         # TODO support "lanes" A and B (need to implement in firmware first)
-        return self._demux.read('HIT', timeout)
+        frame = self._demux.read('HIT', timeout)
+        if frame is None:
+            return None
+        return [int(frame.word)]
 
     def read_ack(self, timeout=1):
         """Read an Ack frame from the STS-XYTER interface."""
