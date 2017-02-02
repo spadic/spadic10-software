@@ -156,7 +156,7 @@ class RegisterFile(Mapping):
         for name in self:
             self[name].apply()
 
-    def update(self):
+    def update(self, blocking=False):
         """Perform the read operation for all registers."""
         last_unknown = 0
         fail_count = 0
@@ -172,7 +172,7 @@ class RegisterFile(Mapping):
             # the code from here would be needed without the retransmit bug
             threads = []
             for name in unknown:
-                t = self[name].update(blocking=False)
+                t = self[name].update(blocking)
                 if t is not None:
                     threads.append(t)
             for t in threads:
@@ -188,13 +188,13 @@ class RegisterFile(Mapping):
         self.set(config)
         self.apply()
 
-    def read(self):
+    def read(self, blocking=False):
         """
         Read the register file configuration into a dictionary.
         
         Has the same effect as calling "update" and then "get".
         """
-        self.update()
+        self.update(blocking)
         return self.get()
 
 
