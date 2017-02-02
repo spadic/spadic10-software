@@ -114,13 +114,13 @@ class NeighborMatrix(ControlUnitBase):
         """Turn 'target is triggered by source' on or off."""
         if all(p is not None for p in [target, source, enable]):
             self._set(target, source, enable)
-        
+
         bits = [1 if enable else 0
                 for target in self._targets for enable in target]
-        for i in range(31):
+        for i in range(33):
             name = ('neighborSelectMatrix%s_%i' % 
                     ({0: 'A', 1: 'B'}[self._group], i))
-            part = bits[16*i:16*(i+1)]
+            part = bits[15*i:15*(i+1)]
             value = sum((1<<i)*bit for (i, bit) in enumerate(part))
             self._registerfile[name].set(value)
 
@@ -143,18 +143,18 @@ class NeighborMatrix(ControlUnitBase):
         self._targets[tgt_idx][src_idx] = value
 
     def apply(self):
-        for i in range(31):
+        for i in range(33):
             name = ('neighborSelectMatrix%s_%i' % 
                     ({0: 'A', 1: 'B'}[self._group], i))
             self._registerfile[name].apply()
 
     def update(self):
         bits = []
-        for i in range(31):
+        for i in range(33):
             name = ('neighborSelectMatrix%s_%i' % 
                     ({0: 'A', 1: 'B'}[self._group], i))
             x = self._registerfile[name].read()
-            bits += [(x >> i) & 1 for i in range(16)]
+            bits += [(x >> i) & 1 for i in range(15)]
         for tgt in range(22):
             for src in range(22):
                 self._targets[tgt][src] = bits[22*tgt+src]
@@ -190,7 +190,7 @@ class Digital:
 
     Controls the following channel-specific digital settings:
     - channel enable/disable
-    - trigger input enable/disable (DLM11)
+    - trigger input enable/disable (DLM11 in SPADIC 1.x)
     - neighbor selection matrix
     
     Individual channels are accessed by 
@@ -231,5 +231,3 @@ class Digital:
         s += ['\nNeighbor matrix (group A)\n'+str(self.neighbor['A'])]
         s += ['\nNeighbor matrix (group B)\n'+str(self.neighbor['B'])]
         return '\n'.join(s)
-
-
