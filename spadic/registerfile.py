@@ -302,12 +302,15 @@ SPADIC20_RF = {             # address, size
    "enableAnalogTrigger"     : (0x320,  1), # enable injecting an analog pulse into ch. 31
    "enableTriggerOutput"     : (0x328,  1), # enable generating the "TriggerOut" signal
    "softReset"               : (0x330,  1),
-   "CMD_trigger"             : (0x338,  2),
-   "CMD_sync"                : (0x340,  1),
-   "MON_status"              : (0x348,  1),
+#  "CMD_trigger"             : (0x338,  2),
+#  "CMD_sync"                : (0x340,  1),
+#  "MON_status"              : (0x348,  1),
    # 0x350, 0x358, 0x360 -> shift register control
    "chipRevision"            : (0x368,  1)  # returns 0 for SPADIC 2.0 rev. 1, 1 for rev. 2
 }
+
+# Exclude special registers (CMD_*, MON_*) from register file, they do not play
+# well with the caching logic.
 
 # neighborSelectMatrix registers are generated here
 for (group, base_addr) in [('A', 0x98), ('B', 0x1a0)]:
@@ -332,12 +335,8 @@ class SpadicRegisterFile(RegisterFile):
         """
         registers = {}
 
-        def disable_cache(reg_name):
-            "Disable cache for special CMD_* registers."
-            return reg_name.startswith('CMD_')
-
         for (name, (addr, size)) in register_map.items():
-            r = Register(size, use_cache and not disable_cache(name))
+            r = Register(size, use_cache)
             r._write = write_gen(name, addr)
             r._read = read_gen(name, addr)
             registers[name] = r
