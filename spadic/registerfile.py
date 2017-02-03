@@ -158,7 +158,7 @@ class RegisterFile(Mapping):
         for name in self:
             self[name].apply()
 
-    def update(self, blocking=False):
+    def update(self, blocking=True):
         """Perform the read operation for all registers."""
         last_unknown = 0
         fail_count = 0
@@ -190,7 +190,7 @@ class RegisterFile(Mapping):
         self.set(config)
         self.apply()
 
-    def read(self, blocking=False):
+    def read(self, blocking=True):
         """
         Read the register file configuration into a dictionary.
         
