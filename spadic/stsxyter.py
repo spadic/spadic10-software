@@ -90,8 +90,9 @@ class SpadicStsxyterRegisterAccess:
 
         # Try to read as many responses as requests were sent (with a short
         # timeout).
-        responses = list(filter(None, (self._stsxyter.read_reg_data(timeout=0.1)
-                                       for _ in requests)))
+        responses = list(filter(None,
+            (self._stsxyter.read_reg_data(timeout=None) for _ in requests)
+        ))
 
         # Hope for the easily handled correct case.
         def returned_sequence_number(response):
