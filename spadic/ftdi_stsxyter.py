@@ -85,6 +85,9 @@ class FtdiStsxyter:
         frame read from the STS-XYTER interface at the given lane number.
         """
         # TODO support "lanes" A and B (need to implement in firmware first)
+        if lane != 0:
+            return None
+
         frame = self._demux.read('HIT', timeout)
         if frame is None:
             return None
