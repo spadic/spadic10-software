@@ -211,12 +211,14 @@ class ShiftRegister(Mapping):
 #--------------------------------------------------------------------
 SPADIC_SR_LENGTH = 584
 
+# Consists of 7-bit DACs and single-bit registers. Each DAC includes one unused
+# bit, therefore not all indexes are used.
 SPADIC_SR = {
 # name              : [MSB, ..., LSB]
 
-  'VNDel'           : list(range(  1,   7+1)),
-  'VPDel'           : list(range(  9,  15+1)),
-  'VPLoadFB2'       : list(range( 17,  23+1)),
+  'VNDel'           : list(range(  1,   7+1)), # index 0 unused
+  'VPDel'           : list(range(  9,  15+1)), # index 8 unused
+  'VPLoadFB2'       : list(range( 17,  23+1)), # etc.
   'VPLoadFB'        : list(range( 25,  31+1)),
   'VPFB'            : list(range( 33,  39+1)),
   'VPAmp'           : list(range( 41,  47+1)),
