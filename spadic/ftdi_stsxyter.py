@@ -15,6 +15,7 @@ class FtdiStsxyterInterface(FtdiContainer, MultiplexedStreamInterface):
 
     _uplink_frame_types = [
         ('HIT', stsxyter_frame.UplinkSpadicData),
+        ('TS-MSB', stsxyter_frame.UplinkTsmsb),
         ('ACK', stsxyter_frame.UplinkAck),
         ('READ', stsxyter_frame.UplinkReadData)
     ]

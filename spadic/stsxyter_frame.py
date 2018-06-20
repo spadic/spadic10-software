@@ -164,6 +164,24 @@ class UplinkControlFrame(BitFieldSuffixCRC, BitFieldPrefix):
     """
     pass
 
+class UplinkTsmsb(UplinkControlFrame):
+    """A TS-MSB frame
+
+    TODO doctests
+    """
+    _prefix = (0b11, 2)
+
+    _fields = [
+        ('epoch1', 6),
+        ('epoch2', 6),
+        ('epoch3', 6)
+    ]
+
+    _crc_poly = crc.Polynomial(
+        value=0x9, degree=4,
+        representation=crc.PolyRepresentation.REVERSED_RECIPROCAL
+    )
+
 class UplinkReadData(UplinkControlFrame):
     """
     >>> frame = UplinkReadData(data=2, sequence_number=4)
