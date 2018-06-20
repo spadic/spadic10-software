@@ -92,7 +92,7 @@ class FtdiStsxyter:
         frame = self._demux.read('HIT', timeout)
         if frame is None:
             return None
-        return [int(frame.word)]
+        return [int(frame.payload)]
 
     def read_ack(self, timeout=1):
         """Read an Ack frame from the STS-XYTER interface."""
