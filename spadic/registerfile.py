@@ -326,14 +326,22 @@ for (group, base_addr) in [('A', 0x98), ('B', 0x1a0)]:
 class SpadicRegisterFile(RegisterFile):
     """Representation of the SPADIC register file."""
 
-    def __init__(self, write_gen, read_gen, register_map, use_cache=True):
+    def __init__(self, reg_access, register_map, use_cache=True):
         """
         Set up the SPADIC registers.
 
-        write_gen/read_gen must return functions that write/read the
-        register with the given name or address.
+        reg_access must have methods read_registers and write_registers.
         """
         registers = {}
+
+        def rf_write_gen(name, addr):
+            def write(value):
+                reg_access.write_registers([(addr, value)])
+            return write
+        def rf_read_gen(name, addr):
+            def read():
+                return next(reg_access.read_registers([addr]))
+            return read
 
         for (name, (addr, size)) in register_map.items():
             r = Register(size, use_cache)

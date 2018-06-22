@@ -28,16 +28,8 @@ class Spadic:
                            for lane in [0, 1]]
 
         # higher level register file access
-        def rf_write_gen(name, addr):
-            def write(value):
-                self._reg_access.write_registers([(addr, value)])
-            return write
-        def rf_read_gen(name, addr):
-            def read():
-                return next(self._reg_access.read_registers([addr]))
-            return read
         self._registerfile = SpadicRegisterFile(
-            rf_write_gen, rf_read_gen, register_map=SPADIC20_RF
+            self._reg_access, register_map=SPADIC20_RF
         )
 
         # higher level shift register access

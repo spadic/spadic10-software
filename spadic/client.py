@@ -80,6 +80,7 @@ class BaseRegisterClient(BaseReceiveClient):
 
         register_values must be a dictionary {name: value, ...}
         """
+        # TODO use same interface as SpadicStsxyterRegisterAccess
         self.socket.sendall(bytes(
             json.dumps(['w', register_values]) + '\n',
             'utf-8'))
@@ -153,20 +154,6 @@ class SpadicControlClient:
         self.sr_client = SpadicSRClient()
         self.cmd_client = SpadicCmdClient()
 
-        # nested function generators!
-        def gen_write_gen(client):
-            def write_gen(name, addr):
-                def write(value):
-                    client.write_registers({name: value})
-                return write
-            return write_gen
-        def gen_read_gen(client):
-            def read_gen(name, addr):
-                def read():
-                    return client.read_registers([name])[name]
-                return read
-            return read_gen
-
         self.rf_client.connect(server_address, port_base)
         self.sr_client.connect(server_address, port_base)
         self.cmd_client.connect(server_address, port_base)
@@ -178,8 +165,7 @@ class SpadicControlClient:
         # have to really read and write a register every time and cannot
         # rely on our last known values.
         self._registerfile = SpadicRegisterFile(
-                                 gen_write_gen(self.rf_client),
-                                 gen_read_gen(self.rf_client),
+                                 self.rf_client,
                                  register_map=SPADIC20_RF,
                                  use_cache=False)
 
@@ -189,8 +175,7 @@ class SpadicControlClient:
         sr_map = {name: (0, len(bits))
                   for (name, bits) in SPADIC_SR.items()}
         self._shiftregister = SpadicRegisterFile(
-                                  gen_write_gen(self.sr_client),
-                                  gen_read_gen(self.sr_client),
+                                  self.sr_client,
                                   register_map=sr_map,
                                   use_cache=False)
 
