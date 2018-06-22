@@ -16,22 +16,26 @@ class Register:
     register, so that the number of hardware write and read operations can
     be minimized.
     """
-    def __init__(self, size, use_cache=True):
-        """Set the size of the register."""
+    def __init__(self, size, address, reg_access, use_cache=True):
+        """Set the size and address of the register and provide the underlying
+        read/write access.
+
+        reg_access must have methods read_registers and write_registers.
+        """
         self.size = size
+        self.address = address
         self._stage = 0     # staging area
         self._cache = None  # last known value of the hardware register
         self._known = False # is the current value of the hardware register known?
         self._use_cache = use_cache # enables the cache
+        self._reg_access = reg_access
 
 
     def _write(self, value):
-        raise NotImplementedError(
-            "Overwrite this with the appropriate write operation.")
+        self._reg_access.write_registers([(self.address, value)])
 
     def _read(self):
-        raise NotImplementedError(
-            "Overwrite this with the appropriate read operation.")
+        return next(self._reg_access.read_registers([self.address]))
 
 
     def set(self, value):
@@ -334,20 +338,8 @@ class SpadicRegisterFile(RegisterFile):
         """
         registers = {}
 
-        def rf_write_gen(name, addr):
-            def write(value):
-                reg_access.write_registers([(addr, value)])
-            return write
-        def rf_read_gen(name, addr):
-            def read():
-                return next(reg_access.read_registers([addr]))
-            return read
-
         for (name, (addr, size)) in register_map.items():
-            r = Register(size, use_cache)
-            r._write = write_gen(name, addr)
-            r._read = read_gen(name, addr)
+            r = Register(size, addr, reg_access, use_cache)
             registers[name] = r
 
         RegisterFile.__init__(self, registers)
-
