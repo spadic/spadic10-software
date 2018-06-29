@@ -49,16 +49,6 @@ class ShiftRegisterEntry:
         """Get the value."""
         return self._value
 
-
-    # The following methods are there for providing the same interface as
-    # the Register class from registerfile.py. They allow faking a
-    # ShiftRegister with a RegisterFile, as done in SpadicControlClient.
-    def apply(self):
-        raise NotImplementedError
-
-    def update(self):
-        raise NotImplementedError
-
     def write(self, value):
         """
         Modify the register value, if necessary perform the write operation.
