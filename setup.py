@@ -9,10 +9,5 @@ setup(name='spadic',
       author='Michael Krieger',
       packages=['spadic',
                 'spadic.control',
-                'spadic.control.ui',
-                'spadic.tools'],
-      scripts=['scripts/spadic_control',
-               'scripts/spadic_server',
-               'scripts/spadic_scope',
-               'scripts/spadic_recorder'],
+                'spadic.control.ui']
      )
